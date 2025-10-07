@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 
 from .models import Categoria, Subcategoria, Producto
+from .forms import SubcategoriaForm
 
 
 class InventarioViewMixin(UserPassesTestMixin):
@@ -184,13 +185,8 @@ class SubcategoriaCreateView(AdminOnlyMixin, CreateView):
     """Crear nueva subcategoría"""
     model = Subcategoria
     template_name = 'inventario/subcategoria_form.html'
-    fields = ['nombre', 'descripcion', 'categoria', 'activa']
+    form_class = SubcategoriaForm
     success_url = reverse_lazy('inventario:subcategoria_list')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['categorias'] = Categoria.objects.filter(activa=True).order_by('nombre')
-        return context
     
     def form_valid(self, form):
         messages.success(self.request, f'Subcategoría "{form.instance.nombre}" creada exitosamente.')
@@ -229,13 +225,8 @@ class SubcategoriaUpdateView(AdminOnlyMixin, UpdateView):
     """Editar subcategoría"""
     model = Subcategoria
     template_name = 'inventario/subcategoria_form.html'
-    fields = ['nombre', 'descripcion', 'categoria', 'activa']
+    form_class = SubcategoriaForm
     success_url = reverse_lazy('inventario:subcategoria_list')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['categorias'] = Categoria.objects.filter(activa=True).order_by('nombre')
-        return context
     
     def form_valid(self, form):
         messages.success(self.request, f'Subcategoría "{form.instance.nombre}" actualizada exitosamente.')

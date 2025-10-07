@@ -44,20 +44,9 @@
                 <div>
                     <label for="{{ form.categoria.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-folder mr-1 text-gray-500"></i>
-                        Categoría Padre *
+                        {{ form.categoria.label }} *
                     </label>
-                    <select name="{{ form.categoria.name }}" 
-                            id="{{ form.categoria.id_for_label }}"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.categoria.errors %}border-red-300{% endif %}"
-                            required>
-                        <option value="">Selecciona una categoría</option>
-                        {% for categoria in categorias %}
-                            <option value="{{ categoria.pk }}" 
-                                    {% if form.categoria.value == categoria.pk or object.categoria.pk == categoria.pk %}selected{% endif %}>
-                                {{ categoria.nombre }}
-                            </option>
-                        {% endfor %}
-                    </select>
+                    {{ form.categoria }}
                     {% if form.categoria.errors %}
                         <div class="mt-1">
                             {% for error in form.categoria.errors %}
@@ -65,25 +54,20 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    <p class="mt-1 text-xs text-gray-500">
-                        La categoría bajo la cual se agrupará esta subcategoría
-                    </p>
+                    {% if form.categoria.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ form.categoria.help_text }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Nombre -->
                 <div>
                     <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-tag mr-1 text-gray-500"></i>
-                        Nombre de la Subcategoría *
+                        {{ form.nombre.label }} *
                     </label>
-                    <input type="text" 
-                           name="{{ form.nombre.name }}" 
-                           id="{{ form.nombre.id_for_label }}"
-                           value="{{ form.nombre.value|default:'' }}"
-                           placeholder="Ej: Computadores de Escritorio, Papel Bond, etc."
-                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.nombre.errors %}border-red-300{% endif %}"
-                           maxlength="100"
-                           required>
+                    {{ form.nombre }}
                     {% if form.nombre.errors %}
                         <div class="mt-1">
                             {% for error in form.nombre.errors %}
@@ -91,22 +75,20 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    <p class="mt-1 text-xs text-gray-500">
-                        Máximo 100 caracteres. Debe ser único dentro de la categoría padre.
-                    </p>
+                    {% if form.nombre.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ form.nombre.help_text }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Descripción -->
                 <div>
                     <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-align-left mr-1 text-gray-500"></i>
-                        Descripción
+                        {{ form.descripcion.label }}
                     </label>
-                    <textarea name="{{ form.descripcion.name }}" 
-                              id="{{ form.descripcion.id_for_label }}"
-                              rows="4"
-                              placeholder="Descripción opcional de la subcategoría..."
-                              class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm {% if form.descripcion.errors %}border-red-300{% endif %}">{{ form.descripcion.value|default:'' }}</textarea>
+                    {{ form.descripcion }}
                     {% if form.descripcion.errors %}
                         <div class="mt-1">
                             {% for error in form.descripcion.errors %}
@@ -114,9 +96,33 @@
                             {% endfor %}
                         </div>
                     {% endif %}
-                    <p class="mt-1 text-xs text-gray-500">
-                        Proporciona una breve descripción de qué tipo de productos incluye esta subcategoría.
-                    </p>
+                    {% if form.descripcion.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ form.descripcion.help_text }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <div class="flex items-center">
+                        {{ form.activa }}
+                        <label for="{{ form.activa.id_for_label }}" class="ml-2 block text-sm font-medium text-gray-700">
+                            {{ form.activa.label }}
+                        </label>
+                    </div>
+                    {% if form.activa.errors %}
+                        <div class="mt-1">
+                            {% for error in form.activa.errors %}
+                                <p class="text-sm text-red-600">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if form.activa.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">
+                            {{ form.activa.help_text }}
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Información adicional para edición -->

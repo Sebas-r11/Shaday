@@ -374,3 +374,51 @@ class BodegaForm(forms.ModelForm):
         # Mensajes de ayuda personalizados
         self.fields['link_ubicacion'].help_text = 'URL de Google Maps, Waze u otro servicio de mapas para facilitar la navegación'
         self.fields['es_principal'].help_text = 'Marcar si esta es la bodega principal de la empresa'
+
+
+class SubcategoriaForm(forms.ModelForm):
+    """Formulario para crear y editar subcategorías"""
+    
+    class Meta:
+        model = Subcategoria
+        fields = ['categoria', 'nombre', 'descripcion', 'activa']
+        widgets = {
+            'categoria': forms.Select(attrs={
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                'id': 'id_categoria'
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                'placeholder': 'Ej: Computadores de Escritorio, Papel Bond, etc.',
+                'maxlength': '100'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                'rows': 3,
+                'placeholder': 'Descripción opcional de la subcategoría...'
+            }),
+            'activa': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Filtrar solo categorías activas para el dropdown
+        self.fields['categoria'].queryset = Categoria.objects.filter(activa=True).order_by('nombre')
+        self.fields['categoria'].empty_label = "Selecciona una categoría"
+        
+        # Configurar labels y help_text
+        self.fields['categoria'].label = "Categoría Padre"
+        self.fields['categoria'].help_text = "La categoría bajo la cual se agrupará esta subcategoría"
+        
+        self.fields['nombre'].label = "Nombre de la Subcategoría"
+        self.fields['nombre'].help_text = "Máximo 100 caracteres. Debe ser único dentro de la categoría padre."
+        
+        self.fields['descripcion'].label = "Descripción"
+        self.fields['descripcion'].help_text = "Descripción opcional de la subcategoría"
+        self.fields['descripcion'].required = False
+        
+        self.fields['activa'].label = "Subcategoría Activa"
+        self.fields['activa'].help_text = "Marcar si la subcategoría está disponible para uso"
