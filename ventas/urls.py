@@ -43,11 +43,16 @@ urlpatterns = [
     path('', dashboard_view, name='dashboard'),
     path('charts/', dashboard_charts_view, name='dashboard_charts'),
     
+    # Dashboard
+    path('', dashboard_charts_view, name='ventas_index'),
+    path('dashboard/', dashboard_charts_view, name='ventas_dashboard'),
+    
     # Clientes
     path('clientes/', ClienteListView.as_view(), name='cliente_list'),
     path('clientes/nuevo/', ClienteCreateView.as_view(), name='cliente_create'),
     path('clientes/<int:pk>/', ClienteDetailView.as_view(), name='cliente_detail'),
     path('clientes/<int:pk>/editar/', ClienteUpdateView.as_view(), name='cliente_update'),
+    path('clientes/<int:pk>/edit/', ClienteUpdateView.as_view(), name='cliente_edit'),
     
     # Cotizaciones
     path('cotizaciones/', CotizacionListView.as_view(), name='cotizacion_list'),
@@ -118,6 +123,9 @@ urlpatterns = [
     path('api/dashboard/estados-pedidos/', api_estados_pedidos, name='api_estados_pedidos'),
     path('api/dashboard/ventas-por-vendedor/', api_ventas_por_vendedor, name='api_ventas_vendedor'),
     path('api/dashboard/estadisticas/', api_estadisticas_dashboard, name='api_estadisticas_dashboard'),
+    
+    # APIs de Alertas
+    path('api/alertas-stock/', views.api_alertas_stock, name='api_alertas_stock'),
     
     # APIs Repartidor
     path('api/entregas/<int:pk>/completar/', completar_entrega_api, name='api_completar_entrega'),

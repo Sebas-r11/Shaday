@@ -946,6 +946,9 @@ def export_reporte_inventario(productos, formato, stats):
             ])
         
         return response
+    
+    # Si no es excel o csv, retornar respuesta por defecto
+    return HttpResponse("Formato no soportado", status=400)
 
 
 def export_reporte_compras(pedidos, formato, stats):
@@ -1004,3 +1007,6 @@ def export_reporte_compras(pedidos, formato, stats):
             ])
         
         return response
+    
+    # Si no es excel o csv, retornar respuesta por defecto
+    return HttpResponse("Formato no soportado", status=400)

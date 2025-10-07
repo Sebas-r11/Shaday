@@ -517,3 +517,35 @@ def api_version(request):
         'build': '2025.10.07',
         'status': 'stable'
     })
+
+# ==================== APIs ESTADÍSTICAS AVANZADAS ====================
+
+@require_http_methods(["GET"])
+def api_estadisticas_dashboard(request):
+    """API para estadísticas del dashboard"""
+    from ventas.general_views import api_estadisticas_dashboard as ventas_api
+    return ventas_api(request)
+
+@require_http_methods(["GET"])
+def api_ventas_por_mes(request):
+    """API para ventas por mes"""
+    from ventas.general_views import api_ventas_por_mes as ventas_api
+    return ventas_api(request)
+
+@require_http_methods(["GET"])
+def api_productos_mas_vendidos(request):
+    """API para productos más vendidos"""
+    from ventas.general_views import api_productos_mas_vendidos as ventas_api
+    return ventas_api(request)
+
+@require_http_methods(["GET"])
+def api_estados_pedidos(request):
+    """API para estados de pedidos"""
+    from ventas.general_views import api_estados_pedidos as ventas_api
+    return ventas_api(request)
+
+@require_http_methods(["GET"])
+def api_ventas_por_vendedor(request):
+    """API para ventas por vendedor"""
+    from ventas.general_views import api_ventas_por_vendedor as ventas_api
+    return ventas_api(request)

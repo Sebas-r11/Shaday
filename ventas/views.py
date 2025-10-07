@@ -3382,3 +3382,42 @@ def exportar_pedidos_csv(request):
     return response
 
 # Función de imprimir_pedido PDF definida anteriormente en la línea 886
+
+# ============= API ALERTAS STOCK =============
+
+@require_http_methods(["GET"])
+def api_alertas_stock(request):
+    """API para obtener alertas de stock bajo"""
+    try:
+        from inventario.models import AlertaStock
+        
+        # Obtener alertas activas
+        alertas = AlertaStock.objects.filter(activa=True).select_related('producto')
+        
+        data = []
+        for alerta in alertas:
+            data.append({
+                'id': alerta.id,
+                'producto': {
+                    'id': alerta.producto.id,
+                    'nombre': alerta.producto.nombre,
+                    'codigo': alerta.producto.codigo,
+                },
+                'stock_actual': alerta.stock_actual,
+                'stock_minimo': alerta.stock_minimo,
+                'fecha_creacion': alerta.fecha_creacion.isoformat(),
+                'activa': alerta.activa,
+                'mensaje': getattr(alerta, 'mensaje', f'Stock bajo: {alerta.producto.nombre}')
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'alertas': data,
+            'total': len(data)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

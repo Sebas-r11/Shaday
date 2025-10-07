@@ -23,6 +23,11 @@ urlpatterns = [
     # APIs de Estadísticas Públicas
     path('estadisticas/productos-populares/', views.api_productos_populares, name='productos_populares'),
     path('estadisticas/categorias-activas/', views.api_categorias_activas, name='categorias_activas'),
+    path('estadisticas/dashboard/', views.api_estadisticas_dashboard, name='estadisticas_dashboard'),
+    path('estadisticas/ventas-mes/', views.api_ventas_por_mes, name='ventas_mes'),
+    path('estadisticas/productos-vendidos/', views.api_productos_mas_vendidos, name='productos_vendidos'),
+    path('estadisticas/estados-pedidos/', views.api_estados_pedidos, name='estados_pedidos'),
+    path('estadisticas/ventas-vendedor/', views.api_ventas_por_vendedor, name='ventas_vendedor'),
     
     # API de Información del Sistema
     path('info/', views.api_info_sistema, name='info_sistema'),

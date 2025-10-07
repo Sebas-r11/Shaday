@@ -210,7 +210,7 @@ class ItemPedido(models.Model):
         return f"{self.producto.nombre} - {self.pedido.numero}"
 
 class ItemFactura(models.Model):
-    factura = models.ForeignKey(Factura, on_delete=models.CASCADE)
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='items')
     cantidad = models.PositiveIntegerField(default=1)
     precio = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     

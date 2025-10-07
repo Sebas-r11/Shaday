@@ -259,7 +259,7 @@ def imprimir_factura(request, pk):
     data = [['Producto', 'Cantidad', 'Precio Unit.', 'Descuento', 'Subtotal']]
     
     # Si hay items, agregarlos (modelo simplificado)
-    if factura.itemfactura_set.exists():
+    if factura.items.exists():
         for item in factura.itemfactura_set.all():
             data.append([
                 f'Item #{item.id}',

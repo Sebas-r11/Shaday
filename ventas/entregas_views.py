@@ -42,7 +42,7 @@ class EntregaListView(VentasRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Entrega.objects.select_related('pedido', 'factura', 'repartidor')
+        queryset = Entrega.objects.select_related('pedido', 'repartidor')
         
         # Filtros
         search = self.request.GET.get('search')
@@ -267,7 +267,7 @@ def obtener_entregas_repartidor(request):
     entregas = Entrega.objects.filter(
         repartidor=request.user,
         estado__in=['asignada', 'en_ruta']
-    ).select_related('pedido', 'factura')
+    ).select_related('pedido')
     
     data = []
     for entrega in entregas:
@@ -328,7 +328,7 @@ def reporte_entregas_periodo(request):
     entregas = Entrega.objects.filter(
         fecha_programada__date__gte=fecha_desde,
         fecha_programada__date__lte=fecha_hasta
-    ).select_related('repartidor', 'pedido', 'factura')
+    ).select_related('repartidor', 'pedido')
     
     # Estadísticas
     total_entregas = entregas.count()
