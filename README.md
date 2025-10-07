@@ -54,8 +54,39 @@ python instalar_sistema.py
 git clone <repository-url>
 cd grsys
 
-# 2. Crear datos de ejemplo (primera vez)
+# 2. Instalar dependencias básicas
+pip install -r requirements.txt
+
+# 3. Configurar base de datos
+python manage.py migrate
+
+# 4. Crear datos de ejemplo (primera vez)
 python crear_datos_ejemplo.py
+
+# 5. Iniciar servidor
+python manage.py runserver
+```
+
+### 🏭 Instalación para Producción
+
+```bash
+# Para entornos de producción
+pip install -r requirements-production.txt
+```
+
+### 👨‍💻 Instalación para Desarrollo
+
+```bash
+# Para desarrollo con herramientas adicionales
+pip install -r requirements-dev.txt
+```
+
+### 🚀 Instalación de Funcionalidades Futuras
+
+```bash
+# Solo si vas a implementar ML, WebSockets, etc.
+pip install -r requirements-future.txt
+```
 
 ```bash
 # 1. Instalar dependencias
