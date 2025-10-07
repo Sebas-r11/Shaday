@@ -1,6 +1,6 @@
 # ================================================================================
 # DISTRIBUCIONES SHADDAI - SISTEMA ERP EMPRESARIAL
-# Requirements.txt - Dependencias completas del proyecto
+# Requirements.txt - Dependencias principales para producción
 # Sistema de Gestión Empresarial con 6 módulos principales
 # ================================================================================
 
@@ -49,11 +49,6 @@ pytz==2024.2
 django-crispy-forms==2.3
 
 # ============================================================================
-# AUTENTICACIÓN Y PERMISOS
-# ============================================================================
-django-contrib-auth==0.3
-
-# ============================================================================
 # CONFIGURACIÓN Y VARIABLES DE ENTORNO
 # ============================================================================
 python-decouple==3.8
@@ -71,29 +66,7 @@ django-debug-toolbar==4.4.6
 django-extensions==3.2.3
 
 # ============================================================================
-# DEPENDENCIAS ADICIONALES PARA FUNCIONALIDADES ESPECÍFICAS
-# ============================================================================
-
-# Para validaciones avanzadas
-validators==0.28.3
-
-# Para manejo de archivos CSV mejorado
-csv-validator==1.4.0
-
-# Para UUID y utilidades de identificación
-uuid==1.30
-
-# Para serialización JSON avanzada
-simplejson==3.19.3
-
-# Para cache y optimización
-django-redis==5.4.0
-
-# Para logging avanzado
-django-extensions==3.2.3
-
-# ============================================================================
-# DEPENDENCIAS DE PRODUCCIÓN (OPCIONALES)
+# DEPENDENCIAS OPCIONALES DE PRODUCCIÓN (COMENTADAS)
 # ============================================================================
 
 # Servidor web para producción
