@@ -134,7 +134,7 @@ class PedidoDetailView(VentasRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['items'] = self.object.items.all()
-        context['puede_cambiar_estado'] = self.request.user.can_manage_inventory()
+        context['puede_cambiar_estado'] = self.request.user.can_adjust_inventory()
         # context['form_estado'] = CambiarEstadoPedidoForm(instance=self.object)  # Form no existe
         return context
 

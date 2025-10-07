@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reporte de Inventario{% endblock %}
+
+{% block extra_head %}
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stock-low {
+        background-color: #fef2f2 !important;
+        border-left: 4px solid #ef4444 !important;
+    }
+    
+    .stock-medium {
+        background-color: #fefce8 !important;
+        border-left: 4px solid #eab308 !important;
+    }
+    
+    .stock-good {
+        background-color: #f0fdf4 !important;
+        border-left: 4px solid #22c55e !important;
+    }
+    
+    .btn-export {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-boxes"></i>
+                    Reporte de Inventario
+                </h1>
+                <div>
+                    <a href="{% url 'ventas:reportes' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <button type="button" class="btn btn-primary" id="btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <h5 class="mb-3">
+            <i class="fas fa-filter"></i>
+            Filtros de Búsqueda
+        </h5>
+        
+        <form method="GET" id="filter-form">
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="categoria" class="form-label">Categoría</label>
+                    <select class="form-control" id="categoria" name="categoria">
+                        <option value="">Todas las categorías</option>
+                        <!-- Aquí iría la lista de categorías desde el contexto -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="stock_bajo" class="form-label">Stock Bajo</label>
+                    <select class="form-control" id="stock_bajo" name="stock_bajo">
+                        <option value="">Todos los productos</option>
+                        <option value="true" {% if filtros.stock_bajo == 'true' %}selected{% endif %}>Solo stock bajo (≤ 10)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                                   value="{{ filtros.fecha_inicio|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-6">
+                            <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
+                                   value="{{ filtros.fecha_fin|date:'Y-m-d' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <a href="{% url 'ventas:reporte_inventario' %}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-times"></i> Limpiar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-card">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_productos }}</span>
+                    <span class="stat-label">Total Productos</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ productos_stock_bajo }}</span>
+                    <span class="stat-label">Stock Bajo</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">${{ valor_inventario|floatformat:2 }}</span>
+                    <span class="stat-label">Valor Inventario</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ alertas_activas }}</span>
+                    <span class="stat-label">Alertas Activas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Movimientos -->
+    {% if top_movimientos %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="table-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-bar"></i>
+                    Productos con Más Movimientos
+                </h5>
+                <div class="row">
+                    {% for mov in top_movimientos %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="border rounded p-2">
+                            <strong>{{ mov.producto__nombre|truncatechars:25 }}</strong><br>
+                            <small>{{ mov.total_movimientos }} movimientos - {{ mov.cantidad_total }} unidades</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de Productos -->
+    <div class="table-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-table"></i>
+                Detalle de Inventario
+                {% if productos|length == 100 %}
+                    <small class="text-muted">(Mostrando primeros 100)</small>
+                {% endif %}
+            </h5>
+            
+            <!-- Botones de Exportación -->
+            <div>
+                <a href="?{{ request.GET.urlencode }}&formato=excel" class="btn btn-success btn-sm btn-export">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+                <a href="?{{ request.GET.urlencode }}&formato=csv" class="btn btn-info btn-sm btn-export">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+            </div>
+        </div>
+
+        {% if productos_con_valores %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th class="text-center">Stock</th>
+                        <th class="text-end">Precio</th>
+                        <th class="text-end">Valor Total</th>
+                        <th class="text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in productos_con_valores %}
+                    {% with producto=item.producto %}
+                    <tr class="{% if item.stock_actual <= 5 %}stock-low{% elif item.stock_actual <= 10 %}stock-medium{% else %}stock-good{% endif %}">
+                        <td>
+                            <strong>{{ producto.codigo }}</strong>
+                        </td>
+                        <td>{{ producto.nombre|truncatechars:40 }}</td>
+                        <td>
+                            {% if producto.categoria %}
+                                {{ producto.categoria.nombre }}
+                            {% else %}
+                                <span class="text-muted">Sin categoría</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{% if item.stock_actual <= 5 %}danger{% elif item.stock_actual <= 10 %}warning{% else %}success{% endif %}">
+                                {{ item.stock_actual }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            ${{ producto.precio_minorista|floatformat:2 }}
+                        </td>
+                        <td class="text-end">
+                            <strong>${{ item.valor_total|floatformat:2 }}</strong>
+                        </td>
+                        <td class="text-center">
+                            {% if item.stock_actual <= 5 %}
+                                <i class="fas fa-exclamation-triangle text-danger" title="Stock crítico"></i>
+                            {% elif item.stock_actual <= 10 %}
+                                <i class="fas fa-exclamation-circle text-warning" title="Stock bajo"></i>
+                            {% else %}
+                                <i class="fas fa-check-circle text-success" title="Stock normal"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-box-open fa-3x mb-3"></i>
+            <h5>No se encontraron productos</h5>
+            <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Leyenda de Colores -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-center">
+                <div class="me-3">
+                    <span class="badge bg-danger">●</span> Stock Crítico (≤ 5)
+                </div>
+                <div class="me-3">
+                    <span class="badge bg-warning">●</span> Stock Bajo (6-10)
+                </div>
+                <div>
+                    <span class="badge bg-success">●</span> Stock Normal (> 10)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón actualizar
+    document.getElementById('btn-refresh').addEventListener('click', function() {
+        window.location.reload();
+    });
+    
+    // Validación de fechas
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    
+    if (fechaInicio && fechaFin) {
+        fechaInicio.addEventListener('change', function() {
+            if (fechaFin.value && this.value > fechaFin.value) {
+                fechaFin.value = this.value;
+            }
+        });
+        
+        fechaFin.addEventListener('change', function() {
+            if (fechaInicio.value && this.value < fechaInicio.value) {
+                fechaInicio.value = this.value;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

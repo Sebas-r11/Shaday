@@ -492,3 +492,515 @@ def test_ajax_simple(request):
 def test_syntax(request):
     """Vista de prueba para verificar sintaxis"""
     return JsonResponse({'status': 'ok', 'message': 'Sintaxis correcta'})
+
+
+# ============= SISTEMA DE REPORTES DETALLADOS =============
+
+@login_required
+def reportes_view(request):
+    """Vista principal del sistema de reportes"""
+    if not request.user.can_create_sales():
+        return redirect('dashboard')
+    
+    context = {
+        'titulo': 'Sistema de Reportes',
+        'puede_ventas': request.user.can_create_sales(),
+        'puede_inventario': request.user.can_adjust_inventory(),
+        'puede_compras': request.user.can_create_sales(),  # Usar can_create_sales para compras
+    }
+    return render(request, 'ventas/reportes.html', context)
+
+
+@login_required
+def reporte_ventas(request):
+    """Generar reporte detallado de ventas con filtros"""
+    if not request.user.can_create_sales():
+        return JsonResponse({'error': 'Sin permisos'}, status=403)
+    
+    # Obtener parámetros de filtro
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    cliente_id = request.GET.get('cliente')
+    vendedor_id = request.GET.get('vendedor')
+    estado = request.GET.get('estado')
+    formato = request.GET.get('formato', 'html')
+    
+    # Construir query base
+    queryset = Factura.objects.all()
+    
+    # Aplicar filtros
+    if fecha_inicio:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            queryset = queryset.filter(fecha_creacion__date__gte=fecha_inicio)
+        except ValueError:
+            pass
+    
+    if fecha_fin:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            queryset = queryset.filter(fecha_creacion__date__lte=fecha_fin)
+        except ValueError:
+            pass
+    
+    if cliente_id:
+        queryset = queryset.filter(cliente_id=cliente_id)
+    
+    if vendedor_id:
+        queryset = queryset.filter(vendedor_id=vendedor_id)
+    
+    if estado:
+        queryset = queryset.filter(estado=estado)
+    
+    # Ordenar por fecha más reciente
+    facturas = queryset.order_by('-fecha_creacion')
+    
+    # Calcular totales
+    total_ventas = facturas.aggregate(Sum('total'))['total__sum'] or 0
+    total_facturas = facturas.count()
+    promedio_factura = total_ventas / total_facturas if total_facturas > 0 else 0
+    
+    # Estadísticas por estado
+    stats_estado = facturas.values('estado').annotate(
+        cantidad=Count('id'),
+        total=Sum('total')
+    ).order_by('estado')
+    
+    # Si es export, generar archivo
+    if formato in ['excel', 'csv', 'pdf']:
+        return export_reporte_ventas(facturas, formato, {
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'total_ventas': total_ventas,
+            'total_facturas': total_facturas
+        })
+    
+    # Preparar datos para template
+    context = {
+        'titulo': 'Reporte de Ventas',
+        'facturas': facturas[:100],  # Limitar a 100 para performance
+        'total_ventas': total_ventas,
+        'total_facturas': total_facturas,
+        'promedio_factura': promedio_factura,
+        'stats_estado': stats_estado,
+        'filtros': {
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'cliente_id': cliente_id,
+            'vendedor_id': vendedor_id,
+            'estado': estado,
+        },
+        'clientes': Cliente.objects.filter(activo=True)[:50],
+        'vendedores': request.user.__class__.objects.filter(
+            groups__name='Vendedores'
+        )[:20] if hasattr(request.user.__class__, 'objects') else [],
+    }
+    
+    return render(request, 'ventas/reporte_ventas.html', context)
+
+
+@login_required  
+def reporte_inventario(request):
+    """Generar reporte detallado de inventario"""
+    if not request.user.can_adjust_inventory():
+        return JsonResponse({'error': 'Sin permisos'}, status=403)
+    
+    from inventario.models import Producto, MovimientoInventario, AlertaStock
+    
+    # Parámetros de filtro
+    categoria_id = request.GET.get('categoria')
+    stock_bajo = request.GET.get('stock_bajo')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    formato = request.GET.get('formato', 'html')
+    
+    # Query base productos
+    productos = Producto.objects.filter(activo=True)
+    
+    if categoria_id:
+        productos = productos.filter(categoria_id=categoria_id)
+    
+    if stock_bajo == 'true':
+        productos = productos.filter(stock_minimo__gt=0)  # Placeholder hasta encontrar el campo correcto
+    
+    # Movimientos de inventario
+    movimientos = MovimientoInventario.objects.all()
+    
+    if fecha_inicio:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            movimientos = movimientos.filter(fecha_movimiento__date__gte=fecha_inicio)
+        except ValueError:
+            pass
+    
+    if fecha_fin:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            movimientos = movimientos.filter(fecha_movimiento__date__lte=fecha_fin)
+        except ValueError:
+            pass
+    
+    # Estadísticas generales  
+    total_productos = productos.count()
+    productos_stock_bajo = 0  # Placeholder - calcularemos manualmente
+    valor_inventario = productos.aggregate(
+        total=Sum('precio_minorista')
+    )['total'] or 0
+    
+    # Alertas activas
+    alertas_activas = AlertaStock.objects.filter(
+        activa=True,
+        producto__in=productos
+    ).count()
+    
+    # Top productos por movimiento
+    top_movimientos = movimientos.values(
+        'producto__nombre'
+    ).annotate(
+        total_movimientos=Count('id'),
+        cantidad_total=Sum('cantidad')
+    ).order_by('-total_movimientos')[:10]
+    
+    if formato in ['excel', 'csv', 'pdf']:
+        return export_reporte_inventario(productos, formato, {
+            'total_productos': total_productos,
+            'productos_stock_bajo': productos_stock_bajo,
+            'valor_inventario': valor_inventario,
+            'alertas_activas': alertas_activas
+        })
+    
+    # Calcular valores totales para cada producto
+    productos_con_valores = []
+    for producto in productos[:100]:
+        stock_actual = getattr(producto, 'stock_total', 0)
+        valor_total = float(stock_actual * producto.precio_minorista)
+        productos_con_valores.append({
+            'producto': producto,
+            'stock_actual': stock_actual,
+            'valor_total': valor_total
+        })
+
+    context = {
+        'titulo': 'Reporte de Inventario',
+        'productos_con_valores': productos_con_valores,
+        'total_productos': total_productos,
+        'productos_stock_bajo': productos_stock_bajo,
+        'valor_inventario': valor_inventario,
+        'alertas_activas': alertas_activas,
+        'top_movimientos': top_movimientos,
+        'filtros': {
+            'categoria_id': categoria_id,
+            'stock_bajo': stock_bajo,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+        }
+    }
+    
+    return render(request, 'ventas/reporte_inventario.html', context)
+
+
+@login_required
+def reporte_compras(request):
+    """Generar reporte detallado de compras"""
+    if not request.user.can_create_sales():
+        return JsonResponse({'error': 'Sin permisos'}, status=403)
+    
+    # Este es un placeholder - asumo que hay un módulo de compras
+    # Por ahora mostraremos los pedidos como "compras internas"
+    
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    estado = request.GET.get('estado')
+    formato = request.GET.get('formato', 'html')
+    
+    queryset = Pedido.objects.all()
+    
+    if fecha_inicio:
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            queryset = queryset.filter(fecha_creacion__date__gte=fecha_inicio)
+        except ValueError:
+            pass
+    
+    if fecha_fin:
+        try:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            queryset = queryset.filter(fecha_creacion__date__lte=fecha_fin)
+        except ValueError:
+            pass
+    
+    if estado:
+        queryset = queryset.filter(estado=estado)
+    
+    pedidos = queryset.order_by('-fecha_creacion')
+    
+    # Estadísticas
+    total_pedidos = pedidos.count()
+    total_valor = pedidos.aggregate(Sum('total'))['total__sum'] or 0
+    promedio_pedido = total_valor / total_pedidos if total_pedidos > 0 else 0
+    
+    stats_estado = pedidos.values('estado').annotate(
+        cantidad=Count('id'),
+        total=Sum('total')
+    ).order_by('estado')
+    
+    if formato in ['excel', 'csv', 'pdf']:
+        return export_reporte_compras(pedidos, formato, {
+            'total_pedidos': total_pedidos,
+            'total_valor': total_valor,
+            'promedio_pedido': promedio_pedido
+        })
+    
+    context = {
+        'titulo': 'Reporte de Compras/Pedidos',
+        'pedidos': pedidos[:100],
+        'total_pedidos': total_pedidos,
+        'total_valor': total_valor,
+        'promedio_pedido': promedio_pedido,
+        'stats_estado': stats_estado,
+        'filtros': {
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'estado': estado,
+        }
+    }
+    
+    return render(request, 'ventas/reporte_compras.html', context)
+
+
+# ============= FUNCIONES DE EXPORT =============
+
+def export_reporte_ventas(facturas, formato, stats):
+    """Exportar reporte de ventas en diferentes formatos"""
+    from django.http import HttpResponse
+    import io
+    
+    if formato == 'excel':
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Reporte Ventas"
+        
+        # Headers
+        headers = ['Fecha', 'Número', 'Cliente', 'Vendedor', 'Estado', 'Total']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+        
+        # Data
+        for row, factura in enumerate(facturas, 2):
+            ws.cell(row=row, column=1, value=factura.fecha_creacion.strftime('%Y-%m-%d'))
+            ws.cell(row=row, column=2, value=factura.numero_factura)
+            ws.cell(row=row, column=3, value=str(factura.cliente))
+            ws.cell(row=row, column=4, value=str(factura.vendedor) if factura.vendedor else 'N/A')
+            ws.cell(row=row, column=5, value=factura.get_estado_display())
+            ws.cell(row=row, column=6, value=float(factura.total))
+        
+        # Totales al final
+        total_row = len(facturas) + 3
+        ws.cell(row=total_row, column=5, value="TOTAL:").font = Font(bold=True)
+        ws.cell(row=total_row, column=6, value=float(stats['total_ventas'])).font = Font(bold=True)
+        
+        # Preparar respuesta
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        response = HttpResponse(
+            output.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="reporte_ventas.xlsx"'
+        return response
+    
+    elif formato == 'csv':
+        import csv
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_ventas.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Fecha', 'Número', 'Cliente', 'Vendedor', 'Estado', 'Total'])
+        
+        for factura in facturas:
+            writer.writerow([
+                factura.fecha_creacion.strftime('%Y-%m-%d'),
+                factura.numero_factura,
+                str(factura.cliente),
+                str(factura.vendedor) if factura.vendedor else 'N/A',
+                factura.get_estado_display(),
+                float(factura.total)
+            ])
+        
+        return response
+    
+    elif formato == 'pdf':
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="reporte_ventas.pdf"'
+        
+        doc = SimpleDocTemplate(response, pagesize=A4)
+        styles = getSampleStyleSheet()
+        story = []
+        
+        # Título
+        title = Paragraph("Reporte de Ventas", styles['Title'])
+        story.append(title)
+        story.append(Spacer(1, 20))
+        
+        # Resumen
+        summary = Paragraph(f"Total de Facturas: {stats['total_facturas']}<br/>Valor Total: ${stats['total_ventas']:,.2f}", styles['Normal'])
+        story.append(summary)
+        story.append(Spacer(1, 20))
+        
+        # Tabla de datos
+        data = [['Fecha', 'Número', 'Cliente', 'Estado', 'Total']]
+        for factura in facturas[:50]:  # Limitar para PDF
+            data.append([
+                factura.fecha_creacion.strftime('%Y-%m-%d'),
+                factura.numero_factura,
+                str(factura.cliente)[:30],  # Truncar nombres largos
+                factura.get_estado_display(),
+                f"${factura.total:,.2f}"
+            ])
+        
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(table)
+        doc.build(story)
+        return response
+
+
+def export_reporte_inventario(productos, formato, stats):
+    """Exportar reporte de inventario"""
+    from django.http import HttpResponse
+    import io
+    
+    if formato == 'excel':
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Reporte Inventario"
+        
+        headers = ['Código', 'Nombre', 'Categoría', 'Stock', 'Precio', 'Valor Total']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+        
+        for row, producto in enumerate(productos, 2):
+            ws.cell(row=row, column=1, value=producto.codigo)
+            ws.cell(row=row, column=2, value=producto.nombre)
+            ws.cell(row=row, column=3, value=str(producto.categoria) if producto.categoria else 'N/A')
+            ws.cell(row=row, column=4, value=0)  # Stock placeholder
+            ws.cell(row=row, column=5, value=float(producto.precio_minorista))
+            ws.cell(row=row, column=6, value=float(0 * producto.precio_minorista))
+        
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        response = HttpResponse(
+            output.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="reporte_inventario.xlsx"'
+        return response
+    
+    elif formato == 'csv':
+        import csv
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_inventario.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Código', 'Nombre', 'Categoría', 'Stock', 'Precio', 'Valor Total'])
+        
+        for producto in productos:
+            writer.writerow([
+                producto.codigo,
+                producto.nombre,
+                str(producto.categoria) if producto.categoria else 'N/A',
+                0,  # Stock placeholder
+                float(producto.precio_minorista),
+                float(0 * producto.precio_minorista)
+            ])
+        
+        return response
+
+
+def export_reporte_compras(pedidos, formato, stats):
+    """Exportar reporte de compras/pedidos"""
+    from django.http import HttpResponse
+    import io
+    
+    if formato == 'excel':
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, Alignment
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Reporte Compras"
+        
+        headers = ['Fecha', 'Número', 'Cliente', 'Estado', 'Total']
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+        
+        for row, pedido in enumerate(pedidos, 2):
+            ws.cell(row=row, column=1, value=pedido.fecha_creacion.strftime('%Y-%m-%d'))
+            ws.cell(row=row, column=2, value=pedido.numero)
+            ws.cell(row=row, column=3, value=str(pedido.cliente))
+            ws.cell(row=row, column=4, value=pedido.get_estado_display())
+            ws.cell(row=row, column=5, value=float(pedido.total))
+        
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        response = HttpResponse(
+            output.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename="reporte_compras.xlsx"'
+        return response
+    
+    elif formato == 'csv':
+        import csv
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_compras.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Fecha', 'Número', 'Cliente', 'Estado', 'Total'])
+        
+        for pedido in pedidos:
+            writer.writerow([
+                pedido.fecha_creacion.strftime('%Y-%m-%d'),
+                pedido.numero,
+                str(pedido.cliente),
+                pedido.get_estado_display(),
+                float(pedido.total)
+            ])
+        
+        return response

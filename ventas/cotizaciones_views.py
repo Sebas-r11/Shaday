@@ -13,6 +13,7 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 from reportlab.pdfgen import canvas
+from decimal import Decimal
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
@@ -291,23 +292,20 @@ def imprimir_cotizacion(request, pk):
     # Información de la cotización
     cotiz_info = f"""
     <b>Fecha:</b> {cotizacion.fecha_creacion.strftime('%d/%m/%Y')}<br/>
-    <b>Vendedor:</b> {cotizacion.vendedor.get_full_name()}<br/>
-    <b>Estado:</b> {cotizacion.get_estado_display()}<br/>
-    <b>Válida hasta:</b> {cotizacion.fecha_vencimiento.strftime('%d/%m/%Y')}
+    <b>Estado:</b> {getattr(cotizacion, "estado", "Pendiente")}<br/>
     """
     cotiz_para = Paragraph(cotiz_info, styles['Normal'])
     elements.append(cotiz_para)
     elements.append(Spacer(1, 12))
     
     # Tabla de items
-    data = [['Producto', 'Cantidad', 'Precio Unit.', 'Descuento', 'Subtotal']]
+    data = [['Producto', 'Cantidad', 'Precio Unit.', 'Subtotal']]
     
     for item in cotizacion.items.all():
         data.append([
             item.producto.nombre,
             str(item.cantidad),
             f'${item.precio_unitario:,.2f}',
-            f'{item.descuento}%',
             f'${item.subtotal:,.2f}'
         ])
     
@@ -328,9 +326,9 @@ def imprimir_cotizacion(request, pk):
     
     # Totales
     totales_info = f"""
-    <b>Subtotal:</b> ${cotizacion.subtotal:,.2f}<br/>
-    <b>Impuestos:</b> ${cotizacion.impuestos:,.2f}<br/>
-    <b>Total:</b> ${cotizacion.total:,.2f}
+    <b>Subtotal:</b> ${cotizacion.total:,.2f}<br/>
+    <b>Impuestos:</b> ${cotizacion.total * Decimal('0.19'):,.2f}<br/>
+    <b>Total:</b> ${cotizacion.total * Decimal('1.19'):,.2f}
     """
     totales_para = Paragraph(totales_info, styles['Normal'])
     elements.append(totales_para)

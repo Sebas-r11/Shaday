@@ -3,21 +3,304 @@
 
 {% block title %}Reporte de Ventas{% endblock %}
 
+{% block extra_head %}
+<style>
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        display: block;
+    }
+    
+    .stat-label {
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .export-buttons {
+        margin-top: 1rem;
+    }
+    
+    .btn-export {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-chart-line"></i> Reporte de Ventas
-        </h1>
-        <div>
-            <a href="{% url 'ventas:dashboard' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Volver
-            </a>
-            <button onclick="window.print()" class="btn btn-primary">
-                <i class="fas fa-print"></i> Imprimir
-            </button>
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-chart-line"></i>
+                    Reporte de Ventas
+                </h1>
+                <div>
+                    <a href="{% url 'ventas:reportes' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <button type="button" class="btn btn-primary" id="btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <h5 class="mb-3">
+            <i class="fas fa-filter"></i>
+            Filtros de Búsqueda
+        </h5>
+        
+        <form method="GET" id="filter-form">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                    <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" 
+                           value="{{ filtros.fecha_inicio|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                    <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" 
+                           value="{{ filtros.fecha_fin|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="cliente" class="form-label">Cliente</label>
+                    <select class="form-control" id="cliente" name="cliente">
+                        <option value="">Todos los clientes</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" 
+                                {% if filtros.cliente_id == cliente.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cliente.nombre_completo }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="estado" class="form-label">Estado</label>
+                    <select class="form-control" id="estado" name="estado">
+                        <option value="">Todos los estados</option>
+                        <option value="pendiente" {% if filtros.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="pagada" {% if filtros.estado == 'pagada' %}selected{% endif %}>Pagada</option>
+                        <option value="cancelada" {% if filtros.estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                        <option value="vencida" {% if filtros.estado == 'vencida' %}selected{% endif %}>Vencida</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Buscar
+                    </button>
+                    <a href="{% url 'ventas:reporte_ventas' %}" class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-times"></i> Limpiar Filtros
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-card">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">${{ total_ventas|floatformat:2 }}</span>
+                    <span class="stat-label">Total Ventas</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ total_facturas }}</span>
+                    <span class="stat-label">Total Facturas</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">
+                        ${{ promedio_factura|floatformat:2 }}
+                    </span>
+                    <span class="stat-label">Promedio por Factura</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <span class="stat-number">{{ stats_estado|length }}</span>
+                    <span class="stat-label">Estados Diferentes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estados -->
+    {% if stats_estado %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="table-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-pie"></i>
+                    Distribución por Estado
+                </h5>
+                <div class="row">
+                    {% for stat in stats_estado %}
+                    <div class="col-md-3 mb-2">
+                        <div class="border rounded p-2 text-center">
+                            <strong>{{ stat.estado|title }}</strong><br>
+                            <small>{{ stat.cantidad }} facturas - ${{ stat.total|floatformat:2 }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de Facturas -->
+    <div class="table-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">
+                <i class="fas fa-table"></i>
+                Detalle de Facturas
+                {% if facturas|length == 100 %}
+                    <small class="text-muted">(Mostrando primeras 100)</small>
+                {% endif %}
+            </h5>
+            
+            <!-- Botones de Exportación -->
+            <div class="export-buttons">
+                <a href="?{{ request.GET.urlencode }}&formato=excel" class="btn btn-success btn-sm btn-export">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+                <a href="?{{ request.GET.urlencode }}&formato=csv" class="btn btn-info btn-sm btn-export">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="?{{ request.GET.urlencode }}&formato=pdf" class="btn btn-danger btn-sm btn-export">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            </div>
+        </div>
+
+        {% if facturas %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Número</th>
+                        <th>Cliente</th>
+                        <th>Vendedor</th>
+                        <th>Estado</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for factura in facturas %}
+                    <tr>
+                        <td>{{ factura.fecha_creacion|date:"d/m/Y" }}</td>
+                        <td>
+                            <strong>{{ factura.numero_factura }}</strong>
+                        </td>
+                        <td>{{ factura.cliente.nombre_completo|truncatechars:30 }}</td>
+                        <td>
+                            {% if factura.vendedor %}
+                                {{ factura.vendedor.get_full_name|default:factura.vendedor.username }}
+                            {% else %}
+                                <span class="text-muted">Sin asignar</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if factura.estado == 'pagada' %}success{% elif factura.estado == 'pendiente' %}warning{% elif factura.estado == 'cancelada' %}danger{% else %}secondary{% endif %}">
+                                {{ factura.get_estado_display }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <strong>${{ factura.total|floatformat:2 }}</strong>
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'ventas:factura_detail' factura.pk %}" 
+                               class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox fa-3x mb-3"></i>
+            <h5>No se encontraron facturas</h5>
+            <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Botón actualizar
+    document.getElementById('btn-refresh').addEventListener('click', function() {
+        window.location.reload();
+    });
+    
+    // Validación de fechas
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    
+    fechaInicio.addEventListener('change', function() {
+        if (fechaFin.value && this.value > fechaFin.value) {
+            fechaFin.value = this.value;
+        }
+    });
+    
+    fechaFin.addEventListener('change', function() {
+        if (fechaInicio.value && this.value < fechaInicio.value) {
+            fechaInicio.value = this.value;
+        }
+    });
+});
+</script>
+{% endblock %}
 
     <!-- Filtros -->
     <div class="card shadow mb-4">

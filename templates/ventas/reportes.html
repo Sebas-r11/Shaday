@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sistema de Reportes{% endblock %}
+
+{% block extra_head %}
+<style>
+    .report-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        transition: transform 0.3s ease;
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .report-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .report-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .report-desc {
+        opacity: 0.9;
+        margin-bottom: 1.5rem;
+    }
+    
+    .btn-report {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-report:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .ventas-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .inventario-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .compras-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-chart-line"></i>
+                    Sistema de Reportes
+                </h1>
+                <a href="{% url 'ventas:dashboard' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reportes Disponibles -->
+    <div class="row">
+        {% if puede_ventas %}
+        <div class="col-md-4">
+            <div class="report-card ventas-card">
+                <div class="text-center">
+                    <i class="fas fa-chart-line report-icon"></i>
+                    <div class="report-title">Reporte de Ventas</div>
+                    <div class="report-desc">
+                        Análisis detallado de ventas con filtros por fecha, cliente, vendedor y estado. 
+                        Incluye estadísticas y exportación a Excel/CSV/PDF.
+                    </div>
+                    <a href="{% url 'ventas:reporte_ventas' %}" class="btn-report">
+                        <i class="fas fa-file-chart-line"></i> Generar Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if puede_inventario %}
+        <div class="col-md-4">
+            <div class="report-card inventario-card">
+                <div class="text-center">
+                    <i class="fas fa-boxes report-icon"></i>
+                    <div class="report-title">Reporte de Inventario</div>
+                    <div class="report-desc">
+                        Estado actual del inventario, productos con stock bajo, movimientos y 
+                        valorización total. Filtros por categoría y alertas.
+                    </div>
+                    <a href="{% url 'ventas:reporte_inventario' %}" class="btn-report">
+                        <i class="fas fa-warehouse"></i> Generar Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if puede_compras %}
+        <div class="col-md-4">
+            <div class="report-card compras-card">
+                <div class="text-center">
+                    <i class="fas fa-shopping-cart report-icon"></i>
+                    <div class="report-title">Reporte de Compras</div>
+                    <div class="report-desc">
+                        Análisis de pedidos y compras realizadas, estados de cumplimiento,
+                        proveedores y estadísticas de adquisiciones.
+                    </div>
+                    <a href="{% url 'ventas:reporte_compras' %}" class="btn-report">
+                        <i class="fas fa-file-invoice"></i> Generar Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Estadísticas Rápidas -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="h4 mb-3">
+                <i class="fas fa-tachometer-alt"></i>
+                Estadísticas Rápidas
+            </h3>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number" id="ventas-mes">-</div>
+            <div class="stat-label">Ventas del Mes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="productos-stock">-</div>
+            <div class="stat-label">Productos Activos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="pedidos-pendientes">-</div>
+            <div class="stat-label">Pedidos Pendientes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="alertas-stock">-</div>
+            <div class="stat-label">Alertas de Stock</div>
+        </div>
+    </div>
+
+    <!-- Información de Acceso -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5 class="alert-heading">
+                    <i class="fas fa-info-circle"></i>
+                    Información de Acceso
+                </h5>
+                <p class="mb-2">
+                    <strong>Permisos disponibles:</strong>
+                </p>
+                <ul class="mb-0">
+                    {% if puede_ventas %}
+                    <li><i class="fas fa-check text-success"></i> Reportes de Ventas</li>
+                    {% endif %}
+                    {% if puede_inventario %}
+                    <li><i class="fas fa-check text-success"></i> Reportes de Inventario</li>
+                    {% endif %}
+                    {% if puede_compras %}
+                    <li><i class="fas fa-check text-success"></i> Reportes de Compras</li>
+                    {% endif %}
+                    {% if not puede_ventas and not puede_inventario and not puede_compras %}
+                    <li><i class="fas fa-times text-danger"></i> Sin permisos para generar reportes</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Cargar estadísticas rápidas
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar ventas del mes
+    fetch('/ventas/api/dashboard/estadisticas/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.ventas_mes !== undefined) {
+                document.getElementById('ventas-mes').textContent = 
+                    '$' + new Intl.NumberFormat().format(data.ventas_mes);
+            }
+            if (data.pedidos_pendientes !== undefined) {
+                document.getElementById('pedidos-pendientes').textContent = data.pedidos_pendientes;
+            }
+        })
+        .catch(error => {
+            console.log('Error cargando estadísticas:', error);
+        });
+    
+    // Simular otras estadísticas (placeholder)
+    document.getElementById('productos-stock').textContent = '0';
+    document.getElementById('alertas-stock').textContent = '0';
+});
+</script>
+{% endblock %}

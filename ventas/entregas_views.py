@@ -64,13 +64,13 @@ class EntregaListView(VentasRequiredMixin, ListView):
         
         fecha_desde = self.request.GET.get('fecha_desde')
         if fecha_desde:
-            queryset = queryset.filter(fecha_creacion__date__gte=fecha_desde)
+            queryset = queryset.filter(fecha_programada__date__gte=fecha_desde)
         
         fecha_hasta = self.request.GET.get('fecha_hasta')
         if fecha_hasta:
-            queryset = queryset.filter(fecha_creacion__date__lte=fecha_hasta)
+            queryset = queryset.filter(fecha_programada__date__lte=fecha_hasta)
         
-        return queryset.order_by('-fecha_creacion')
+        return queryset.order_by('-fecha_programada')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -326,8 +326,8 @@ def reporte_entregas_periodo(request):
         return redirect('ventas:entrega_list')
     
     entregas = Entrega.objects.filter(
-        fecha_creacion__date__gte=fecha_desde,
-        fecha_creacion__date__lte=fecha_hasta
+        fecha_programada__date__gte=fecha_desde,
+        fecha_programada__date__lte=fecha_hasta
     ).select_related('repartidor', 'pedido', 'factura')
     
     # Estadísticas
@@ -369,7 +369,7 @@ def estadisticas_entregas_api(request):
     from django.utils import timezone
     hoy = timezone.now().date()
     
-    entregas_hoy = Entrega.objects.filter(fecha_creacion__date=hoy)
+    entregas_hoy = Entrega.objects.filter(fecha_programada__date=hoy)
     
     stats = {
         'entregas_hoy': entregas_hoy.count(),

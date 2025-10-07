@@ -4,7 +4,8 @@ from .general_views import (
     dashboard_view, dashboard_charts_view, buscar_productos_api, obtener_precio_producto,
     verificar_stock_disponible, test_autocompletado, test_ajax_simple, test_syntax,
     api_ventas_por_mes, api_productos_mas_vendidos, api_estados_pedidos,
-    api_ventas_por_vendedor, api_estadisticas_dashboard
+    api_ventas_por_vendedor, api_estadisticas_dashboard, reportes_view,
+    reporte_ventas, reporte_inventario, reporte_compras
 )
 from .clientes_views import (
     ClienteListView, ClienteCreateView, ClienteDetailView, ClienteUpdateView,
@@ -126,6 +127,12 @@ urlpatterns = [
     # Exportación de datos
     path('pedidos/exportar/excel/', views.exportar_pedidos_excel, name='exportar_pedidos_excel'),
     path('pedidos/exportar/csv/', views.exportar_pedidos_csv, name='exportar_pedidos_csv'),
+    
+    # Sistema de Reportes Detallados
+    path('reportes/', reportes_view, name='reportes'),
+    path('reportes/ventas/', reporte_ventas, name='reporte_ventas'),
+    path('reportes/inventario/', reporte_inventario, name='reporte_inventario'),
+    path('reportes/compras/', reporte_compras, name='reporte_compras'),
     
     # Vistas de prueba/desarrollo
     path('test-autocompletado/', test_autocompletado, name='test_autocompletado'),
