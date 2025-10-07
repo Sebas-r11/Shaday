@@ -22,8 +22,8 @@ def create_sample_data():
     try:
         # Importar modelos
         from django.contrib.auth import get_user_model
-        from ventas.models import Cliente, Producto, Categoria, Subcategoria
-        from inventario.models import Bodega, Stock
+        from ventas.models import Cliente
+        from inventario.models import Producto, Categoria, Subcategoria, Bodega, Stock
         
         User = get_user_model()
         
@@ -83,15 +83,15 @@ def create_sample_data():
         
         # 4. Crear bodegas de ejemplo
         bodegas_ejemplo = [
-            ('Bodega Principal', 'Bodega principal del centro de distribución'),
-            ('Bodega Secundaria', 'Bodega para overflow y productos especiales')
+            ('Bodega Principal', 'Calle 123 #45-67, Centro de Distribución'),
+            ('Bodega Secundaria', 'Carrera 78 #90-12, Bodega de Overflow')
         ]
         
-        for nombre, descripcion in bodegas_ejemplo:
+        for nombre, direccion in bodegas_ejemplo:
             bodega, created = Bodega.objects.get_or_create(
                 nombre=nombre,
                 defaults={
-                    'descripcion': descripcion,
+                    'direccion': direccion,
                     'activa': True,
                     'es_principal': nombre == 'Bodega Principal'
                 }
@@ -102,17 +102,17 @@ def create_sample_data():
         # 5. Crear clientes de ejemplo
         clientes_ejemplo = [
             {
-                'nombre': 'Empresa Demo S.A.S',
-                'nit': '900123456-1',
-                'email': 'contacto@empresademo.com',
+                'nombre_completo': 'Empresa Demo S.A.S',
+                'numero_documento': '900123456-1',
+                'tipo_documento': 'NIT',
                 'telefono': '1234567890',
                 'ciudad': 'Bogotá',
                 'direccion': 'Calle 123 #45-67'
             },
             {
-                'nombre': 'Comercial Ejemplo Ltda',
-                'nit': '800987654-2',
-                'email': 'ventas@comercialejemplo.com',
+                'nombre_completo': 'Comercial Ejemplo Ltda',
+                'numero_documento': '800987654-2',
+                'tipo_documento': 'NIT',
                 'telefono': '0987654321',
                 'ciudad': 'Medellín',
                 'direccion': 'Carrera 78 #90-12'
@@ -121,11 +121,11 @@ def create_sample_data():
         
         for cliente_data in clientes_ejemplo:
             cliente, created = Cliente.objects.get_or_create(
-                nit=cliente_data['nit'],
+                numero_documento=cliente_data['numero_documento'],
                 defaults=cliente_data
             )
             if created:
-                print(f"   ✅ Cliente creado: {cliente_data['nombre']}")
+                print(f"   ✅ Cliente creado: {cliente_data['nombre_completo']}")
         
         # 6. Crear productos de ejemplo
         productos_ejemplo = [
@@ -133,21 +133,24 @@ def create_sample_data():
                 'codigo': 'PROD001',
                 'nombre': 'Producto Demo 1',
                 'descripcion': 'Producto de ejemplo para testing',
-                'precio': Decimal('100000.00'),
+                'precio_minorista': Decimal('100000.00'),
+                'precio_mayorista': Decimal('85000.00'),
                 'categoria': 'Electrónicos'
             },
             {
                 'codigo': 'PROD002',
                 'nombre': 'Producto Demo 2',
                 'descripcion': 'Segundo producto de ejemplo',
-                'precio': Decimal('75000.00'),
+                'precio_minorista': Decimal('75000.00'),
+                'precio_mayorista': Decimal('65000.00'),
                 'categoria': 'Ropa y Accesorios'
             },
             {
                 'codigo': 'PROD003',
                 'nombre': 'Producto Demo 3',
                 'descripcion': 'Tercer producto de ejemplo',
-                'precio': Decimal('50000.00'),
+                'precio_minorista': Decimal('50000.00'),
+                'precio_mayorista': Decimal('42000.00'),
                 'categoria': 'Hogar y Jardín'
             }
         ]
@@ -155,13 +158,18 @@ def create_sample_data():
         for prod_data in productos_ejemplo:
             try:
                 categoria = Categoria.objects.get(nombre=prod_data['categoria'])
+                # Buscar una subcategoría de esa categoría
+                subcategoria = Subcategoria.objects.filter(categoria=categoria).first()
+                
                 producto, created = Producto.objects.get_or_create(
                     codigo=prod_data['codigo'],
                     defaults={
                         'nombre': prod_data['nombre'],
                         'descripcion': prod_data['descripcion'],
-                        'precio': prod_data['precio'],
+                        'precio_minorista': prod_data['precio_minorista'],
+                        'precio_mayorista': prod_data['precio_mayorista'],
                         'categoria': categoria,
+                        'subcategoria': subcategoria,
                         'activo': True
                     }
                 )
@@ -175,9 +183,7 @@ def create_sample_data():
                             producto=producto,
                             bodega=bodega_principal,
                             defaults={
-                                'cantidad_actual': 100,
-                                'cantidad_minima': 10,
-                                'cantidad_maxima': 500
+                                'cantidad': 100
                             }
                         )
                         if stock_created:
