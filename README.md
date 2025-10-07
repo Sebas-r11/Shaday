@@ -50,6 +50,14 @@ python instalar_sistema.py
 ### 🔧 Instalación Manual
 
 ```bash
+# 1. Clonar el repositorio
+git clone <repository-url>
+cd grsys
+
+# 2. Crear datos de ejemplo (primera vez)
+python crear_datos_ejemplo.py
+
+```bash
 # 1. Instalar dependencias
 pip install -r requirements.txt
 
@@ -192,7 +200,44 @@ pip install redis==5.0.8
 - Análisis de tendencias
 - **Tecnología**: Django + ReportLab
 
-## 🚨 Solución de Problemas
+## � Seguridad y .gitignore
+
+### 📋 Archivos Protegidos
+El sistema incluye un `.gitignore` completo que protege:
+
+- **🗄️ Base de datos**: `db.sqlite3` - Nunca se sube al repositorio
+- **🔑 Variables de entorno**: `.env` - Claves secretas protegidas  
+- **📁 Archivos de usuario**: `media/` - Uploads de usuarios
+- **📊 Reportes generados**: `*.pdf`, `*.xlsx` - Archivos temporales
+- **🐍 Cache de Python**: `__pycache__/` - Archivos compilados
+- **📝 Logs**: `*.log` - Información sensible del sistema
+
+### 🚀 Para Nuevos Desarrolladores
+
+```bash
+# 1. Clonar el repositorio (sin base de datos)
+git clone <repository-url>
+cd grsys
+
+# 2. Instalar dependencias
+pip install -r requirements.txt
+
+# 3. Crear base de datos limpia
+python manage.py migrate
+
+# 4. Crear datos de ejemplo
+python crear_datos_ejemplo.py
+
+# 5. Iniciar servidor
+python manage.py runserver
+```
+
+### ⚠️ Importante
+- La base de datos NO se sube al repositorio por seguridad
+- Usa `crear_datos_ejemplo.py` para generar datos de prueba
+- Nunca subas archivos con información real de clientes
+
+## �🚨 Solución de Problemas
 
 ### Error de dependencias
 ```bash
