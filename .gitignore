@@ -1,0 +1,288 @@
+# ================================================================================
+# GITIGNORE - SISTEMA ERP DISTRIBUCIONES SHADDAI
+# Archivos y directorios que no deben subirse al repositorio
+# ================================================================================
+
+# ============================================================================
+# BASE DE DATOS - CRÍTICO PARA SEGURIDAD
+# ============================================================================
+# SQLite database files
+*.sqlite3
+*.sqlite
+*.db
+db.sqlite3
+
+# PostgreSQL dumps
+*.sql
+*.dump
+
+# MySQL dumps
+*.mysql
+
+# ============================================================================
+# ARCHIVOS DE CONFIGURACIÓN SENSIBLES
+# ============================================================================
+# Variables de entorno
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# Configuraciones locales
+local_settings.py
+settings_local.py
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+myenv/
+python-env/
+
+# ============================================================================
+# DJANGO ESPECÍFICO
+# ============================================================================
+# Django migrations (opcional - algunos prefieren incluirlas)
+# */migrations/
+# !*/migrations/__init__.py
+
+# Django static files (collected)
+/static/
+/staticfiles/
+/media/
+
+# Django logs
+*.log
+logs/
+django.log
+
+# Django secret key
+secret_key.txt
+
+# Django cache
+django_cache/
+
+# ============================================================================
+# ARCHIVOS DE MEDIOS Y UPLOADS
+# ============================================================================
+# User uploaded files
+media/
+uploads/
+files/
+documents/
+
+# Generated PDFs (opcional)
+pdfs/
+reports/
+*.pdf
+
+# Excel files generados
+*.xlsx
+*.xls
+exports/
+
+# ============================================================================
+# DESARROLLO Y EDITORS
+# ============================================================================
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ============================================================================
+# SISTEMA OPERATIVO
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ============================================================================
+# ARCHIVOS TEMPORALES
+# ============================================================================
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# ============================================================================
+# CONFIGURACIONES DEL SERVIDOR
+# ============================================================================
+# nginx
+nginx.conf
+
+# gunicorn
+gunicorn.conf
+
+# supervisor
+supervisord.conf
+
+# ============================================================================
+# CERTIFICADOS Y CLAVES
+# ============================================================================
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.cert
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.ppk
+
+# ============================================================================
+# ARCHIVOS DE CONFIGURACIÓN ESPECÍFICOS DEL PROYECTO
+# ============================================================================
+# Datos de prueba sensibles
+datos_produccion.json
+datos_reales.json
+backup_*.json
+
+# Archivos de configuración específicos
+config.ini
+settings.ini
+
+# Scripts de deployment
+deploy.sh
+deploy.bat
+
+# ============================================================================
+# ARCHIVOS DE LOGS Y DEBUGGING
+# ============================================================================
+# Error logs
+error.log
+access.log
+debug.log
+
+# Django debug files
+django_debug.log
+
+# ============================================================================
+# COMENTARIOS IMPORTANTES
+# ============================================================================
+# 
+# ARCHIVOS CRÍTICOS A IGNORAR:
+# 1. db.sqlite3 - Base de datos con información sensible
+# 2. .env - Variables de entorno con claves secretas
+# 3. media/ - Archivos subidos por usuarios
+# 4. *.log - Logs que pueden contener información sensible
+# 5. __pycache__/ - Archivos compilados de Python
+#
+# NOTA: Si necesitas subir datos de ejemplo, crea un archivo
+# fixtures/datos_ejemplo.json en su lugar
+#
+# ============================================================================
