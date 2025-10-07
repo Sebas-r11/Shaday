@@ -14,7 +14,7 @@ from .stock_views import (
     BodegaListView, BodegaCreateView, BodegaDetailView, BodegaUpdateView,
     StockListView, StockDetailView
     # BodegaDeleteView - No existe en stock_views
-    # AlertasStockView - No existe en stock_views  
+    # AlertasStockView - Existe en views.py principal
 )
 from .movimientos_views import (
     MovimientoInventarioListView, MovimientoInventarioDetailView,
@@ -72,7 +72,7 @@ urlpatterns = [
     # Stock
     path('stock/', StockListView.as_view(), name='stock_list'),
     path('stock/<int:pk>/', StockDetailView.as_view(), name='stock_detail'),
-    # path('alertas-stock/', AlertasStockView.as_view(), name='alertas_stock'),  # AlertasStockView no existe
+    path('alertas-stock/', views.AlertasStockView.as_view(), name='alertas_stock'),
     
     # Movimientos
     path('movimientos/', MovimientoInventarioListView.as_view(), name='movimiento_list'),
