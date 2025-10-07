@@ -186,7 +186,7 @@ class BodegaCreateView(AdminInventarioMixin, CreateView):
     """Crear nueva bodega"""
     model = Bodega
     template_name = 'inventario/bodega_form.html'
-    fields = ['nombre', 'descripcion', 'direccion', 'telefono', 'activa']
+    fields = ['nombre', 'direccion', 'telefono', 'activa', 'es_principal', 'link_ubicacion']
     success_url = reverse_lazy('inventario:bodega_list')
     
     def form_valid(self, form):
@@ -238,7 +238,7 @@ class BodegaUpdateView(AdminInventarioMixin, UpdateView):
     """Editar bodega"""
     model = Bodega
     template_name = 'inventario/bodega_form.html'
-    fields = ['nombre', 'descripcion', 'direccion', 'telefono', 'activa']
+    fields = ['nombre', 'direccion', 'telefono', 'activa', 'es_principal', 'link_ubicacion']
     success_url = reverse_lazy('inventario:bodega_list')
     
     def form_valid(self, form):
