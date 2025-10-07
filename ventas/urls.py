@@ -54,13 +54,18 @@ urlpatterns = [
     path('cotizaciones/<int:pk>/aprobar/', aprobar_cotizacion, name='aprobar_cotizacion'),
     path('cotizaciones/<int:pk>/rechazar/', rechazar_cotizacion, name='rechazar_cotizacion'),
     path('cotizaciones/<int:pk>/convertir-pedido/', convertir_cotizacion_pedido, name='convertir_a_pedido'),
+    path('cotizaciones/<int:pk>/generar-pdf/', views.generar_pdf_cotizacion, name='generar_pdf_cotizacion'),
+    path('cotizaciones/<int:pk>/enviar/', views.enviar_cotizacion, name='enviar_cotizacion'),
     
     # Pedidos
     path('pedidos/', PedidoListView.as_view(), name='pedido_list'),
     path('pedidos/nuevo/', PedidoCreateView.as_view(), name='pedido_create'),
     path('pedidos/<int:pk>/', PedidoDetailView.as_view(), name='pedido_detail'),
     path('pedidos/<int:pk>/editar/', PedidoUpdateView.as_view(), name='pedido_update'),
+    path('pedidos/<int:pk>/imprimir/', views.imprimir_pedido, name='imprimir_pedido'),
     # path('pedidos/<int:pk>/cambiar-estado/', cambiar_estado_pedido, name='cambiar_estado_pedido'),  # Función comentada
+    path('pedidos/<int:pk>/cambiar-estado/', views.cambiar_estado_pedido_simple, name='cambiar_estado_pedido'),
+    path('pedidos/<int:pk>/completar-inmediato/', views.completar_pedido_inmediato, name='completar_pedido_inmediato'),
     path('pedidos/<int:pk>/cancelar/', cancelar_pedido, name='cancelar_pedido'),
     path('pedidos/alistamiento/', PedidosAlistamientoView.as_view(), name='pedidos_alistamiento'),
     path('pedidos/<int:pk>/completar-alistamiento/', completar_alistamiento, name='completar_alistamiento'),
@@ -73,7 +78,9 @@ urlpatterns = [
     path('facturas/<int:pk>/imprimir/', imprimir_factura, name='imprimir_factura'),
     path('facturas/<int:pk>/marcar-pagada/', marcar_factura_pagada, name='marcar_factura_pagada'),
     path('facturas/<int:pk>/cancelar/', cancelar_factura, name='cancelar_factura'),
+    path('facturas/<int:pk>/anular/', views.anular_factura, name='anular_factura'),
     path('facturas/reportes/', reporte_ventas_periodo, name='reporte_facturas'),
+    path('reportes/ventas/', views.reporte_ventas, name='reporte_ventas'),
     
     # Conversión de pedidos a facturas
     path('pedidos/<int:pk>/convertir-factura/', convertir_pedido_factura, name='convertir_a_factura'),
@@ -84,6 +91,8 @@ urlpatterns = [
     path('entregas/<int:pk>/', EntregaDetailView.as_view(), name='entrega_detail'),
     path('entregas/repartidor/', EntregasRepartidorView.as_view(), name='entregas_repartidor'),
     # path('entregas/<int:pk>/asignar/', asignar_repartidor, name='asignar_repartidor'),  # Función comentada
+    path('entregas/<int:pk>/asignar/', views.asignar_pedido_bodega, name='asignar_pedido_bodega'),
+    path('entregas/<int:pk>/reprogramar/', views.reprogramar_entrega, name='reprogramar_entrega'),
     path('entregas/<int:pk>/iniciar/', iniciar_entrega, name='iniciar_entrega'),
     path('entregas/<int:pk>/completar/', completar_entrega, name='completar_entrega'),
     path('entregas/<int:pk>/problema/', reportar_problema_entrega, name='reportar_problema_entrega'),

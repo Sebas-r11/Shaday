@@ -10,7 +10,7 @@
             <i class="fas fa-truck"></i>
             {% if object %}Editar Entrega{% else %}Nueva Entrega{% endif %}
         </h1>
-        <a href="{% url 'ventas:entregas-repartidor' %}" class="btn btn-secondary">
+        <a href="{% url 'ventas:entregas_repartidor' %}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Volver
         </a>
     </div>
@@ -133,7 +133,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Guardar Entrega
                             </button>
-                            <a href="{% url 'ventas:entregas-repartidor' %}" class="btn btn-secondary">
+                            <a href="{% url 'ventas:entregas_repartidor' %}" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancelar
                             </a>
                             {% if object and object.estado == 'programada' %}
@@ -216,14 +216,14 @@ $(document).ready(function() {
 function iniciarEntrega() {
     if (confirm('¿Está seguro de que desea iniciar esta entrega?')) {
         // Aquí iría la lógica para cambiar el estado a 'en_proceso'
-        window.location.href = "{% if object %}{% url 'ventas:entrega-detail' object.pk %}{% endif %}";
+        window.location.href = "{% if object %}{% url 'ventas:entrega_detail' object.pk %}{% endif %}";
     }
 }
 
 function completarEntrega() {
     if (confirm('¿Está seguro de que desea marcar esta entrega como completada?')) {
         // Aquí iría la lógica para cambiar el estado a 'entregado'
-        window.location.href = "{% if object %}{% url 'ventas:entrega-detail' object.pk %}{% endif %}";
+        window.location.href = "{% if object %}{% url 'ventas:entrega_detail' object.pk %}{% endif %}";
     }
 }
 </script>

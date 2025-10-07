@@ -10,10 +10,10 @@
             <i class="fas fa-building"></i> {{ proveedor.nombre }}
         </h1>
         <div>
-            <a href="{% url 'compras:proveedor-list' %}" class="btn btn-secondary">
+            <a href="{% url 'compras:proveedor_list' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
-            <a href="{% url 'compras:proveedor-update' proveedor.pk %}" class="btn btn-primary">
+            <a href="{% url 'compras:proveedor_update' proveedor.pk %}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Editar
             </a>
         </div>
@@ -60,7 +60,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">Órdenes de Compra Recientes</h6>
-                    <a href="{% url 'compras:orden-compra-create' %}?proveedor={{ proveedor.pk }}" class="btn btn-sm btn-primary">
+                    <a href="{% url 'compras:orden_create' %}?proveedor={{ proveedor.pk }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus"></i> Nueva Orden
                     </a>
                 </div>
@@ -89,7 +89,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{% url 'compras:orden-compra-detail' orden.pk %}" class="btn btn-sm btn-info">
+                                        <a href="{% url 'compras:orden_detail' orden.pk %}" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
@@ -178,7 +178,7 @@
                         <i class="fas fa-envelope"></i> Enviar Email
                     </a>
                     {% endif %}
-                    <a href="{% url 'compras:orden-compra-create' %}?proveedor={{ proveedor.pk }}" class="btn btn-warning btn-block">
+                    <a href="{% url 'compras:orden_create' %}?proveedor={{ proveedor.pk }}" class="btn btn-warning btn-block">
                         <i class="fas fa-shopping-cart"></i> Nueva Orden
                     </a>
                 </div>

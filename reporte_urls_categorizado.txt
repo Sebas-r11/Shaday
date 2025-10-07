@@ -1,0 +1,73 @@
+REPORTE CATEGORIZADO - URLs PROBLEMÁTICAS
+==================================================
+
+Fecha: 2025-10-07 07:30:02
+
+1. URLs QUE NECESITAN ARGUMENTOS:
+-----------------------------------
+• accounts:change_user_password
+• accounts:toggle_user_status
+• accounts:user_detail
+• accounts:user_update
+• analytics:detalle_reporte
+• compras:cambiar_estado_orden
+• compras:orden_cancel
+• compras:orden_detail
+• compras:orden_print
+• compras:orden_update
+• compras:proveedor_detail
+• compras:recepcion_detail
+• crm:oportunidad_detail
+• crm:oportunidad_update
+• inventario:bodega_detail
+• inventario:bodega_update
+• inventario:detalle_devolucion
+• inventario:orden_compra_pdf
+• inventario:orden_compra_stock_detail
+• inventario:producto_detail
+• inventario:producto_update
+• inventario:recomendacion_detail
+• inventario:stock_detail
+• inventario:subcategoria_delete
+• inventario:subcategoria_update
+• inventario:transferencia_pdf
+• ventas:cliente_detail
+• ventas:cliente_update
+• ventas:convertir_a_factura
+• ventas:convertir_a_pedido
+• ventas:cotizacion_detail
+• ventas:entrega_detail
+• ventas:factura_detail
+• ventas:imprimir_cotizacion
+• ventas:imprimir_factura
+• ventas:marcar_factura_pagada
+• ventas:pedido_detail
+
+2. URLs CON NOMBRES INCORRECTOS:
+-----------------------------------
+• accounts:user-create
+• accounts:user-detail
+• accounts:user-update
+• compras:orden-compra-create
+• compras:orden-compra-detail
+• compras:proveedor-list
+• compras:proveedor-update
+• inventario:stock-list
+• ventas:entrega-detail
+• ventas:entregas-repartidor
+• ventas:factura-list
+
+3. URLs QUE NO EXISTEN:
+-------------------------
+• inventario:bodega_delete
+• inventario:imprimir_devolucion
+• inventario:producto_proveedores
+• ventas:anular_factura
+• ventas:asignar_pedido_bodega
+• ventas:cambiar_estado_pedido
+• ventas:completar_pedido_inmediato
+• ventas:enviar_cotizacion
+• ventas:generar_pdf_cotizacion
+• ventas:imprimir_pedido
+• ventas:reporte_ventas
+• ventas:reprogramar_entrega

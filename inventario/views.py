@@ -2131,3 +2131,32 @@ def obtener_presentaciones_proveedor(request, proveedor_id, producto_id):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ============= VISTAS SIMPLES PARA URLs FALTANTES =============
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def bodega_delete_simple(request, pk):
+    """Vista simple para eliminar bodega"""
+    bodega = get_object_or_404(Bodega, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            bodega.delete()
+            messages.success(request, 'Bodega eliminada exitosamente.')
+        except Exception as e:
+            messages.error(request, f'Error al eliminar bodega: {str(e)}')
+    
+    return redirect('inventario:bodega_list')
+
+@login_required
+def producto_proveedores_simple(request, pk):
+    """Vista simple para gestionar proveedores de producto"""
+    producto = get_object_or_404(Producto, pk=pk)
+    
+    if request.method == 'POST':
+        messages.info(request, 'Funcionalidad de proveedores en desarrollo.')
+    
+    return redirect('inventario:producto_detail', pk=pk)

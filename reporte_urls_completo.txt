@@ -1,0 +1,248 @@
+REPORTE COMPLETO DE URLs DEL SISTEMA ERP
+==================================================
+
+Fecha: 2025-10-07 07:29:07
+URLs exitosas: 55
+URLs fallidas: 60
+Total verificadas: 115
+
+URLs EXITOSAS:
+--------------------
+✅ accounts:dashboard
+✅ accounts:login
+✅ accounts:logout
+✅ accounts:user_create
+✅ accounts:user_list
+✅ analytics:analisis_clientes
+✅ analytics:dashboard
+✅ analytics:estadisticas_masivas
+✅ analytics:prediccion_demanda
+✅ analytics:reportes
+✅ analytics:sistema_mrp
+✅ compras:orden_create
+✅ compras:orden_list
+✅ compras:proveedor_create
+✅ compras:recepcion_create
+✅ crm:actividad_create
+✅ crm:dashboard
+✅ crm:oportunidad_create
+✅ crm:oportunidad_list
+✅ inventario:alertas_stock
+✅ inventario:bodega_create
+✅ inventario:bodega_list
+✅ inventario:categoria_create
+✅ inventario:categoria_list
+✅ inventario:crear_ajuste_inventario
+✅ inventario:dashboard_recomendaciones
+✅ inventario:exportar_productos_excel
+✅ inventario:generar_orden_compra
+✅ inventario:generar_recomendaciones_ajax
+✅ inventario:lista_devoluciones
+✅ inventario:movimiento_list
+✅ inventario:orden_compra_stock_list
+✅ inventario:producto_create
+✅ inventario:producto_list
+✅ inventario:recomendaciones_list
+✅ inventario:reporte_devoluciones
+✅ inventario:stock_api
+✅ inventario:stock_list
+✅ inventario:subcategoria_create
+✅ inventario:subcategoria_list
+✅ inventario:transferencia_create
+✅ ventas:api_clientes
+✅ ventas:api_productos
+✅ ventas:cliente_create
+✅ ventas:cliente_list
+✅ ventas:cotizacion_create
+✅ ventas:cotizacion_list
+✅ ventas:dashboard
+✅ ventas:entregas_repartidor
+✅ ventas:factura_create
+✅ ventas:factura_list
+✅ ventas:pedido_create
+✅ ventas:pedido_list
+✅ ventas:pedidos_alistamiento
+✅ ventas:reporte_facturas
+
+URLs PROBLEMÁTICAS:
+--------------------
+❌ accounts:change_user_password
+   Error: Reverse for 'change_user_password' with no arguments not found. 1 pattern(s) tried: ['accounts/usuarios/(?P<pk>[0-9]+)/cambiar\\-password/\\Z']
+
+❌ accounts:toggle_user_status
+   Error: Reverse for 'toggle_user_status' with no arguments not found. 1 pattern(s) tried: ['accounts/usuarios/(?P<pk>[0-9]+)/toggle\\-status/\\Z']
+
+❌ accounts:user-create
+   Error: Reverse for 'user-create' not found. 'user-create' is not a valid view function or pattern name.
+
+❌ accounts:user-detail
+   Error: Reverse for 'user-detail' not found. 'user-detail' is not a valid view function or pattern name.
+
+❌ accounts:user-update
+   Error: Reverse for 'user-update' not found. 'user-update' is not a valid view function or pattern name.
+
+❌ accounts:user_detail
+   Error: Reverse for 'user_detail' with no arguments not found. 1 pattern(s) tried: ['accounts/usuarios/(?P<pk>[0-9]+)/\\Z']
+
+❌ accounts:user_update
+   Error: Reverse for 'user_update' with no arguments not found. 1 pattern(s) tried: ['accounts/usuarios/(?P<pk>[0-9]+)/editar/\\Z']
+
+❌ analytics:detalle_reporte
+   Error: Reverse for 'detalle_reporte' with no arguments not found. 1 pattern(s) tried: ['analytics/reportes/(?P<reporte_id>[0-9]+)/\\Z']
+
+❌ compras:cambiar_estado_orden
+   Error: Reverse for 'cambiar_estado_orden' with no arguments not found. 1 pattern(s) tried: ['compras/ordenes/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/cambiar\\-estado/\\Z']
+
+❌ compras:orden-compra-create
+   Error: Reverse for 'orden-compra-create' not found. 'orden-compra-create' is not a valid view function or pattern name.
+
+❌ compras:orden-compra-detail
+   Error: Reverse for 'orden-compra-detail' not found. 'orden-compra-detail' is not a valid view function or pattern name.
+
+❌ compras:orden_cancel
+   Error: Reverse for 'orden_cancel' with no arguments not found. 1 pattern(s) tried: ['compras/ordenes/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/cancelar/\\Z']
+
+❌ compras:orden_detail
+   Error: Reverse for 'orden_detail' with no arguments not found. 1 pattern(s) tried: ['compras/ordenes/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/\\Z']
+
+❌ compras:orden_print
+   Error: Reverse for 'orden_print' with no arguments not found. 1 pattern(s) tried: ['compras/ordenes/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/imprimir/\\Z']
+
+❌ compras:orden_update
+   Error: Reverse for 'orden_update' with no arguments not found. 1 pattern(s) tried: ['compras/ordenes/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/editar/\\Z']
+
+❌ compras:proveedor-list
+   Error: Reverse for 'proveedor-list' not found. 'proveedor-list' is not a valid view function or pattern name.
+
+❌ compras:proveedor-update
+   Error: Reverse for 'proveedor-update' not found. 'proveedor-update' is not a valid view function or pattern name.
+
+❌ compras:proveedor_detail
+   Error: Reverse for 'proveedor_detail' with no arguments not found. 1 pattern(s) tried: ['compras/proveedores/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/\\Z']
+
+❌ compras:recepcion_detail
+   Error: Reverse for 'recepcion_detail' with no arguments not found. 1 pattern(s) tried: ['compras/recepciones/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/\\Z']
+
+❌ crm:oportunidad_detail
+   Error: Reverse for 'oportunidad_detail' with no arguments not found. 1 pattern(s) tried: ['crm/oportunidades/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/\\Z']
+
+❌ crm:oportunidad_update
+   Error: Reverse for 'oportunidad_update' with no arguments not found. 1 pattern(s) tried: ['crm/oportunidades/(?P<pk>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/editar/\\Z']
+
+❌ inventario:bodega_delete
+   Error: Reverse for 'bodega_delete' not found. 'bodega_delete' is not a valid view function or pattern name.
+
+❌ inventario:bodega_detail
+   Error: Reverse for 'bodega_detail' with no arguments not found. 1 pattern(s) tried: ['inventario/bodegas/(?P<pk>[0-9]+)/\\Z']
+
+❌ inventario:bodega_update
+   Error: Reverse for 'bodega_update' with no arguments not found. 1 pattern(s) tried: ['inventario/bodegas/(?P<pk>[0-9]+)/editar/\\Z']
+
+❌ inventario:detalle_devolucion
+   Error: Reverse for 'detalle_devolucion' with no arguments not found. 1 pattern(s) tried: ['inventario/devoluciones/(?P<devolucion_id>[0-9]+)/\\Z']
+
+❌ inventario:imprimir_devolucion
+   Error: Reverse for 'imprimir_devolucion' not found. 'imprimir_devolucion' is not a valid view function or pattern name.
+
+❌ inventario:orden_compra_pdf
+   Error: Reverse for 'orden_compra_pdf' with no arguments not found. 1 pattern(s) tried: ['inventario/ordenes\\-compra\\-stock/(?P<orden_id>[0-9]+)/pdf/\\Z']
+
+❌ inventario:orden_compra_stock_detail
+   Error: Reverse for 'orden_compra_stock_detail' with no arguments not found. 1 pattern(s) tried: ['inventario/ordenes\\-compra\\-stock/(?P<pk>[0-9]+)/\\Z']
+
+❌ inventario:producto_detail
+   Error: Reverse for 'producto_detail' with no arguments not found. 1 pattern(s) tried: ['inventario/productos/(?P<pk>[0-9]+)/\\Z']
+
+❌ inventario:producto_proveedores
+   Error: Reverse for 'producto_proveedores' not found. 'producto_proveedores' is not a valid view function or pattern name.
+
+❌ inventario:producto_update
+   Error: Reverse for 'producto_update' with no arguments not found. 1 pattern(s) tried: ['inventario/productos/(?P<pk>[0-9]+)/editar/\\Z']
+
+❌ inventario:recomendacion_detail
+   Error: Reverse for 'recomendacion_detail' with no arguments not found. 1 pattern(s) tried: ['inventario/recomendaciones/(?P<pk>[0-9]+)/\\Z']
+
+❌ inventario:stock-list
+   Error: Reverse for 'stock-list' not found. 'stock-list' is not a valid view function or pattern name.
+
+❌ inventario:stock_detail
+   Error: Reverse for 'stock_detail' with no arguments not found. 1 pattern(s) tried: ['inventario/stock/(?P<pk>[0-9]+)/\\Z']
+
+❌ inventario:subcategoria_delete
+   Error: Reverse for 'subcategoria_delete' with no arguments not found. 1 pattern(s) tried: ['inventario/subcategorias/(?P<pk>[0-9]+)/eliminar/\\Z']
+
+❌ inventario:subcategoria_update
+   Error: Reverse for 'subcategoria_update' with no arguments not found. 1 pattern(s) tried: ['inventario/subcategorias/(?P<pk>[0-9]+)/editar/\\Z']
+
+❌ inventario:transferencia_pdf
+   Error: Reverse for 'transferencia_pdf' with no arguments not found. 1 pattern(s) tried: ['inventario/transferencias/(?P<movimiento_id>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/pdf/\\Z']
+
+❌ ventas:anular_factura
+   Error: Reverse for 'anular_factura' not found. 'anular_factura' is not a valid view function or pattern name.
+
+❌ ventas:asignar_pedido_bodega
+   Error: Reverse for 'asignar_pedido_bodega' not found. 'asignar_pedido_bodega' is not a valid view function or pattern name.
+
+❌ ventas:cambiar_estado_pedido
+   Error: Reverse for 'cambiar_estado_pedido' not found. 'cambiar_estado_pedido' is not a valid view function or pattern name.
+
+❌ ventas:cliente_detail
+   Error: Reverse for 'cliente_detail' with no arguments not found. 1 pattern(s) tried: ['ventas/clientes/(?P<pk>[0-9]+)/\\Z']
+
+❌ ventas:cliente_update
+   Error: Reverse for 'cliente_update' with no arguments not found. 1 pattern(s) tried: ['ventas/clientes/(?P<pk>[0-9]+)/editar/\\Z']
+
+❌ ventas:completar_pedido_inmediato
+   Error: Reverse for 'completar_pedido_inmediato' not found. 'completar_pedido_inmediato' is not a valid view function or pattern name.
+
+❌ ventas:convertir_a_factura
+   Error: Reverse for 'convertir_a_factura' with no arguments not found. 1 pattern(s) tried: ['ventas/pedidos/(?P<pk>[0-9]+)/convertir\\-factura/\\Z']
+
+❌ ventas:convertir_a_pedido
+   Error: Reverse for 'convertir_a_pedido' with no arguments not found. 1 pattern(s) tried: ['ventas/cotizaciones/(?P<pk>[0-9]+)/convertir\\-pedido/\\Z']
+
+❌ ventas:cotizacion_detail
+   Error: Reverse for 'cotizacion_detail' with no arguments not found. 1 pattern(s) tried: ['ventas/cotizaciones/(?P<pk>[0-9]+)/\\Z']
+
+❌ ventas:entrega-detail
+   Error: Reverse for 'entrega-detail' not found. 'entrega-detail' is not a valid view function or pattern name.
+
+❌ ventas:entrega_detail
+   Error: Reverse for 'entrega_detail' with no arguments not found. 1 pattern(s) tried: ['ventas/entregas/(?P<pk>[0-9]+)/\\Z']
+
+❌ ventas:entregas-repartidor
+   Error: Reverse for 'entregas-repartidor' not found. 'entregas-repartidor' is not a valid view function or pattern name.
+
+❌ ventas:enviar_cotizacion
+   Error: Reverse for 'enviar_cotizacion' not found. 'enviar_cotizacion' is not a valid view function or pattern name.
+
+❌ ventas:factura-list
+   Error: Reverse for 'factura-list' not found. 'factura-list' is not a valid view function or pattern name.
+
+❌ ventas:factura_detail
+   Error: Reverse for 'factura_detail' with no arguments not found. 1 pattern(s) tried: ['ventas/facturas/(?P<pk>[0-9]+)/\\Z']
+
+❌ ventas:generar_pdf_cotizacion
+   Error: Reverse for 'generar_pdf_cotizacion' not found. 'generar_pdf_cotizacion' is not a valid view function or pattern name.
+
+❌ ventas:imprimir_cotizacion
+   Error: Reverse for 'imprimir_cotizacion' with no arguments not found. 1 pattern(s) tried: ['ventas/cotizaciones/(?P<pk>[0-9]+)/imprimir/\\Z']
+
+❌ ventas:imprimir_factura
+   Error: Reverse for 'imprimir_factura' with no arguments not found. 1 pattern(s) tried: ['ventas/facturas/(?P<pk>[0-9]+)/imprimir/\\Z']
+
+❌ ventas:imprimir_pedido
+   Error: Reverse for 'imprimir_pedido' not found. 'imprimir_pedido' is not a valid view function or pattern name.
+
+❌ ventas:marcar_factura_pagada
+   Error: Reverse for 'marcar_factura_pagada' with no arguments not found. 1 pattern(s) tried: ['ventas/facturas/(?P<pk>[0-9]+)/marcar\\-pagada/\\Z']
+
+❌ ventas:pedido_detail
+   Error: Reverse for 'pedido_detail' with no arguments not found. 1 pattern(s) tried: ['ventas/pedidos/(?P<pk>[0-9]+)/\\Z']
+
+❌ ventas:reporte_ventas
+   Error: Reverse for 'reporte_ventas' not found. 'reporte_ventas' is not a valid view function or pattern name.
+
+❌ ventas:reprogramar_entrega
+   Error: Reverse for 'reprogramar_entrega' not found. 'reprogramar_entrega' is not a valid view function or pattern name.
+

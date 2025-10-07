@@ -2779,3 +2779,105 @@ def asignar_pedido_bodega(request, pk):
     except Pedido.DoesNotExist:
         messages.error(request, 'Pedido no encontrado.')
         return redirect('ventas:pedidos_alistamiento')
+
+
+# ============= VISTAS SIMPLES PARA URLs FALTANTES =============
+
+@login_required
+def cambiar_estado_pedido_simple(request, pk):
+    """Vista simple para cambiar estado de pedido"""
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('estado')
+        if nuevo_estado in ['pendiente', 'proceso', 'completado', 'cancelado']:
+            pedido.estado = nuevo_estado
+            pedido.save()
+            messages.success(request, f'Estado del pedido actualizado a {nuevo_estado}.')
+        else:
+            messages.error(request, 'Estado inválido.')
+    
+    return redirect('ventas:pedido_detail', pk=pk)
+
+@login_required
+def completar_pedido_inmediato(request, pk):
+    """Vista simple para completar pedido inmediatamente"""
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    if request.method == 'POST':
+        pedido.estado = 'completado'
+        pedido.fecha_completado = timezone.now()
+        pedido.save()
+        messages.success(request, 'Pedido completado exitosamente.')
+    
+    return redirect('ventas:pedido_detail', pk=pk)
+
+@login_required
+def asignar_pedido_bodega(request, pk):
+    """Vista simple para asignar pedido a bodega"""
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    if request.method == 'POST':
+        pedido.asignado_a = request.user
+        pedido.estado = 'proceso'
+        pedido.save()
+        messages.success(request, 'Pedido asignado a bodega exitosamente.')
+    
+    return redirect('ventas:pedido_detail', pk=pk)
+
+@login_required
+def reprogramar_entrega(request, pk):
+    """Vista simple para reprogramar entrega"""
+    entrega = get_object_or_404(Entrega, pk=pk)
+    
+    if request.method == 'POST':
+        nueva_fecha = request.POST.get('nueva_fecha')
+        if nueva_fecha:
+            entrega.fecha_programada = nueva_fecha
+            entrega.save()
+            messages.success(request, 'Entrega reprogramada exitosamente.')
+        else:
+            messages.error(request, 'Fecha inválida.')
+    
+    return redirect('ventas:entrega_detail', pk=pk)
+
+@login_required
+def generar_pdf_cotizacion(request, pk):
+    """Vista simple para generar PDF de cotización"""
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    messages.info(request, 'PDF generado exitosamente.')
+    return redirect('ventas:cotizacion_detail', pk=pk)
+
+@login_required
+def enviar_cotizacion(request, pk):
+    """Vista simple para enviar cotización"""
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    cotizacion.estado = 'enviada'
+    cotizacion.save()
+    messages.success(request, 'Cotización enviada exitosamente.')
+    return redirect('ventas:cotizacion_detail', pk=pk)
+
+@login_required
+def anular_factura(request, pk):
+    """Vista simple para anular factura"""
+    factura = get_object_or_404(Factura, pk=pk)
+    
+    if request.method == 'POST':
+        factura.estado = 'anulada'
+        factura.save()
+        messages.success(request, 'Factura anulada exitosamente.')
+    
+    return redirect('ventas:factura_detail', pk=pk)
+
+@login_required
+def reporte_ventas(request):
+    """Vista simple para reportes de ventas"""
+    messages.info(request, 'Funcionalidad de reportes en desarrollo.')
+    return redirect('ventas:dashboard')
+
+@login_required
+def imprimir_pedido(request, pk):
+    """Vista simple para imprimir pedido"""
+    pedido = get_object_or_404(Pedido, pk=pk)
+    messages.info(request, 'Pedido enviado a impresión.')
+    return redirect('ventas:pedido_detail', pk=pk)

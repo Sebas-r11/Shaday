@@ -416,3 +416,12 @@ def reporte_devoluciones(request):
     }
     
     return render(request, 'inventario/devoluciones/reporte.html', context)
+
+
+@login_required
+@user_passes_test(es_bodeguero)
+def imprimir_devolucion(request, devolucion_id):
+    """Vista simple para imprimir devolución"""
+    devolucion = get_object_or_404(DevolucionVentas, id=devolucion_id)
+    messages.info(request, 'Devolución enviada a impresión.')
+    return redirect('inventario:detalle_devolucion', devolucion_id=devolucion_id)

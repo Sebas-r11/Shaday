@@ -68,6 +68,7 @@ urlpatterns = [
     path('bodegas/<int:pk>/', BodegaDetailView.as_view(), name='bodega_detail'),
     path('bodegas/<int:pk>/editar/', BodegaUpdateView.as_view(), name='bodega_update'),
     # path('bodegas/<int:pk>/eliminar/', BodegaDeleteView.as_view(), name='bodega_delete'),  # BodegaDeleteView no existe
+    path('bodegas/<int:pk>/eliminar/', views.bodega_delete_simple, name='bodega_delete'),
     
     # Stock
     path('stock/', StockListView.as_view(), name='stock_list'),
@@ -84,7 +85,7 @@ urlpatterns = [
     path('ajustes/<uuid:movimiento_id>/pdf/', generar_pdf_ajuste, name='ajuste_pdf'),
     
     # Transferencias
-    # path('transferencias/', transferencia_producto, name='transferencia_create'),  # transferencia_producto no existe
+    path('transferencias/', views.transferencia_producto, name='transferencia_create'),
     path('transferencias/<uuid:movimiento_id>/pdf/', generar_pdf_transferencia, name='transferencia_pdf'),
     
     # Reportes y dashboards
@@ -93,6 +94,7 @@ urlpatterns = [
     
     # Gestión de proveedores por producto (temporalmente comentado - requiere implementación)
     # path('productos/<int:pk>/proveedores/', ProductoProveedoresView.as_view(), name='producto_proveedores'),
+    path('productos/<int:pk>/proveedores/', views.producto_proveedores_simple, name='producto_proveedores'),
     # path('productos/<int:pk>/detalle-proveedores/', ProductoDetailViewConProveedores.as_view(), name='producto_detail_proveedores'),
     
     # Órdenes de compra (vistas que aún no se han refactorizado)
@@ -109,6 +111,7 @@ urlpatterns = [
     path('devoluciones/<int:devolucion_id>/rechazar/', views_devoluciones.rechazar_devolucion, name='rechazar_devolucion'),
     path('devoluciones/crear-desde-entrega/', views_devoluciones.crear_devolucion_desde_entrega, name='crear_devolucion_desde_entrega'),
     path('devoluciones/reportes/', views_devoluciones.reporte_devoluciones, name='reporte_devoluciones'),
+    path('devoluciones/<int:devolucion_id>/imprimir/', views_devoluciones.imprimir_devolucion, name='imprimir_devolucion'),
     
     # Recomendaciones Inteligentes (vistas que aún no se han refactorizado)
     path('recomendaciones/', views.RecomendacionesListView.as_view(), name='recomendaciones_list'),
