@@ -94,7 +94,7 @@ class CategoriaDetailView(InventarioViewMixin, DetailView):
         context['subcategorias'] = Subcategoria.objects.filter(
             categoria=self.object
         ).annotate(
-            productos_count=Count('productos')
+            productos_count=Count('producto')
         ).order_by('nombre')
         
         # Estadísticas
@@ -141,7 +141,7 @@ class SubcategoriaListView(InventarioViewMixin, ListView):
     
     def get_queryset(self):
         queryset = Subcategoria.objects.select_related('categoria').annotate(
-            productos_count=Count('productos')
+            productos_count=Count('producto')
         )
         
         # Filtro por nombre de subcategoría
