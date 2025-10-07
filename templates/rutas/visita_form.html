@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar Visita - Rutas{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <div class="flex items-center">
+                    <a href="{% url 'rutas:mis_clientes' %}" 
+                       class="text-gray-400 hover:text-gray-600 mr-4">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">
+                            <i class="fas fa-calendar-plus mr-3 text-green-600"></i>
+                            Registrar Nueva Visita
+                        </h1>
+                        <p class="mt-2 text-gray-600">
+                            Registra tu visita a un cliente
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow rounded-lg">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información de la Visita</h3>
+                </div>
+
+                <div class="px-6 py-4 space-y-6">
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                            <div class="flex">
+                                <i class="fas fa-exclamation-circle text-red-400 mr-2 mt-0.5"></i>
+                                <div class="text-sm text-red-700">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Crear datalist para autocompletado de clientes -->
+                    <datalist id="clientes-list">
+                        {% for cliente in clientes_list %}
+                            <option value="{{ cliente.nombre }}" data-id="{{ cliente.id }}">
+                                {% if cliente.vendedor %}
+                                    {{ cliente.nombre }} - {{ cliente.vendedor }}
+                                {% else %}
+                                    {{ cliente.nombre }}
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </datalist>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Cliente -->
+                        <div class="md:col-span-2">
+                            <label for="id_cliente_busqueda" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2 text-blue-600"></i>Cliente *
+                            </label>
+                            {{ form.cliente_busqueda }}
+                            {% if form.cliente_busqueda.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.cliente_busqueda.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                Escriba el nombre del cliente para buscarlo
+                            </p>
+                        </div>
+
+                        <!-- Fecha de Visita -->
+                        <div class="md:col-span-2">
+                            <label for="id_fecha_programada" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar mr-2 text-purple-600"></i>Fecha de Visita *
+                            </label>
+                            {{ form.fecha_programada }}
+                            {% if form.fecha_programada.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.fecha_programada.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                Fecha y hora de la visita
+                            </p>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="md:col-span-2">
+                            <label for="id_observaciones" class="block text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-comments mr-2 text-orange-600"></i>Observaciones
+                            </label>
+                            {{ form.observaciones }}
+                            {% if form.observaciones.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.observaciones.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                Describe los detalles de la visita, temas tratados, resultados, etc.
+                            </p>
+                        </div>
+
+                        <!-- Requiere Seguimiento -->
+                        <div class="md:col-span-2">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <div class="flex items-center h-5">
+                                        {{ form.requiere_seguimiento }}
+                                    </div>
+                                    <div class="ml-3 text-sm">
+                                        <label for="id_requiere_seguimiento" class="font-medium text-gray-700">
+                                            <i class="fas fa-flag mr-2 text-red-600"></i>
+                                            Requiere Seguimiento
+                                        </label>
+                                        <p class="text-gray-500">
+                                            Marca si esta visita requiere acciones de seguimiento específicas
+                                        </p>
+                                    </div>
+                                </div>
+                                {% if form.requiere_seguimiento.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.requiere_seguimiento.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                    <a href="{% url 'rutas:mis_clientes' %}" 
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-save mr-2"></i>
+                        Registrar Visita
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Script para mejorar la funcionalidad del autocompletado -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteInput = document.getElementById('id_cliente_busqueda');
+    const datalist = document.getElementById('clientes-list');
+    
+    if (clienteInput && datalist) {
+        // Asegurar que el input tenga las clases correctas
+        clienteInput.className = 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
+        
+        // Mejorar la experiencia de usuario con el autocompletado
+        clienteInput.addEventListener('input', function() {
+            const value = this.value.toLowerCase();
+            const options = datalist.querySelectorAll('option');
+            
+            // Filtrar opciones visibles
+            options.forEach(option => {
+                const text = option.value.toLowerCase();
+                if (text.includes(value)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+        
+        // Cuando selecciona una opción, asegurar que se seleccione correctamente
+        clienteInput.addEventListener('change', function() {
+            const selectedValue = this.value;
+            const option = Array.from(datalist.options).find(opt => 
+                opt.value === selectedValue
+            );
+            
+            if (option) {
+                // Si encuentra la opción exacta, todo bien
+                this.setCustomValidity('');
+            } else {
+                // Si no encuentra coincidencia exacta, buscar parcial
+                const partialMatch = Array.from(datalist.options).find(opt => 
+                    opt.value.toLowerCase().includes(selectedValue.toLowerCase())
+                );
+                
+                if (partialMatch) {
+                    this.value = partialMatch.value;
+                    this.setCustomValidity('');
+                } else if (selectedValue.trim() !== '') {
+                    this.setCustomValidity('Por favor seleccione un cliente válido de la lista');
+                }
+            }
+        });
+    }
+    
+    // Asegurar que los otros campos tengan las clases correctas
+    const fechaInput = document.getElementById('id_fecha_programada');
+    if (fechaInput) {
+        fechaInput.className = 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
+    }
+    
+    const observacionesTextarea = document.getElementById('id_observaciones');
+    if (observacionesTextarea) {
+        observacionesTextarea.className = 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm';
+    }
+    
+    const checkboxInput = document.getElementById('id_requiere_seguimiento');
+    if (checkboxInput) {
+        checkboxInput.className = 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded';
+    }
+});
+</script>
+{% endblock %}

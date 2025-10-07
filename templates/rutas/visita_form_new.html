@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Visita - Sistema Reyes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        Registrar Nueva Visita
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Crear datalist para autocompletado de clientes -->
+                        <datalist id="clientes-list">
+                            {% for cliente in clientes_list %}
+                                <option value="{{ cliente.nombre }}" data-id="{{ cliente.id }}">
+                                    {% if cliente.vendedor %}
+                                        {{ cliente.nombre }} - {{ cliente.vendedor }}
+                                    {% else %}
+                                        {{ cliente.nombre }}
+                                    {% endif %}
+                                </option>
+                            {% endfor %}
+                        </datalist>
+                        
+                        <div class="row">
+                            <!-- Campo Cliente con búsqueda -->
+                            <div class="col-md-6 mb-3">
+                                <label for="id_cliente_busqueda" class="form-label">
+                                    <i class="fas fa-user me-1"></i>
+                                    Cliente *
+                                </label>
+                                {{ form.cliente_busqueda }}
+                                {% if form.cliente_busqueda.help_text %}
+                                    <small class="form-text text-muted">{{ form.cliente_busqueda.help_text }}</small>
+                                {% endif %}
+                                {% if form.cliente_busqueda.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.cliente_busqueda.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Campo Fecha de Visita -->
+                            <div class="col-md-6 mb-3">
+                                <label for="id_fecha_programada" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Fecha de Visita *
+                                </label>
+                                {{ form.fecha_programada }}
+                                {% if form.fecha_programada.help_text %}
+                                    <small class="form-text text-muted">{{ form.fecha_programada.help_text }}</small>
+                                {% endif %}
+                                {% if form.fecha_programada.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.fecha_programada.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Campo Observaciones -->
+                            <div class="col-md-8 mb-3">
+                                <label for="id_observaciones" class="form-label">
+                                    <i class="fas fa-comments me-1"></i>
+                                    Observaciones
+                                </label>
+                                {{ form.observaciones }}
+                                {% if form.observaciones.help_text %}
+                                    <small class="form-text text-muted">{{ form.observaciones.help_text }}</small>
+                                {% endif %}
+                                {% if form.observaciones.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.observaciones.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Campo Requiere Seguimiento -->
+                            <div class="col-md-4 mb-3">
+                                <div class="form-check mt-4">
+                                    {{ form.requiere_seguimiento }}
+                                    <label for="id_requiere_seguimiento" class="form-check-label">
+                                        <i class="fas fa-flag me-1"></i>
+                                        Requiere Seguimiento
+                                    </label>
+                                    {% if form.requiere_seguimiento.help_text %}
+                                        <small class="form-text text-muted d-block">{{ form.requiere_seguimiento.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                                {% if form.requiere_seguimiento.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.requiere_seguimiento.errors.as_text }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Errores generales del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Botones de acción -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>
+                                    Registrar Visita
+                                </button>
+                                <a href="{% url 'rutas:visitas_list' %}" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para mejorar la funcionalidad del autocompletado -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteInput = document.getElementById('id_cliente_busqueda');
+    const datalist = document.getElementById('clientes-list');
+    
+    if (clienteInput && datalist) {
+        // Mejorar la experiencia de usuario con el autocompletado
+        clienteInput.addEventListener('input', function() {
+            const value = this.value.toLowerCase();
+            const options = datalist.querySelectorAll('option');
+            
+            // Filtrar opciones visibles
+            options.forEach(option => {
+                const text = option.value.toLowerCase();
+                if (text.includes(value)) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+        
+        // Cuando selecciona una opción, asegurar que se seleccione correctamente
+        clienteInput.addEventListener('change', function() {
+            const selectedValue = this.value;
+            const option = Array.from(datalist.options).find(opt => 
+                opt.value === selectedValue
+            );
+            
+            if (option) {
+                // Si encuentra la opción exacta, todo bien
+                this.setCustomValidity('');
+            } else {
+                // Si no encuentra coincidencia exacta, buscar parcial
+                const partialMatch = Array.from(datalist.options).find(opt => 
+                    opt.value.toLowerCase().includes(selectedValue.toLowerCase())
+                );
+                
+                if (partialMatch) {
+                    this.value = partialMatch.value;
+                    this.setCustomValidity('');
+                } else if (selectedValue.trim() !== '') {
+                    this.setCustomValidity('Por favor seleccione un cliente válido de la lista');
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

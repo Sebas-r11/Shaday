@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Rutas - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i class="fas fa-route mr-3 text-blue-600"></i>
+                    Gestión de Rutas
+                </h1>
+                <p class="mt-2 text-gray-600">
+                    Sistema de asignación y seguimiento de clientes para vendedores
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {% if es_admin %}
+        <!-- Dashboard para Administradores -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Asignaciones -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Asignaciones Activas
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ total_asignaciones }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Vendedores -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-tie text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Vendedores Activos
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ total_vendedores }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visitas Hoy -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-calendar-day text-2xl text-yellow-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Visitas Hoy
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ visitas_hoy }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visitas Vencidas -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Visitas Vencidas
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ visitas_vencidas }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones para Administradores -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-user-plus mr-2 text-blue-600"></i>
+                    Gestión de Asignaciones
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Asignar clientes a vendedores y gestionar las rutas
+                </p>
+                <div class="space-y-2">
+                    <a href="{% url 'rutas:asignacion_create' %}" 
+                       class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-md font-medium transition-colors">
+                        Nueva Asignación
+                    </a>
+                    <a href="{% url 'rutas:asignaciones' %}" 
+                       class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 text-center py-2 px-4 rounded-md font-medium transition-colors">
+                        Ver Todas
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-calendar-check mr-2 text-green-600"></i>
+                    Visitas y Seguimiento
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Monitorear visitas programadas y completadas
+                </p>
+                <div class="space-y-2">
+                    <a href="{% url 'rutas:visita_create' %}" 
+                       class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-md font-medium transition-colors">
+                        Registrar Visita
+                    </a>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+                    Reportes
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Estadísticas y reportes de rendimiento
+                </p>
+                <div class="space-y-2">
+                    <a href="{% url 'rutas:asignaciones' %}" 
+                       class="block w-full bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-md font-medium transition-colors">
+                        Ver Asignaciones
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if es_vendedor %}
+        <!-- Dashboard para Vendedores -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Mis Clientes -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-address-book text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Mis Clientes
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ mis_clientes_count }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visitas Esta Semana -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-calendar-week text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Visitas Esta Semana
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ visitas_esta_semana }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visitas Vencidas -->
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-2xl text-red-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Visitas Vencidas
+                                </dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {{ visitas_vencidas_personal }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones para Vendedores -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-users mr-2 text-blue-600"></i>
+                    Mis Clientes Asignados
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Ver todos tus clientes asignados y programar visitas
+                </p>
+                <a href="{% url 'rutas:mis_clientes' %}" 
+                   class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-md font-medium transition-colors">
+                    Ver Mis Clientes
+                </a>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-calendar-plus mr-2 text-green-600"></i>
+                    Programar Visita
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    Programar una nueva visita a uno de tus clientes
+                </p>
+                <a href="{% url 'rutas:visita_create' %}" 
+                   class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-md font-medium transition-colors">
+                    Nueva Visita
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Asignar Cliente - Rutas{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <div class="flex items-center">
+                    <a href="{% url 'rutas:asignaciones' %}" 
+                       class="text-gray-400 hover:text-gray-600 mr-4">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">
+                            <i class="fas fa-user-plus mr-3 text-blue-600"></i>
+                            {% if object %}Editar Asignación{% else %}Nueva Asignación{% endif %}
+                        </h1>
+                        <p class="mt-2 text-gray-600">
+                            {% if object %}
+                                Modificar la asignación de {{ object.cliente.nombre_completo }} a {{ object.vendedor.get_full_name }}
+                            {% else %}
+                                Asignar un cliente a un vendedor para visitas regulares
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow rounded-lg">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información de la Asignación</h3>
+                </div>
+
+                <div class="px-6 py-4 space-y-6">
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                            <div class="flex">
+                                <i class="fas fa-exclamation-circle text-red-400 mr-2 mt-0.5"></i>
+                                <div class="text-sm text-red-700">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Cliente -->
+                    <div>
+                        <label for="{{ form.cliente.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-blue-600"></i>Cliente *
+                        </label>
+                        {{ form.cliente }}
+                        {% if form.cliente.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.cliente.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            Selecciona el cliente que será asignado al vendedor
+                        </p>
+                    </div>
+
+                    <!-- Vendedor -->
+                    <div>
+                        <label for="{{ form.vendedor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-user-tie mr-2 text-green-600"></i>Vendedor *
+                        </label>
+                        {{ form.vendedor }}
+                        {% if form.vendedor.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.vendedor.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            Vendedor responsable de visitar este cliente
+                        </p>
+                    </div>
+
+                    <!-- Frecuencia de Visita -->
+                    <div>
+                        <label for="{{ form.frecuencia_visita.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-clock mr-2 text-purple-600"></i>Frecuencia de Visita *
+                        </label>
+                        {{ form.frecuencia_visita }}
+                        {% if form.frecuencia_visita.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.frecuencia_visita.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            ¿Con qué frecuencia debe visitar el vendedor a este cliente?
+                        </p>
+                    </div>
+
+                    <!-- Fecha de Primera Visita -->
+                    <div>
+                        <label for="{{ form.fecha_primera_visita.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-calendar-alt mr-2 text-orange-600"></i>Fecha de Primera Visita
+                        </label>
+                        {{ form.fecha_primera_visita }}
+                        {% if form.fecha_primera_visita.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.fecha_primera_visita.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            Si no se especifica, se programará automáticamente según la frecuencia
+                        </p>
+                    </div>
+
+                    <!-- Activa -->
+                    <div class="flex items-center">
+                        <div class="flex items-center h-5">
+                            {{ form.activa }}
+                        </div>
+                        <div class="ml-3">
+                            <label for="{{ form.activa.id_for_label }}" class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-toggle-on mr-2 text-green-600"></i>Asignación Activa
+                            </label>
+                            <p class="text-sm text-gray-500">
+                                Si está activa, el vendedor debe realizar visitas según la frecuencia establecida
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    <div>
+                        <label for="{{ form.notas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>Notas
+                        </label>
+                        {{ form.notas }}
+                        {% if form.notas.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.notas.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            Información adicional sobre esta asignación
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+                    <a href="{% url 'rutas:asignaciones' %}" 
+                       class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-4 py-2 rounded-md font-medium transition-colors">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        {% if object %}Actualizar Asignación{% else %}Crear Asignación{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Información Adicional para Nueva Asignación -->
+        {% if not object %}
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <i class="fas fa-info-circle text-blue-400 mr-3 mt-0.5"></i>
+                <div>
+                    <h4 class="text-sm font-medium text-blue-800 mb-2">Información Importante</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        <li>• Al crear la asignación, se calculará automáticamente la fecha de la próxima visita</li>
+                        <li>• El vendedor podrá ver este cliente en su lista de clientes asignados</li>
+                        <li>• Las visitas vencidas aparecerán marcadas en el dashboard</li>
+                        <li>• Puedes cambiar la frecuencia de visita en cualquier momento</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Estilos para los campos del formulario */
+select, input[type="text"], input[type="date"], textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    outline: none;
+}
+
+select:focus, input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
+    --tw-ring-color: #3b82f6;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+select {
+    padding-right: 2.5rem;
+}
+
+textarea {
+    resize: none;
+    min-height: 100px;
+}
+
+input[type="checkbox"] {
+    height: 1rem;
+    width: 1rem;
+    color: #3b82f6;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}

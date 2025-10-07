@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'compras',
     'analytics',
     'api',
+    'rutas',
 ]
 
 MIDDLEWARE = [

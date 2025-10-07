@@ -157,6 +157,26 @@ NAVIGATION_CONFIG = {
                 ]
             },
             {
+                'name': 'Rutas de Vendedores',
+                'icon': 'fas fa-route',
+                'main_url': 'rutas:dashboard',
+                'active_namespace': 'rutas',
+                'subitems': [
+                    {
+                        'name': 'Dashboard Rutas',
+                        'url': 'rutas:dashboard',
+                        'icon': 'fas fa-tachometer-alt',
+                        'description': 'Panel principal de gestión de rutas'
+                    },
+                    {
+                        'name': 'Asignaciones',
+                        'url': 'rutas:asignaciones',
+                        'icon': 'fas fa-handshake',
+                        'description': 'Gestionar asignaciones de clientes a vendedores'
+                    }
+                ]
+            },
+            {
                 'name': 'Analytics e IA',
                 'icon': 'fas fa-brain',
                 'main_url': 'analytics:dashboard',
@@ -283,6 +303,26 @@ NAVIGATION_CONFIG = {
                         'name': 'Nueva Actividad',
                         'url': 'crm:actividad_create',
                         'icon': 'fas fa-calendar-plus'
+                    }
+                ]
+            },
+            {
+                'name': 'Mis Rutas',
+                'icon': 'fas fa-map-marked-alt',
+                'main_url': 'rutas:mis_clientes',
+                'active_namespace': 'rutas',
+                'subitems': [
+                    {
+                        'name': 'Mis Clientes',
+                        'url': 'rutas:mis_clientes',
+                        'icon': 'fas fa-users',
+                        'description': 'Ver clientes asignados para visitar'
+                    },
+                    {
+                        'name': 'Registrar Visita',
+                        'url': 'rutas:visita_create',
+                        'icon': 'fas fa-calendar-plus',
+                        'description': 'Registrar nueva visita a cliente'
                     }
                 ]
             }

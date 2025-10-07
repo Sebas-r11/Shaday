@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ cliente.nombre_completo }} - Detalle Cliente{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <a href="{% url 'rutas:mis_clientes' %}" 
+                           class="text-gray-400 hover:text-gray-600 mr-4">
+                            <i class="fas fa-arrow-left text-xl"></i>
+                        </a>
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">
+                                <i class="fas fa-user mr-3 text-blue-600"></i>
+                                {{ cliente.nombre_completo }}
+                            </h1>
+                            <p class="mt-2 text-gray-600">
+                                Cliente desde {{ cliente.fecha_creacion|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'rutas:visita_create' %}?cliente={{ cliente.id }}" 
+                           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                            <i class="fas fa-calendar-plus mr-2"></i>Nueva Visita
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Información del Cliente -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Datos Básicos -->
+            <div class="lg:col-span-2 bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-address-card mr-2 text-blue-600"></i>
+                        Información del Cliente
+                    </h3>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Nombre Completo</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ cliente.nombre_completo }}</dd>
+                        </div>
+                        {% if cliente.email %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <a href="mailto:{{ cliente.email }}" class="text-blue-600 hover:text-blue-800">
+                                    {{ cliente.email }}
+                                </a>
+                            </dd>
+                        </div>
+                        {% endif %}
+                        {% if cliente.telefono %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <a href="tel:{{ cliente.telefono }}" class="text-blue-600 hover:text-blue-800">
+                                    {{ cliente.telefono }}
+                                </a>
+                            </dd>
+                        </div>
+                        {% endif %}
+                        {% if cliente.direccion %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Dirección</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ cliente.direccion }}</dd>
+                        </div>
+                        {% endif %}
+                        {% if cliente.ciudad %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Ciudad</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ cliente.ciudad.nombre }}</dd>
+                        </div>
+                        {% endif %}
+                        {% if cliente.departamento %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Departamento</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ cliente.departamento.nombre }}</dd>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                            <dd class="mt-1">
+                                {% if cliente.activo %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Activo
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <i class="fas fa-times-circle mr-1"></i>Inactivo
+                                    </span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Cliente desde</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ cliente.fecha_creacion|date:"d/m/Y" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Información de Asignación -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-route mr-2 text-green-600"></i>
+                        Asignación de Ruta
+                    </h3>
+                </div>
+                <div class="px-6 py-4">
+                    {% if asignacion %}
+                    <dl class="space-y-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Vendedor Asignado</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ asignacion.vendedor.get_full_name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Frecuencia de Visita</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ asignacion.get_frecuencia_visita_display }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Última Visita</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {% if asignacion.ultima_visita %}
+                                    {{ asignacion.ultima_visita|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="text-gray-400">Nunca</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Próxima Visita</dt>
+                            <dd class="mt-1">
+                                {% if asignacion.proxima_visita %}
+                                    {% if asignacion.visita_vencida %}
+                                        <span class="text-red-600 font-medium">
+                                            {{ asignacion.proxima_visita|date:"d/m/Y" }} (Vencida)
+                                        </span>
+                                    {% elif asignacion.dias_para_proxima_visita <= 3 %}
+                                        <span class="text-yellow-600 font-medium">
+                                            {{ asignacion.proxima_visita|date:"d/m/Y" }} (Urgente)
+                                        </span>
+                                    {% else %}
+                                        <span class="text-green-600">
+                                            {{ asignacion.proxima_visita|date:"d/m/Y" }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-gray-400">Sin programar</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Estado de Asignación</dt>
+                            <dd class="mt-1">
+                                {% if asignacion.activa %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Activa
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-pause-circle mr-1"></i>Inactiva
+                                    </span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        {% if asignacion.notas %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Notas de Asignación</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ asignacion.notas }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle text-gray-400 text-2xl mb-2"></i>
+                        <p class="text-sm text-gray-500">Este cliente no tiene asignación de ruta.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de Visitas -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-history mr-2 text-purple-600"></i>
+                        Historial de Visitas
+                    </h3>
+                    {% if visitas.count > 0 %}
+                    <span class="text-sm text-gray-500">
+                        {{ visitas.count }} visita{{ visitas.count|pluralize }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if visitas %}
+            <div class="px-6 py-4">
+                <div class="space-y-4">
+                    {% for visita in visitas %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-4 mb-2">
+                                    <h4 class="text-lg font-medium text-gray-900">
+                                        {{ visita.fecha_visita|date:"d/m/Y" }}
+                                    </h4>
+                                    
+                                    <!-- Tipo de Visita -->
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if visita.tipo_visita == 'programada' %}bg-blue-100 text-blue-800
+                                        {% elif visita.tipo_visita == 'no_programada' %}bg-orange-100 text-orange-800
+                                        {% elif visita.tipo_visita == 'urgente' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ visita.get_tipo_visita_display }}
+                                    </span>
+                                    
+                                    <!-- Resultado -->
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if visita.resultado == 'exitosa' %}bg-green-100 text-green-800
+                                        {% elif visita.resultado == 'parcial' %}bg-yellow-100 text-yellow-800
+                                        {% elif visita.resultado == 'no_exitosa' %}bg-red-100 text-red-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ visita.get_resultado_display }}
+                                    </span>
+                                </div>
+                                
+                                {% if visita.hora_inicio or visita.hora_fin %}
+                                <div class="text-sm text-gray-600 mb-2">
+                                    {% if visita.hora_inicio %}
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Desde {{ visita.hora_inicio|time:"H:i" }}
+                                        {% if visita.hora_fin %}
+                                            hasta {{ visita.hora_fin|time:"H:i" }}
+                                            ({{ visita.duracion_horas|floatformat:1 }}h)
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                
+                                {% if visita.objetivo %}
+                                <div class="text-sm text-gray-700 mb-2">
+                                    <span class="font-medium">Objetivo:</span> {{ visita.objetivo }}
+                                </div>
+                                {% endif %}
+                                
+                                {% if visita.observaciones %}
+                                <div class="text-sm text-gray-700 mb-2">
+                                    <span class="font-medium">Observaciones:</span> {{ visita.observaciones }}
+                                </div>
+                                {% endif %}
+                                
+                                {% if visita.seguimiento_requerido %}
+                                <div class="bg-yellow-50 border border-yellow-200 rounded p-2 mt-2">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-2 mt-0.5"></i>
+                                        <div>
+                                            <div class="text-sm font-medium text-yellow-800">Requiere Seguimiento</div>
+                                            {% if visita.notas_seguimiento %}
+                                            <div class="text-sm text-yellow-700 mt-1">{{ visita.notas_seguimiento }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="text-right text-sm text-gray-500">
+                                Registrada {{ visita.fecha_registro|date:"d/m/Y H:i" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="px-6 py-8 text-center">
+                <i class="fas fa-calendar-times text-gray-400 text-4xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Sin visitas registradas</h3>
+                <p class="text-gray-500 mb-4">
+                    Aún no se han registrado visitas para este cliente.
+                </p>
+                {% if asignacion %}
+                <a href="{% url 'rutas:visita_create' %}?cliente={{ cliente.id }}" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                    <i class="fas fa-calendar-plus mr-2"></i>Registrar Primera Visita
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

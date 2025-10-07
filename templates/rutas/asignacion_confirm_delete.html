@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Asignación - Rutas{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="py-6">
+                <div class="flex items-center">
+                    <a href="{% url 'rutas:asignaciones' %}" 
+                       class="text-gray-400 hover:text-gray-600 mr-4">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">
+                            <i class="fas fa-trash mr-3 text-red-600"></i>
+                            Eliminar Asignación
+                        </h1>
+                        <p class="mt-2 text-gray-600">
+                            Confirma la eliminación de la asignación
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow rounded-lg">
+            <!-- Advertencia -->
+            <div class="px-6 py-4 bg-red-50 border-b border-red-200">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-0.5"></i>
+                    <div>
+                        <h3 class="text-lg font-medium text-red-800">¡Atención!</h3>
+                        <p class="text-sm text-red-700 mt-1">
+                            Esta acción no se puede deshacer. Al eliminar la asignación se perderán todos los datos relacionados.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de la Asignación -->
+            <div class="px-6 py-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    ¿Estás seguro de que quieres eliminar esta asignación?
+                </h4>
+                
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Cliente</dt>
+                            <dd class="mt-1 text-lg font-semibold text-gray-900">
+                                <i class="fas fa-user mr-2 text-blue-600"></i>
+                                {{ asignacion.cliente.nombre_completo }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Vendedor</dt>
+                            <dd class="mt-1 text-lg font-semibold text-gray-900">
+                                <i class="fas fa-user-tie mr-2 text-green-600"></i>
+                                {{ asignacion.vendedor.get_full_name }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Frecuencia de Visita</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ asignacion.get_frecuencia_visita_display }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                            <dd class="mt-1">
+                                {% if asignacion.activa %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Activa
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        <i class="fas fa-pause-circle mr-1"></i>Inactiva
+                                    </span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div class="md:col-span-2">
+                            <dt class="text-sm font-medium text-gray-500">Fecha de Asignación</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ asignacion.fecha_asignacion|date:"d/m/Y H:i" }}
+                            </dd>
+                        </div>
+                        {% if asignacion.notas %}
+                        <div class="md:col-span-2">
+                            <dt class="text-sm font-medium text-gray-500">Notas</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ asignacion.notas }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+
+                <!-- Consecuencias de la eliminación -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-yellow-400 mr-3 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-yellow-800 mb-2">Consecuencias de esta acción:</h4>
+                            <ul class="text-sm text-yellow-700 space-y-1">
+                                <li>• Se eliminará la asignación del cliente al vendedor</li>
+                                <li>• El cliente quedará disponible para nuevas asignaciones</li>
+                                <li>• Se mantendrá el historial de visitas realizadas</li>
+                                <li>• Las visitas programadas pendientes se cancelarán</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de confirmación -->
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="flex justify-end space-x-3">
+                        <a href="{% url 'rutas:asignaciones' %}" 
+                           class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-6 py-2 rounded-md font-medium transition-colors">
+                            <i class="fas fa-times mr-2"></i>Cancelar
+                        </a>
+                        <button type="submit" 
+                                class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md font-medium transition-colors">
+                            <i class="fas fa-trash mr-2"></i>Eliminar Asignación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Alternativa sugerida -->
+        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <i class="fas fa-lightbulb text-blue-400 mr-3 mt-0.5"></i>
+                <div>
+                    <h4 class="text-sm font-medium text-blue-800 mb-2">¿Consideras una alternativa?</h4>
+                    <p class="text-sm text-blue-700 mb-3">
+                        En lugar de eliminar la asignación, podrías desactivarla temporalmente.
+                        Esto preservará el historial y permitirá reactivarla en el futuro.
+                    </p>
+                    <a href="{% url 'rutas:asignacion_update' asignacion.id %}" 
+                       class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        <i class="fas fa-edit mr-2"></i>Editar asignación en su lugar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

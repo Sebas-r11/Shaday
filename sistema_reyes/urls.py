@@ -29,6 +29,7 @@ urlpatterns = [
     path('compras/', include('compras.urls')),
     path('analytics/', include('analytics.urls')),
     path('api/', include('api.urls')),
+    path('rutas/', include('rutas.urls')),
     path('test-forms/', TemplateView.as_view(template_name='test_forms.html'), name='test_forms'),
     path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico')),
     path('', RedirectView.as_view(url='/accounts/dashboard/', permanent=False)),
