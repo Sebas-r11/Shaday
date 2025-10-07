@@ -12,7 +12,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 
 from .models import Categoria, Subcategoria, Producto
-from .forms import SubcategoriaForm
+from .forms import SubcategoriaForm, CategoriaForm
 
 
 class InventarioViewMixin(UserPassesTestMixin):
@@ -69,7 +69,7 @@ class CategoriaCreateView(AdminOnlyMixin, CreateView):
     """Crear nueva categoría"""
     model = Categoria
     template_name = 'inventario/categoria_form.html'
-    fields = ['nombre', 'descripcion', 'activa']
+    form_class = CategoriaForm
     success_url = reverse_lazy('inventario:categoria_list')
     
     def form_valid(self, form):
@@ -123,7 +123,7 @@ class CategoriaUpdateView(AdminOnlyMixin, UpdateView):
     """Editar categoría"""
     model = Categoria
     template_name = 'inventario/categoria_form.html'
-    fields = ['nombre', 'descripcion', 'activa']
+    form_class = CategoriaForm
     success_url = reverse_lazy('inventario:categoria_list')
     
     def form_valid(self, form):

@@ -59,6 +59,25 @@
                 </div>
                 {% endif %}
             </div>
+            
+            <div>
+                <div class="flex items-center">
+                    <input type="checkbox" name="activa" id="{{ form.activa.id_for_label }}" 
+                           {% if form.activa.value is None or form.activa.value %}checked{% endif %}
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="{{ form.activa.id_for_label }}" class="ml-2 block text-sm font-medium text-gray-700">
+                        Categoría activa
+                    </label>
+                </div>
+                <p class="mt-1 text-sm text-gray-500">
+                    Las categorías inactivas no aparecerán en las listas de selección
+                </p>
+                {% if form.activa.errors %}
+                <div class="mt-1 text-sm text-red-600">
+                    {{ form.activa.errors }}
+                </div>
+                {% endif %}
+            </div>
 
             {% if form.non_field_errors %}
             <div class="bg-red-50 border border-red-200 rounded-md p-4">

@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Solicitudes de Compra{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumbs -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/accounts/dashboard/" class="text-blue-600 hover:text-blue-800">Inicio</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="/compras/gestion/" class="text-blue-600 hover:text-blue-800">Compras</a>
+            </li>
+            <li class="breadcrumb-item active text-gray-600" aria-current="page">
+                Solicitudes
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Título y Acciones -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                            <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
+                            Solicitudes de Compra
+                        </h1>
+                        <p class="text-gray-600">
+                            Gestionar todas las solicitudes de compra del sistema
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{% url 'compras:solicitud_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Nueva Solicitud
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Estado</label>
+                        <select name="estado" class="form-select">
+                            <option value="">Todos los estados</option>
+                            <option value="borrador" {% if request.GET.estado == 'borrador' %}selected{% endif %}>Borrador</option>
+                            <option value="enviada" {% if request.GET.estado == 'enviada' %}selected{% endif %}>Enviada</option>
+                            <option value="aprobada" {% if request.GET.estado == 'aprobada' %}selected{% endif %}>Aprobada</option>
+                            <option value="rechazada" {% if request.GET.estado == 'rechazada' %}selected{% endif %}>Rechazada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" name="usuario" class="form-control" value="{{ request.GET.usuario }}" placeholder="Buscar usuario...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Desde</label>
+                        <input type="date" name="fecha_desde" class="form-control" value="{{ request.GET.fecha_desde }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Hasta</label>
+                        <input type="date" name="fecha_hasta" class="form-control" value="{{ request.GET.fecha_hasta }}">
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                        <a href="{% url 'compras:solicitud_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Solicitudes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Número</th>
+                                <th>Usuario</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Total Items</th>
+                                <th>Observaciones</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for solicitud in solicitudes %}
+                            <tr>
+                                <td>
+                                    <strong>#{{ solicitud.numero_solicitud|default:solicitud.id }}</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-circle text-gray-400 me-2"></i>
+                                        {{ solicitud.solicitante.get_full_name|default:solicitud.solicitante.username }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ solicitud.fecha_solicitud|date:"d/m/Y" }}
+                                </td>
+                                <td>
+                                    {% if solicitud.estado == 'borrador' %}
+                                        <span class="badge bg-secondary">Borrador</span>
+                                    {% elif solicitud.estado == 'enviada' %}
+                                        <span class="badge bg-warning">Enviada</span>
+                                    {% elif solicitud.estado == 'aprobada' %}
+                                        <span class="badge bg-success">Aprobada</span>
+                                    {% elif solicitud.estado == 'rechazada' %}
+                                        <span class="badge bg-danger">Rechazada</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">{{ solicitud.estado|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ solicitud.items.count }}</span>
+                                </td>
+                                <td>
+                                    {% if solicitud.observaciones %}
+                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ solicitud.observaciones }}">
+                                            {{ solicitud.observaciones }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Sin observaciones</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'compras:solicitud_detail' solicitud.pk %}" class="btn btn-outline-primary" title="Ver detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if solicitud.estado == 'borrador' %}
+                                        <a href="{% url 'compras:solicitud_update' solicitud.pk %}" class="btn btn-outline-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fas fa-clipboard-list fa-3x text-gray-300 mb-3"></i>
+                                        <h5 class="text-gray-500">No hay solicitudes</h5>
+                                        <p class="text-gray-400 mb-3">No se encontraron solicitudes con los filtros seleccionados.</p>
+                                        <a href="{% url 'compras:solicitud_create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus mr-2"></i>Crear Primera Solicitud
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <div class="p-4 border-top">
+                    <nav aria-label="Paginación de solicitudes">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1">Primera</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Última</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumbs -->
+    {% if breadcrumbs %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if breadcrumb.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ breadcrumb.url }}" class="text-blue-600 hover:text-blue-800">
+                            {{ breadcrumb.title }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item active text-gray-600" aria-current="page">
+                        {{ breadcrumb.title }}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+    {% endif %}
+
+    <!-- Título y Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                            <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i>
+                            {{ title }}
+                        </h1>
+                        <p class="text-gray-600">
+                            Monitoreo de productos con niveles de stock bajo que requieren reposición
+                        </p>
+                    </div>
+                    <div>
+                        <a href="/compras/ordenes/crear/" class="btn btn-warning">
+                            <i class="fas fa-shopping-cart mr-2"></i>Crear Orden de Compra
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-exclamation-triangle fa-2x text-yellow-600 mb-2"></i>
+                            <h3 class="text-yellow-900">{{ total_alertas }}</h3>
+                            <p class="text-yellow-700 mb-0">Total Alertas</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-times-circle fa-2x text-red-600 mb-2"></i>
+                            <h3 class="text-red-900">{{ alertas_criticas }}</h3>
+                            <p class="text-red-700 mb-0">Sin Stock (Críticas)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter mr-2"></i>Filtros de Búsqueda
+                </h5>
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Buscar producto</label>
+                        <input type="text" name="search" class="form-control" 
+                               value="{{ search }}" 
+                               placeholder="Nombre o código del producto...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Categoría</label>
+                        <select name="categoria" class="form-select">
+                            <option value="">Todas las categorías</option>
+                            {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" {% if categoria_filter == categoria.id|stringformat:"s" %}selected{% endif %}>
+                                {{ categoria.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a href="/compras/gestion/alertas-stock/" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Alertas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list mr-2"></i>Productos con Stock Bajo 
+                        <span class="badge bg-warning">{{ page_obj.paginator.count }}</span>
+                    </h5>
+                    {% if is_paginated %}
+                    <small class="text-muted">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </small>
+                    {% endif %}
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Bodega</th>
+                                <th>Stock Actual</th>
+                                <th>Stock Mínimo</th>
+                                <th>Diferencia</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            {% if stock.cantidad == 0 %}
+                                                <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-times"></i>
+                                                </div>
+                                            {% else %}
+                                                <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-exclamation"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ stock.producto.nombre }}</h6>
+                                            <small class="text-muted">{{ stock.producto.codigo }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ stock.bodega.nombre }}</span>
+                                </td>
+                                <td>
+                                    {% if stock.cantidad == 0 %}
+                                        <span class="text-danger fw-bold">{{ stock.cantidad }}</span>
+                                    {% elif stock.cantidad <= 5 %}
+                                        <span class="text-warning fw-bold">{{ stock.cantidad }}</span>
+                                    {% else %}
+                                        <span class="text-dark">{{ stock.cantidad }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ stock.producto.stock_minimo }}</span>
+                                </td>
+                                <td>
+                                    {% if stock.diferencia_stock < 0 %}
+                                        <span class="text-danger">{{ stock.diferencia_stock }}</span>
+                                    {% elif stock.diferencia_stock > 0 %}
+                                        <span class="text-success">+{{ stock.diferencia_stock }}</span>
+                                    {% else %}
+                                        <span class="text-muted">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if stock.cantidad == 0 %}
+                                        <span class="badge bg-danger">Sin Stock</span>
+                                    {% elif stock.cantidad <= 5 %}
+                                        <span class="badge bg-warning">Crítico</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Bajo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/admin/inventario/producto/{{ stock.producto.id }}/change/" 
+                                           class="btn btn-outline-primary" title="Ver producto">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/admin/inventario/stock/?producto__id__exact={{ stock.producto.id }}" 
+                                           class="btn btn-outline-info" title="Ver stock">
+                                            <i class="fas fa-boxes"></i>
+                                        </a>
+                                        <a href="/compras/ordenes/crear/?producto={{ stock.producto.id }}" 
+                                           class="btn btn-outline-success" title="Crear orden">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fas fa-check-circle fa-3x text-green-400 mb-3"></i>
+                                        <h5 class="text-green-600">¡Excelente! No hay alertas de stock</h5>
+                                        <p class="text-gray-500 mb-3">Todos los productos tienen niveles de stock adecuados.</p>
+                                        <a href="/inventario/productos/" class="btn btn-success">
+                                            <i class="fas fa-box mr-2"></i>Ver Todos los Productos
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <div class="p-4 border-top">
+                    <nav aria-label="Paginación de alertas">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1">Primera</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Última</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Enlaces Rápidos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-link mr-2"></i>Acciones Rápidas
+                </h5>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <a href="/compras/ordenes/crear/" class="btn btn-warning w-100">
+                            <i class="fas fa-shopping-cart me-2"></i>Nueva Orden de Compra
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/inventario/productos/" class="btn btn-outline-info w-100">
+                            <i class="fas fa-box me-2"></i>Ver Productos
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/stock/" class="btn btn-outline-success w-100">
+                            <i class="fas fa-warehouse me-2"></i>Admin Stock
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/compras/gestion/" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Volver a Compras
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

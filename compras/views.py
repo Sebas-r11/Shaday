@@ -888,7 +888,7 @@ def gestion_compras_dashboard(request):
     """Dashboard centralizado simplificado para gestión de compras y proveedores"""
     from django.http import HttpResponse
     
-    # HTML directo sin template complejo
+    # HTML directo unificado con Tailwind CSS
     html = f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -896,160 +896,165 @@ def gestion_compras_dashboard(request):
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Dashboard de Compras - Sistema Reyes</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-        <style>
-            .dashboard-header {{
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 2rem 0;
-                margin-bottom: 2rem;
-            }}
-            .module-card {{
-                border: none;
-                border-radius: 15px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                transition: transform 0.3s ease;
-                height: 100%;
-            }}
-            .module-card:hover {{
-                transform: translateY(-5px);
-            }}
-            .module-icon {{
-                font-size: 3rem;
-                margin-bottom: 1rem;
-            }}
-        </style>
     </head>
-    <body>
-        <div class="dashboard-header">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <h1><i class="fas fa-truck"></i> Dashboard de Compras</h1>
-                        <p class="lead">Sistema centralizado para gestión de proveedores y compras</p>
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb justify-content-center" style="background: rgba(255,255,255,0.1);">
-                                <li class="breadcrumb-item"><a href="/accounts/dashboard/" style="color: white;">Inicio</a></li>
-                                <li class="breadcrumb-item active" aria-current="page" style="color: rgba(255,255,255,0.8);">Gestión de Compras</li>
-                            </ol>
-                        </nav>
+    <body class="bg-gray-50">
+        <!-- Header unificado -->
+        <div class="min-h-screen py-6">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <!-- Breadcrumb y título -->
+                <div class="mb-6">
+                    <nav class="text-sm font-medium text-gray-500 mb-4">
+                        <a href="/accounts/dashboard/" class="hover:text-gray-700">Inicio</a>
+                        <span class="mx-2">/</span>
+                        <span class="text-gray-900">Gestión de Compras</span>
+                    </nav>
+                    
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">
+                                <i class="fas fa-truck mr-2 text-blue-600"></i>
+                                Dashboard de Compras
+                            </h1>
+                            <p class="text-gray-600 mt-2">Sistema centralizado para gestión de proveedores y compras</p>
+                        </div>
+                        <a href="/accounts/dashboard/" class="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-arrow-left mr-1"></i> Volver al Dashboard
+                        </a>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="container">
-            <div class="row g-4">
-                <!-- Gestión de Proveedores -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="card module-card">
-                        <div class="card-body text-center">
-                            <div class="module-icon text-primary">
+
+                <!-- Módulos de gestión -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Gestión de Proveedores -->
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-6 text-center">
+                            <div class="text-blue-600 text-5xl mb-4">
                                 <i class="fas fa-building"></i>
                             </div>
-                            <h5 class="card-title">Gestión de Proveedores</h5>
-                            <p class="card-text">Administrar proveedores y sus productos</p>
-                            <a href="/compras/gestion/proveedores/" class="btn btn-primary">
-                                <i class="fas fa-arrow-right"></i> Acceder
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Gestión de Proveedores</h3>
+                            <p class="text-gray-600 mb-4">Administrar proveedores y productos</p>
+                            <a href="/compras/gestion/proveedores/" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-arrow-right mr-1"></i> Acceder
                             </a>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Presentaciones -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="card module-card">
-                        <div class="card-body text-center">
-                            <div class="module-icon text-success">
+                    
+                    <!-- Presentaciones -->
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-6 text-center">
+                            <div class="text-green-600 text-5xl mb-4">
                                 <i class="fas fa-boxes"></i>
                             </div>
-                            <h5 class="card-title">Presentaciones</h5>
-                            <p class="card-text">Configurar presentaciones por proveedor</p>
-                            <a href="/compras/gestion/presentaciones/" class="btn btn-success">
-                                <i class="fas fa-arrow-right"></i> Acceder
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Presentaciones</h3>
+                            <p class="text-gray-600 mb-4">Configurar presentaciones por proveedor</p>
+                            <a href="/compras/gestion/presentaciones/" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-arrow-right mr-1"></i> Acceder
                             </a>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Alertas de Stock -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="card module-card">
-                        <div class="card-body text-center">
-                            <div class="module-icon text-warning">
+                    
+                    <!-- Alertas de Stock -->
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-6 text-center">
+                            <div class="text-yellow-600 text-5xl mb-4">
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
-                            <h5 class="card-title">Alertas de Stock</h5>
-                            <p class="card-text">Monitorear niveles de inventario</p>
-                            <a href="/compras/gestion/alertas-stock/" class="btn btn-warning">
-                                <i class="fas fa-arrow-right"></i> Acceder
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Alertas de Stock</h3>
+                            <p class="text-gray-600 mb-4">Monitorear niveles de inventario</p>
+                            <a href="/compras/gestion/alertas-stock/" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-arrow-right mr-1"></i> Acceder
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Órdenes de Compra -->
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-6 text-center">
+                            <div class="text-purple-600 text-5xl mb-4">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Órdenes de Compra</h3>
+                            <p class="text-gray-600 mb-4">Gestionar órdenes de compra</p>
+                            <a href="/compras/ordenes/" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-arrow-right mr-1"></i> Acceder
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Solicitudes de Compra -->
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-6 text-center">
+                            <div class="text-indigo-600 text-5xl mb-4">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Solicitudes de Compra</h3>
+                            <p class="text-gray-600 mb-4">Gestionar solicitudes internas</p>
+                            <a href="/compras/solicitudes/" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-arrow-right mr-1"></i> Acceder
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Proveedores -->
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                        <div class="p-6 text-center">
+                            <div class="text-red-600 text-5xl mb-4">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Proveedores</h3>
+                            <p class="text-gray-600 mb-4">Administrar catálogo de proveedores</p>
+                            <a href="/compras/proveedores/" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-arrow-right mr-1"></i> Acceder
                             </a>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Órdenes de Compra -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="card module-card">
-                        <div class="card-body text-center">
-                            <div class="module-icon text-info">
-                                <i class="fas fa-file-invoice"></i>
-                            </div>
-                            <h5 class="card-title">Órdenes de Compra</h5>
-                            <p class="card-text">Gestionar órdenes de compra</p>
-                            <a href="/compras/ordenes/" class="btn btn-info">
-                                <i class="fas fa-arrow-right"></i> Acceder
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Información del Sistema -->
-            <div class="row mt-5">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <h5 class="card-title">
-                                <i class="fas fa-info-circle text-primary"></i> 
+                <!-- Información del Sistema -->
+                <div class="mt-8">
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                        <div class="p-6 text-center">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                <i class="fas fa-info-circle text-blue-600 mr-2"></i> 
                                 Información del Sistema
-                            </h5>
-                            <p class="card-text">
+                            </h3>
+                            <p class="text-gray-600 mb-4">
                                 Este dashboard centraliza todas las funcionalidades relacionadas con compras y proveedores. 
                                 Accede rápidamente a la gestión de proveedores, configuración de presentaciones, 
                                 monitoreo de alertas de stock y administración de órdenes de compra.
                             </p>
-                            <small class="text-muted">
-                                <i class="fas fa-lightbulb"></i> 
+                            <p class="text-sm text-gray-500">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-1"></i> 
                                 Tip: Utiliza las presentaciones dinámicas para configurar diferentes formatos de venta por proveedor.
-                            </small>
+                            </p>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Links de navegación rápida -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <h6 class="card-title">Navegación Rápida</h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                <a href="/admin/inventario/proveedor/" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-cog"></i> Admin Proveedores
+                
+                <!-- Links de navegación rápida -->
+                <div class="mt-6">
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Navegación Rápida</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <a href="/admin/inventario/proveedor/" class="border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-cog mr-1"></i> Admin Proveedores
                                 </a>
-                                <a href="/admin/inventario/productoproveedor/" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-link"></i> Admin Productos-Proveedores
+                                <a href="/admin/inventario/productoproveedor/" class="border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-link mr-1"></i> Admin Productos-Proveedores
                                 </a>
-                                <a href="/admin/inventario/presentacionproveedorproducto/" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-boxes"></i> Admin Presentaciones
+                                <a href="/admin/inventario/presentacionproveedorproducto/" class="border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-boxes mr-1"></i> Admin Presentaciones
                                 </a>
-                                <a href="/inventario/alertas-stock/" class="btn btn-outline-warning btn-sm">
-                                    <i class="fas fa-exclamation-triangle"></i> Alertas Stock
+                                <a href="/inventario/alertas-stock/" class="border border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100 px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i> Alertas Stock
                                 </a>
-                                <a href="/compras/ordenes/" class="btn btn-outline-info btn-sm">
-                                    <i class="fas fa-shopping-cart"></i> Lista Órdenes
+                                <a href="/compras/ordenes/" class="border border-purple-300 text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-shopping-cart mr-1"></i> Lista Órdenes
                                 </a>
                             </div>
                         </div>
@@ -1057,8 +1062,6 @@ def gestion_compras_dashboard(request):
                 </div>
             </div>
         </div>
-        
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     </body>
     </html>
     """

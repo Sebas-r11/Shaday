@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumbs -->
+    {% if breadcrumbs %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if breadcrumb.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ breadcrumb.url }}" class="text-blue-600 hover:text-blue-800">
+                            {{ breadcrumb.title }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item active text-gray-600" aria-current="page">
+                        {{ breadcrumb.title }}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+    {% endif %}
+
+    <!-- Título y Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                            <i class="fas fa-users-cog mr-2 text-blue-600"></i>
+                            {{ title }}
+                        </h1>
+                        <p class="text-gray-600">
+                            Administra y consulta la información de todos los proveedores
+                        </p>
+                    </div>
+                    <div>
+                        <a href="/admin/inventario/proveedor/add/" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Nuevo Proveedor
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-building fa-2x text-blue-600 mb-2"></i>
+                            <h3 class="text-blue-900">{{ total_proveedores }}</h3>
+                            <p class="text-blue-700 mb-0">Total Proveedores</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-check-circle fa-2x text-green-600 mb-2"></i>
+                            <h3 class="text-green-900">{{ proveedores_activos }}</h3>
+                            <p class="text-green-700 mb-0">Proveedores Activos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-search mr-2"></i>Filtros de Búsqueda
+                </h5>
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Buscar proveedor</label>
+                        <input type="text" name="search" class="form-control" 
+                               value="{{ search }}" 
+                               placeholder="Nombre, email, teléfono o ciudad...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Estado</label>
+                        <select name="activo" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="true" {% if activo_filter == "true" %}selected{% endif %}>Activos</option>
+                            <option value="false" {% if activo_filter == "false" %}selected{% endif %}>Inactivos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a href="/compras/gestion/proveedores/" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Proveedores -->
+    <div class="row">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list mr-2"></i>Lista de Proveedores 
+                        <span class="badge bg-secondary">{{ page_obj.paginator.count }}</span>
+                    </h5>
+                    {% if is_paginated %}
+                    <small class="text-muted">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </small>
+                    {% endif %}
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Proveedor</th>
+                                <th>Contacto</th>
+                                <th>Ubicación</th>
+                                <th>Productos</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for proveedor in proveedores %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-building"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ proveedor.nombre }}</h6>
+                                            <small class="text-muted">ID: {{ proveedor.id }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div><i class="fas fa-envelope text-muted me-1"></i>{{ proveedor.email|default:"No especificado" }}</div>
+                                        <div><i class="fas fa-phone text-muted me-1"></i>{{ proveedor.telefono|default:"No especificado" }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <i class="fas fa-map-marker-alt text-muted me-1"></i>
+                                        {{ proveedor.ciudad|default:"No especificada" }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge bg-info">{{ proveedor.total_productos }} productos</span><br>
+                                        <small class="text-muted">{{ proveedor.total_presentaciones }} presentaciones</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if proveedor.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/admin/inventario/proveedor/{{ proveedor.id }}/change/" 
+                                           class="btn btn-outline-primary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="/admin/inventario/productoproveedor/?proveedor__id__exact={{ proveedor.id }}" 
+                                           class="btn btn-outline-info" title="Ver productos">
+                                            <i class="fas fa-box"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                                        <h5 class="text-gray-500">No se encontraron proveedores</h5>
+                                        <p class="text-gray-400 mb-3">No hay proveedores que coincidan con los filtros aplicados.</p>
+                                        <a href="/admin/inventario/proveedor/add/" class="btn btn-primary">
+                                            <i class="fas fa-plus mr-2"></i>Agregar Primer Proveedor
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <div class="p-4 border-top">
+                    <nav aria-label="Paginación de proveedores">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1">Primera</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Última</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Enlaces Rápidos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-link mr-2"></i>Enlaces Rápidos
+                </h5>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/proveedor/" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-cog me-2"></i>Admin Proveedores
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/productoproveedor/" class="btn btn-outline-info w-100">
+                            <i class="fas fa-link me-2"></i>Productos-Proveedores
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/presentacionproveedorproducto/" class="btn btn-outline-success w-100">
+                            <i class="fas fa-boxes me-2"></i>Presentaciones
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/compras/gestion/" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Volver a Compras
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

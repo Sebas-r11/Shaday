@@ -428,7 +428,7 @@ class SolicitudCompraListView(ComprasRequiredMixin, ListView):
     
     def get_queryset(self):
         queryset = SolicitudCompra.objects.select_related(
-            'usuario_solicita', 'usuario_aprueba'
+            'solicitante', 'aprobado_por'
         ).prefetch_related('items')
         
         # Filtros básicos
@@ -441,7 +441,7 @@ class SolicitudCompraListView(ComprasRequiredMixin, ListView):
             queryset = queryset.filter(estado=estado)
         
         if usuario:
-            queryset = queryset.filter(usuario_solicita__id=usuario)
+            queryset = queryset.filter(solicitante__id=usuario)
         
         if fecha_desde:
             queryset = queryset.filter(fecha_solicitud__gte=fecha_desde)
@@ -467,7 +467,7 @@ class SolicitudCompraCreateView(ComprasRequiredMixin, CreateView):
     fields = ['motivo', 'prioridad', 'observaciones']
     
     def form_valid(self, form):
-        form.instance.usuario_solicita = self.request.user
+        form.instance.solicitante = self.request.user
         form.instance.estado = 'borrador'
         messages.success(self.request, 'Solicitud de compra creada exitosamente.')
         return super().form_valid(form)

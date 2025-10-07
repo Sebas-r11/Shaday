@@ -186,13 +186,13 @@ class CategoriaListView(InventarioViewMixin, ListView):
 class CategoriaCreateView(AdminOnlyMixin, CreateView):
     model = Categoria
     template_name = 'inventario/categoria_form.html'
-    fields = ['nombre', 'descripcion']
+    fields = ['nombre', 'descripcion', 'activa']
     success_url = reverse_lazy('inventario:categoria_list')
 
 class CategoriaUpdateView(AdminOnlyMixin, UpdateView):
     model = Categoria
     template_name = 'inventario/categoria_form.html'
-    fields = ['nombre', 'descripcion']
+    fields = ['nombre', 'descripcion', 'activa']
     success_url = reverse_lazy('inventario:categoria_list')
 
 def exportar_productos_excel(request):

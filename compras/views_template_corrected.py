@@ -10,7 +10,7 @@ from inventario.models import Proveedor, ProductoProveedor, PresentacionProveedo
 from decimal import Decimal
 
 @login_required
-def gestion_proveedores_simple(request):
+def gestion_proveedores_simple_template(request):
     """Vista simple para gestionar proveedores usando template system"""
     
     # Obtener parámetros de búsqueda y filtros
@@ -66,12 +66,7 @@ def gestion_proveedores_simple(request):
     return render(request, 'compras/gestion_proveedores.html', context)
 
 @login_required
-def gestion_presentaciones_simple(request):
-    """Vista simple para gestionar presentaciones (redirige a la vista ya existente)"""
-    return redirect('/inventario/presentaciones-simple/')
-
-@login_required
-def gestion_alertas_stock_simple(request):
+def gestion_alertas_stock_simple_template(request):
     """Vista simple para alertas de stock usando template system"""
     
     # Obtener productos con stock bajo
@@ -102,10 +97,6 @@ def gestion_alertas_stock_simple(request):
     # Paginación
     paginator = Paginator(queryset, 20)
     page_obj = paginator.get_page(page_number)
-    
-    # Agregar diferencia de stock a cada objeto
-    for stock in page_obj.object_list:
-        stock.diferencia_stock = stock.cantidad - stock.producto.stock_minimo
     
     # Estadísticas
     total_alertas = queryset.count()

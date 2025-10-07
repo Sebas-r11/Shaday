@@ -422,3 +422,42 @@ class SubcategoriaForm(forms.ModelForm):
         
         self.fields['activa'].label = "Subcategoría Activa"
         self.fields['activa'].help_text = "Marcar si la subcategoría está disponible para uso"
+
+
+class CategoriaForm(forms.ModelForm):
+    """Formulario para crear y editar categorías"""
+    
+    class Meta:
+        model = Categoria
+        fields = ['nombre', 'descripcion', 'activa']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                'placeholder': 'Ej: Electrónicos, Oficina, Limpieza, etc.',
+                'maxlength': '100'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm',
+                'rows': 3,
+                'placeholder': 'Descripción opcional de la categoría...'
+            }),
+            'activa': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded',
+                'checked': True  # ✅ ESTO ASEGURA QUE APAREZCA MARCADO POR DEFECTO
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Configurar labels y help_text
+        self.fields['nombre'].label = "Nombre de la Categoría"
+        self.fields['nombre'].help_text = "Máximo 100 caracteres. Debe ser único."
+        
+        self.fields['descripcion'].label = "Descripción"
+        self.fields['descripcion'].help_text = "Descripción opcional de la categoría"
+        self.fields['descripcion'].required = False
+        
+        self.fields['activa'].label = "Categoría Activa"
+        self.fields['activa'].help_text = "Marcar si la categoría está disponible para uso"
+        self.fields['activa'].initial = True  # ✅ VALOR INICIAL TRUE

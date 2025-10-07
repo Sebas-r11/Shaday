@@ -20,150 +20,159 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">
-                {% if object %}
-                    <i class="fas fa-edit text-warning me-2"></i>
-                    Editar Orden de Compra: {{ object.numero }}
-                {% else %}
-                    <i class="fas fa-plus-circle text-success me-2"></i>
-                    Nueva Orden de Compra
-                {% endif %}
-            </h1>
-            <p class="text-muted mb-0">
-                {% if object %}
-                    Actualizar información de la orden de compra
-                {% else %}
-                    Crear nueva orden de compra para proveedor
-                {% endif %}
-            </p>
-        </div>
-        <div>
-            <a href="{% url 'compras:orden_list' %}" class="btn btn-outline-secondary me-2">
-                <i class="fas fa-arrow-left me-1"></i> Volver
-            </a>
-            {% if object %}
-            <a href="{% url 'compras:orden_detail' object.pk %}" class="btn btn-outline-info">
-                <i class="fas fa-eye me-1"></i> Ver Detalle
-            </a>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if form.errors %}
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <h6><i class="fas fa-exclamation-triangle me-2"></i>Errores en el formulario:</h6>
-        <ul class="mb-0">
-            {% for field, errors in form.errors.items %}
-                {% for error in errors %}
-                    <li>
-                        {% if field != '__all__' %}<strong>{{ form.fields.field.label|default:field }}:</strong>{% endif %}
-                        {{ error }}
-                    </li>
-                {% endfor %}
-            {% endfor %}
-        </ul>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endif %}
-
-    <form method="post" novalidate>
-        {% csrf_token %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div class="row">
-            <!-- Formulario Principal -->
-            <div class="col-lg-8">
-                <!-- Información Básica -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-file-invoice me-2 text-primary"></i>
-                            Información de la Orden
-                        </h5>
+        <!-- Header unificado -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    {% if object %}
+                        <i class="fas fa-edit mr-2 text-yellow-600"></i>
+                        Editar Orden de Compra: {{ object.numero }}
+                    {% else %}
+                        <i class="fas fa-plus-circle mr-2 text-green-600"></i>
+                        Nueva Orden de Compra
+                    {% endif %}
+                </h1>
+                <p class="text-gray-600 mt-2">
+                    {% if object %}
+                        Actualizar información de la orden de compra
+                    {% else %}
+                        Crear nueva orden de compra para proveedor
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'compras:orden_list' %}" class="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    <i class="fas fa-arrow-left mr-1"></i> Volver
+                </a>
+                {% if object %}
+                    <a href="{% url 'compras:orden_detail' object.pk %}" class="border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-eye mr-1"></i> Ver Detalle
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if form.errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">Errores en el formulario:</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <ul class="list-disc list-inside space-y-1">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>
+                                        {% if field != '__all__' %}<strong>{{ form.fields.field.label|default:field }}:</strong>{% endif %}
+                                        {{ error }}
+                                    </li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <!-- Proveedor -->
-                            <div class="col-12">
-                                <label for="{{ form.proveedor.id_for_label }}" class="form-label">
-                                    Proveedor *
-                                </label>
-                                {{ form.proveedor }}
-                                {% if form.proveedor.help_text %}
-                                    <div class="form-text">{{ form.proveedor.help_text }}</div>
-                                {% endif %}
-                                {% if form.proveedor.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.proveedor.errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- Fecha de Entrega Estimada -->
-                            <div class="col-md-6">
-                                <label for="{{ form.fecha_entrega_estimada.id_for_label }}" class="form-label">
-                                    Fecha de Entrega Estimada
-                                </label>
-                                {{ form.fecha_entrega_estimada }}
-                                {% if form.fecha_entrega_estimada.help_text %}
-                                    <div class="form-text">{{ form.fecha_entrega_estimada.help_text }}</div>
-                                {% endif %}
-                                {% if form.fecha_entrega_estimada.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.fecha_entrega_estimada.errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <!-- Número de Referencia del Proveedor -->
-                            <div class="col-md-6">
-                                <label for="{{ form.numero_referencia_proveedor.id_for_label }}" class="form-label">
-                                    Referencia del Proveedor
-                                </label>
-                                {{ form.numero_referencia_proveedor }}
-                                {% if form.numero_referencia_proveedor.help_text %}
-                                    <div class="form-text">{{ form.numero_referencia_proveedor.help_text }}</div>
-                                {% endif %}
-                                {% if form.numero_referencia_proveedor.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in form.numero_referencia_proveedor.errors %}
-                                            <div>{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Formulario Principal -->
+                <div class="lg:col-span-2">
+                    <!-- Información Básica -->
+                    <div class="bg-white shadow rounded-lg mb-6">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">
+                                <i class="fas fa-file-invoice mr-2 text-blue-600"></i>
+                                Información de la Orden
+                            </h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <!-- Proveedor -->
+                                <div class="md:col-span-2">
+                                    <label for="{{ form.proveedor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Proveedor *
+                                    </label>
+                                    {{ form.proveedor }}
+                                    {% if form.proveedor.help_text %}
+                                        <div class="text-gray-600 text-sm mt-1">{{ form.proveedor.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.proveedor.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.proveedor.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Fecha de Entrega Estimada -->
+                                <div>
+                                    <label for="{{ form.fecha_entrega_estimada.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Fecha de Entrega Estimada
+                                    </label>
+                                    {{ form.fecha_entrega_estimada }}
+                                    {% if form.fecha_entrega_estimada.help_text %}
+                                        <div class="text-gray-600 text-sm mt-1">{{ form.fecha_entrega_estimada.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.fecha_entrega_estimada.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.fecha_entrega_estimada.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Número de Referencia del Proveedor -->
+                                <div>
+                                    <label for="{{ form.numero_referencia_proveedor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Referencia del Proveedor
+                                    </label>
+                                    {{ form.numero_referencia_proveedor }}
+                                    {% if form.numero_referencia_proveedor.help_text %}
+                                        <div class="text-gray-600 text-sm mt-1">{{ form.numero_referencia_proveedor.help_text }}</div>
+                                    {% endif %}
+                                    {% if form.numero_referencia_proveedor.errors %}
+                                        <div class="text-red-600 text-sm mt-1">
+                                            {% for error in form.numero_referencia_proveedor.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Observaciones y Condiciones -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-clipboard-list me-2 text-info"></i>
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                            <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>
                             Observaciones y Condiciones
                         </h5>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
+                    <div class="p-6">
+                        <div class="space-y-4">
                             <!-- Observaciones -->
-                            <div class="col-12">
-                                <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <div>
+                                <label for="{{ form.observaciones.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                                     Observaciones
                                 </label>
                                 {{ form.observaciones }}
                                 {% if form.observaciones.help_text %}
-                                    <div class="form-text">{{ form.observaciones.help_text }}</div>
+                                    <div class="text-gray-600 text-sm mt-1">{{ form.observaciones.help_text }}</div>
                                 {% endif %}
                                 {% if form.observaciones.errors %}
-                                    <div class="invalid-feedback d-block">
+                                    <div class="text-red-600 text-sm mt-1">
                                         {% for error in form.observaciones.errors %}
                                             <div>{{ error }}</div>
                                         {% endfor %}
@@ -172,39 +181,38 @@
                             </div>
                             
                             <!-- Condiciones Especiales -->
-                            <div class="col-12">
-                                <label for="{{ form.condiciones_especiales.id_for_label }}" class="form-label">
+                            <div>
+                                <label for="{{ form.condiciones_especiales.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                                     Condiciones Especiales
                                 </label>
                                 {{ form.condiciones_especiales }}
                                 {% if form.condiciones_especiales.help_text %}
-                                    <div class="form-text">{{ form.condiciones_especiales.help_text }}</div>
+                                    <div class="text-gray-600 text-sm mt-1">{{ form.condiciones_especiales.help_text }}</div>
                                 {% endif %}
                                 {% if form.condiciones_especiales.errors %}
-                                    <div class="invalid-feedback d-block">
+                                    <div class="text-red-600 text-sm mt-1">
                                         {% for error in form.condiciones_especiales.errors %}
                                             <div>{{ error }}</div>
                                         {% endfor %}
                                     </div>
                                 {% endif %}
                             </div>
-                        </div>
                     </div>
                 </div>
                 
                 <!-- Items de la Orden -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-boxes me-2 text-primary"></i>
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                            <i class="fas fa-boxes mr-2 text-blue-600"></i>
                             Items de la Orden
                         </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="p-6">
                         {% if formset.errors %}
-                        <div class="alert alert-danger">
-                            <h6>Errores en los items:</h6>
-                            <ul class="mb-0">
+                        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                            <h6 class="font-medium">Errores en los items:</h6>
+                            <ul class="list-disc list-inside mt-2">
                                 {% for error in formset.non_form_errors %}
                                     <li>{{ error }}</li>
                                 {% endfor %}
@@ -215,9 +223,9 @@
                         <div id="formset-container">
                             {{ formset.management_form }}
                             
-                            <div class="table-responsive">
-                                <table class="table table-bordered" id="items-table">
-                                    <thead class="table-light">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200" id="items-table">
+                                    <thead class="bg-gray-50">
                                         <tr>
                                             <th style="width: 35%;">Producto *</th>
                                             <th style="width: 20%;">Variante</th>
@@ -265,7 +273,7 @@
                                             <td>
                                                 {{ form.descuento_porcentaje }}
                                                 {% if form.descuento_porcentaje.errors %}
-                                                    <div class="invalid-feedback d-block">
+                                                    <div class="text-red-600 text-sm">
                                                         {% for error in form.descuento_porcentaje.errors %}{{ error }}{% endfor %}
                                                     </div>
                                                 {% endif %}
@@ -273,11 +281,11 @@
                                             <td class="text-center">
                                                 {% if form.instance.pk %}
                                                     {{ form.DELETE }}
-                                                    <label for="{{ form.DELETE.id_for_label }}" class="btn btn-outline-danger btn-sm">
+                                                    <label for="{{ form.DELETE.id_for_label }}" class="inline-flex items-center px-2 py-1 border border-red-300 text-red-700 bg-white hover:bg-red-50 rounded text-sm cursor-pointer">
                                                         <i class="fas fa-trash"></i>
                                                     </label>
                                                 {% else %}
-                                                    <button type="button" class="btn btn-outline-danger btn-sm remove-row">
+                                                    <button type="button" class="inline-flex items-center px-2 py-1 border border-red-300 text-red-700 bg-white hover:bg-red-50 rounded text-sm remove-row">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 {% endif %}
@@ -290,9 +298,9 @@
                             </div>
                         </div>
                         
-                        <div class="text-center mt-3">
-                            <button type="button" class="btn btn-outline-primary" id="add-item">
-                                <i class="fas fa-plus me-1"></i> Agregar Item
+                        <div class="text-center mt-4">
+                            <button type="button" class="border border-blue-600 text-blue-600 bg-white hover:bg-blue-50 px-4 py-2 rounded-md text-sm font-medium transition-colors" id="add-item">
+                                <i class="fas fa-plus mr-1"></i> Agregar Item
                             </button>
                         </div>
 
@@ -316,7 +324,7 @@
                                         {{ formset.empty_form.descuento_porcentaje }}
                                     </td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-row">
+                                        <button type="button" class="inline-flex items-center px-2 py-1 border border-red-300 text-red-700 bg-white hover:bg-red-50 rounded text-sm remove-row">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                         {{ formset.empty_form.id }}
@@ -328,14 +336,14 @@
                 </div>
                 
                 <!-- Botones de Acción -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'compras:orden_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-times me-1"></i> Cancelar
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                    <div class="p-6">
+                        <div class="flex justify-between">
+                            <a href="{% url 'compras:orden_list' %}" class="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-times mr-1"></i> Cancelar
                             </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save me-1"></i>
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors">
+                                <i class="fas fa-save mr-1"></i>
                                 {% if object %}
                                     Actualizar Orden
                                 {% else %}
@@ -348,58 +356,58 @@
             </div>
             
             <!-- Panel Lateral de Ayuda -->
-            <div class="col-lg-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-info-circle me-2 text-info"></i>
+            <div class="lg:col-span-1">
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <h6 class="text-lg font-medium text-gray-900 mb-0">
+                            <i class="fas fa-info-circle mr-2 text-blue-600"></i>
                             Información
                         </h6>
                     </div>
-                    <div class="card-body">
+                    <div class="p-6">
                         {% if not object %}
-                        <div class="alert alert-info mb-3">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-lightbulb me-1"></i> Nueva Orden
+                        <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md mb-4">
+                            <h6 class="font-medium mb-2">
+                                <i class="fas fa-lightbulb mr-1"></i> Nueva Orden
                             </h6>
-                            <p class="mb-0">
+                            <p class="text-sm mb-0">
                                 El número de orden se generará automáticamente al guardar.
                             </p>
                         </div>
                         {% else %}
-                        <div class="alert alert-warning mb-3">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-edit me-1"></i> Editando Orden
+                        <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md mb-4">
+                            <h6 class="font-medium mb-2">
+                                <i class="fas fa-edit mr-1"></i> Editando Orden
                             </h6>
-                            <p class="mb-0">
-                                <strong>Número:</strong> {{ object.numero }}<br>
-                                <strong>Estado:</strong> {{ object.get_estado_display }}<br>
-                                <strong>Creada:</strong> {{ object.fecha_orden|date:"d/m/Y" }}
-                            </p>
+                            <div class="text-sm">
+                                <p><strong>Número:</strong> {{ object.numero }}</p>
+                                <p><strong>Estado:</strong> {{ object.get_estado_display }}</p>
+                                <p class="mb-0"><strong>Creada:</strong> {{ object.fecha_orden|date:"d/m/Y" }}</p>
+                            </div>
                         </div>
                         {% endif %}
                         
-                        <h6 class="mb-2">Campos Obligatorios:</h6>
-                        <ul class="list-unstyled mb-3">
-                            <li><i class="fas fa-check-circle text-success me-2"></i> Proveedor</li>
+                        <h6 class="font-medium text-gray-900 mb-2">Campos Obligatorios:</h6>
+                        <ul class="space-y-1 mb-4">
+                            <li class="flex items-center text-sm"><i class="fas fa-check-circle text-green-500 mr-2"></i> Proveedor</li>
                         </ul>
                         
-                        <h6 class="mb-2">Campos Opcionales:</h6>
-                        <ul class="list-unstyled mb-3">
-                            <li><i class="fas fa-circle text-muted me-2"></i> Fecha de entrega estimada</li>
-                            <li><i class="fas fa-circle text-muted me-2"></i> Referencia del proveedor</li>
-                            <li><i class="fas fa-circle text-muted me-2"></i> Observaciones</li>
-                            <li><i class="fas fa-circle text-muted me-2"></i> Condiciones especiales</li>
+                        <h6 class="font-medium text-gray-900 mb-2">Campos Opcionales:</h6>
+                        <ul class="space-y-1 mb-4">
+                            <li class="flex items-center text-sm"><i class="fas fa-circle text-gray-400 mr-2"></i> Fecha de entrega estimada</li>
+                            <li class="flex items-center text-sm"><i class="fas fa-circle text-gray-400 mr-2"></i> Referencia del proveedor</li>
+                            <li class="flex items-center text-sm"><i class="fas fa-circle text-gray-400 mr-2"></i> Observaciones</li>
+                            <li class="flex items-center text-sm"><i class="fas fa-circle text-gray-400 mr-2"></i> Condiciones especiales</li>
                         </ul>
                         
                         {% if not object %}
-                        <div class="alert alert-light">
-                            <h6 class="mb-2">Próximos Pasos:</h6>
-                            <ol class="mb-0">
-                                <li>Crear la orden de compra</li>
-                                <li>Añadir productos a la orden</li>
-                                <li>Enviar al proveedor</li>
-                                <li>Gestionar recepción</li>
+                        <div class="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded-md">
+                            <h6 class="font-medium mb-2">Próximos Pasos:</h6>
+                            <ol class="text-sm space-y-1">
+                                <li>1. Crear la orden de compra</li>
+                                <li>2. Añadir productos a la orden</li>
+                                <li>3. Enviar al proveedor</li>
+                                <li>4. Gestionar recepción</li>
                             </ol>
                         </div>
                         {% endif %}
@@ -408,8 +416,8 @@
                 
                 <!-- Panel de Estado (solo en edición) -->
                 {% if object %}
-                <div class="card mt-3">
-                    <div class="card-header">
+                <div class="bg-white shadow-sm rounded-lg border border-gray-200 mt-6">
+                    <div class="border-b border-gray-200 px-6 py-4">
                         <h6 class="card-title mb-0">
                             <i class="fas fa-chart-line me-2 text-success"></i>
                             Estado de la Orden

@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumbs -->
+    {% if breadcrumbs %}
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            {% for breadcrumb in breadcrumbs %}
+                {% if breadcrumb.url %}
+                    <li class="breadcrumb-item">
+                        <a href="{{ breadcrumb.url }}" class="text-blue-600 hover:text-blue-800">
+                            {{ breadcrumb.title }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="breadcrumb-item active text-gray-600" aria-current="page">
+                        {{ breadcrumb.title }}
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ol>
+    </nav>
+    {% endif %}
+
+    <!-- Título y Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                            <i class="fas fa-boxes mr-2 text-green-600"></i>
+                            {{ title }}
+                        </h1>
+                        <p class="text-gray-600">
+                            Gestión de presentaciones de productos por proveedor
+                        </p>
+                    </div>
+                    <div>
+                        <a href="/admin/inventario/presentacionproveedorproducto/add/" class="btn btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Nueva Presentación
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-boxes fa-2x text-blue-600 mb-2"></i>
+                            <h3 class="text-blue-900">{{ total_presentaciones }}</h3>
+                            <p class="text-blue-700 mb-0">Total Presentaciones</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-check-circle fa-2x text-green-600 mb-2"></i>
+                            <h3 class="text-green-900">{{ presentaciones_disponibles }}</h3>
+                            <p class="text-green-700 mb-0">Disponibles</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter mr-2"></i>Filtros de Búsqueda
+                </h5>
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Buscar</label>
+                        <input type="text" name="search" class="form-control" 
+                               value="{{ search }}" 
+                               placeholder="Producto, proveedor o código...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Proveedor</label>
+                        <select name="proveedor" class="form-select">
+                            <option value="">Todos los proveedores</option>
+                            {% for proveedor in proveedores %}
+                            <option value="{{ proveedor.id }}" {% if proveedor_filter == proveedor.id|stringformat:"s" %}selected{% endif %}>
+                                {{ proveedor.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Estado</label>
+                        <select name="disponible" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="true" {% if disponible_filter == "true" %}selected{% endif %}>Disponibles</option>
+                            <option value="false" {% if disponible_filter == "false" %}selected{% endif %}>No disponibles</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>Buscar
+                        </button>
+                        <a href="/inventario/presentaciones-simple/" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Presentaciones -->
+    <div class="row">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list mr-2"></i>Presentaciones 
+                        <span class="badge bg-secondary">{{ page_obj.paginator.count }}</span>
+                    </h5>
+                    {% if is_paginated %}
+                    <small class="text-muted">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </small>
+                    {% endif %}
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Producto</th>
+                                <th>Proveedor</th>
+                                <th>Presentación Base</th>
+                                <th>Código Proveedor</th>
+                                <th>Precio</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for presentacion in presentaciones %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="fas fa-box"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">{{ presentacion.producto_proveedor.producto.nombre }}</h6>
+                                            <small class="text-muted">{{ presentacion.producto_proveedor.producto.codigo }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ presentacion.producto_proveedor.proveedor.nombre }}</span>
+                                </td>
+                                <td>
+                                    {% if presentacion.presentacion_base %}
+                                        <div>
+                                            <strong>{{ presentacion.presentacion_base.nombre }}</strong><br>
+                                            <small class="text-muted">{{ presentacion.presentacion_base.cantidad_base }} {{ presentacion.presentacion_base.unidad_medida }}</small>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Sin presentación base</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <code>{{ presentacion.codigo_proveedor|default:"Sin código" }}</code>
+                                </td>
+                                <td>
+                                    {% if presentacion.precio_proveedor %}
+                                        <span class="text-success fw-bold">${{ presentacion.precio_proveedor|floatformat:2 }}</span>
+                                    {% else %}
+                                        <span class="text-muted">No especificado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if presentacion.disponible %}
+                                        <span class="badge bg-success">Disponible</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No disponible</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/admin/inventario/presentacionproveedorproducto/{{ presentacion.id }}/change/" 
+                                           class="btn btn-outline-primary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="/admin/inventario/presentacionproveedorproducto/{{ presentacion.id }}/" 
+                                           class="btn btn-outline-info" title="Ver detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <i class="fas fa-boxes fa-3x text-gray-300 mb-3"></i>
+                                        <h5 class="text-gray-500">No se encontraron presentaciones</h5>
+                                        <p class="text-gray-400 mb-3">No hay presentaciones que coincidan con los filtros aplicados.</p>
+                                        <a href="/admin/inventario/presentacionproveedorproducto/add/" class="btn btn-primary">
+                                            <i class="fas fa-plus mr-2"></i>Agregar Primera Presentación
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación -->
+                {% if is_paginated %}
+                <div class="p-4 border-top">
+                    <nav aria-label="Paginación de presentaciones">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1">Primera</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+                                </li>
+                            {% endif %}
+                            
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Última</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Enlaces Rápidos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-4">
+                <h5 class="mb-3">
+                    <i class="fas fa-link mr-2"></i>Enlaces Rápidos
+                </h5>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/presentacionproveedorproducto/add/" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>Nueva Presentación
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/presentacionproveedorproducto/" class="btn btn-outline-info w-100">
+                            <i class="fas fa-boxes me-2"></i>Admin Presentaciones
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/inventario/productoproveedor/" class="btn btn-outline-success w-100">
+                            <i class="fas fa-link me-2"></i>Productos-Proveedores
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/inventario/" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left me-2"></i>Volver a Inventario
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

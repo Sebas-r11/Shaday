@@ -4,30 +4,36 @@
 {% block title %}Proveedores - Compras{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-0">Proveedores</h1>
-            <p class="text-muted mb-0">Gestión de la base de proveedores</p>
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header unificado -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i class="fas fa-users mr-2 text-green-600"></i>
+                    Proveedores
+                </h1>
+                <p class="text-gray-600 mt-2">Gestión de la base de proveedores</p>
+            </div>
+            <a href="{% url 'compras:proveedor_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <i class="fas fa-plus mr-2"></i>Nuevo Proveedor
+            </a>
         </div>
-        <a href="{% url 'compras:proveedor_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> Nuevo Proveedor
-        </a>
-    </div>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-6">
-                    <label for="search" class="form-label">Búsqueda</label>
-                    <input type="text" class="form-control" name="search" id="search" 
-                           value="{{ filtro_search }}" 
-                           placeholder="Buscar por razón social, documento o código...">
-                </div>
-                <div class="col-md-3">
-                    <label for="activo" class="form-label">Estado</label>
+        <!-- Filtros unificados -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="p-6">
+                <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Búsqueda</label>
+                        <input type="text" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                               name="search" id="search" 
+                               value="{{ filtro_search }}" 
+                               placeholder="Buscar por razón social, documento o código...">
+                    </div>
+                    <div>
+                        <label for="activo" class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
                     <select class="form-select" name="activo" id="activo">
                         <option value="all" {% if filtro_activo == 'all' %}selected{% endif %}>Todos</option>
                         <option value="true" {% if filtro_activo == 'true' %}selected{% endif %}>Activos</option>
