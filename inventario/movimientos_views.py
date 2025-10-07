@@ -73,7 +73,7 @@ class MovimientoInventarioListView(AdminInventarioMixin, ListView):
         if fecha_desde:
             try:
                 fecha = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
-                queryset = queryset.filter(fecha_creacion__date__gte=fecha)
+                queryset = queryset.filter(fecha_movimiento__date__gte=fecha)
             except ValueError:
                 pass
         
@@ -81,7 +81,7 @@ class MovimientoInventarioListView(AdminInventarioMixin, ListView):
         if fecha_hasta:
             try:
                 fecha = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
-                queryset = queryset.filter(fecha_creacion__date__lte=fecha)
+                queryset = queryset.filter(fecha_movimiento__date__lte=fecha)
             except ValueError:
                 pass
         
@@ -122,13 +122,13 @@ class MovimientoInventarioDetailView(AdminInventarioMixin, DetailView):
         context = super().get_context_data(**kwargs)
         
         # Otros movimientos del mismo producto en fechas cercanas
-        fecha_desde = self.object.fecha_creacion - timedelta(days=7)
-        fecha_hasta = self.object.fecha_creacion + timedelta(days=7)
+        fecha_desde = self.object.fecha_movimiento - timedelta(days=7)
+        fecha_hasta = self.object.fecha_movimiento + timedelta(days=7)
         
         context['movimientos_relacionados'] = MovimientoInventario.objects.filter(
             producto=self.object.producto,
-            fecha_creacion__range=[fecha_desde, fecha_hasta]
-        ).exclude(id=self.object.id).order_by('-fecha_creacion')[:10]
+            fecha_movimiento__range=[fecha_desde, fecha_hasta]
+        ).exclude(id=self.object.id).order_by('-fecha_movimiento')[:10]
         
         # Stock actual del producto en la bodega
         try:
@@ -405,7 +405,7 @@ def generar_pdf_transferencia(request, movimiento_id):
     story.append(Paragraph("INFORMACIÓN GENERAL", subtitle_style))
     
     transfer_data = [
-        ['Fecha de Transferencia:', movimiento.fecha_creacion.strftime('%d/%m/%Y %H:%M')],
+        ['Fecha de Transferencia:', movimiento.fecha_movimiento.strftime('%d/%m/%Y %H:%M')],
         ['N° de Documento:', f"TR-{movimiento.id:06d}"],
         ['Usuario Responsable:', movimiento.usuario.get_full_name() or movimiento.usuario.username],
         ['', ''],  # Línea vacía
@@ -561,7 +561,7 @@ def generar_pdf_ajuste(request, movimiento_id):
     story.append(Paragraph("INFORMACIÓN DEL AJUSTE", subtitle_style))
     
     ajuste_data = [
-        ['Fecha del Ajuste:', movimiento.fecha_creacion.strftime('%d/%m/%Y %H:%M')],
+        ['Fecha del Ajuste:', movimiento.fecha_movimiento.strftime('%d/%m/%Y %H:%M')],
         ['N° de Documento:', f"AJ-{movimiento.id:06d}"],
         ['Usuario Responsable:', movimiento.usuario.get_full_name() or movimiento.usuario.username],
         ['Motivo:', dict(movimiento.MOTIVOS_CHOICES).get(movimiento.motivo, movimiento.motivo)],
@@ -670,7 +670,7 @@ def estadisticas_movimientos_api(request):
     
     # Movimientos del día
     hoy = timezone.now().date()
-    movimientos_hoy = MovimientoInventario.objects.filter(fecha_creacion__date=hoy)
+    movimientos_hoy = MovimientoInventario.objects.filter(fecha_movimiento__date=hoy)
     
     # Movimientos por tipo
     movimientos_por_tipo = MovimientoInventario.objects.values(
@@ -712,13 +712,13 @@ def movimientos_recientes_api(request):
     if bodega_id:
         queryset = queryset.filter(bodega_id=bodega_id)
     
-    movimientos = queryset.order_by('-fecha_creacion')[:limite]
+    movimientos = queryset.order_by('-fecha_movimiento')[:limite]
     
     data = []
     for movimiento in movimientos:
         data.append({
             'id': movimiento.id,
-            'fecha': movimiento.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+            'fecha': movimiento.fecha_movimiento.strftime('%d/%m/%Y %H:%M'),
             'producto': {
                 'id': movimiento.producto.id,
                 'codigo': movimiento.producto.codigo,
