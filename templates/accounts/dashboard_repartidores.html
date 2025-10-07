@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Repartidores{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        <i class="fas fa-users mr-3 text-blue-600"></i>
+                        Dashboard de Repartidores
+                    </h1>
+                    <p class="mt-2 text-gray-600">Seguimiento en tiempo real de repartidores y entregas</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button onclick="actualizarDatos()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas Generales -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Repartidores</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ stats.total_repartidores }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Disponibles</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ stats.disponibles }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-truck text-2xl text-yellow-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">En Entregas</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ stats.en_entregas }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-map-marker-alt text-2xl text-purple-600"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Con GPS</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ stats.con_gps }}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Repartidores -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    Estado de Repartidores
+                </h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Repartidor
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ubicación GPS
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cobertura
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Entregas
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Última Actualización
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for repartidor in repartidores %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                                            <i class="fas fa-user text-gray-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ repartidor.get_full_name|default:repartidor.username }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ repartidor.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if repartidor.disponible_entregas %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        <i class="fas fa-check mr-1"></i>Disponible
+                                    </span>
+                                {% else %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        <i class="fas fa-pause mr-1"></i>No Disponible
+                                    </span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if repartidor.latitud and repartidor.longitud %}
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-green-500 mr-1"></i>
+                                        <span class="text-xs">
+                                            {{ repartidor.latitud|floatformat:4 }},<br>
+                                            {{ repartidor.longitud|floatformat:4 }}
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <span class="text-gray-400">Sin GPS</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-circle mr-1 text-blue-500"></i>
+                                        <span>{{ repartidor.radio_cobertura_km }} km</span>
+                                    </div>
+                                    {% if repartidor.zona_cobertura %}
+                                        <div class="text-xs text-gray-400 mt-1">
+                                            {{ repartidor.zona_cobertura }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="text-center">
+                                    <div class="text-lg font-semibold">{{ repartidor.entregas_hoy }}</div>
+                                    <div class="text-xs text-gray-400">hoy</div>
+                                </div>
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if repartidor.ubicacion_actualizada %}
+                                    {{ repartidor.ubicacion_actualizada|date:"d/m H:i" }}
+                                {% else %}
+                                    <span class="text-gray-400">Nunca</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <button onclick="verUbicacionMapa('{{ repartidor.id }}')" 
+                                            class="text-blue-600 hover:text-blue-900 text-xs"
+                                            {% if not repartidor.latitud or not repartidor.longitud %}disabled{% endif %}>
+                                        <i class="fas fa-map"></i>
+                                    </button>
+                                    <button onclick="toggleDisponibilidad('{{ repartidor.id }}')" 
+                                            class="text-orange-600 hover:text-orange-900 text-xs">
+                                        <i class="fas fa-toggle-{% if repartidor.disponible_entregas %}on{% else %}off{% endif %}"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                                No hay repartidores registrados
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mapa de cobertura (placeholder) -->
+        <div class="mt-8 bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-map mr-2 text-green-600"></i>
+                    Mapa de Cobertura
+                </h3>
+            </div>
+            <div class="p-6">
+                <div id="mapa-cobertura" class="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-map text-4xl mb-4"></i>
+                        <p class="text-lg">Mapa de ubicaciones de repartidores</p>
+                        <p class="text-sm">Funcionalidad disponible próximamente</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function actualizarDatos() {
+    location.reload();
+}
+
+function verUbicacionMapa(repartidorId) {
+    // Placeholder para mostrar ubicación en mapa
+    alert('Próximamente: Ver ubicación en mapa para repartidor ' + repartidorId);
+}
+
+function toggleDisponibilidad(repartidorId) {
+    if (confirm('¿Cambiar el estado de disponibilidad del repartidor?')) {
+        // Implementar toggle de disponibilidad
+        fetch(`/accounts/repartidor/${repartidorId}/toggle-disponibilidad/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al cambiar disponibilidad: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión');
+        });
+    }
+}
+
+// Auto-refresh cada 5 minutos
+setInterval(function() {
+    actualizarDatos();
+}, 5 * 60 * 1000);
+</script>
+{% endblock %}

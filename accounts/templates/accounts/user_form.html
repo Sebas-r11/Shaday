@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">{{ title }}</h1>
+            <p class="text-muted mb-0">{{ subtitle }}</p>
+        </div>
+        <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <!-- Información Básica -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user me-2 text-primary"></i>
+                            Información Básica
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">
+                                    Nombre de Usuario <span class="text-danger">*</span>
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if form.username.help_text %}
+                                    <small class="form-text text-muted">{{ form.username.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    Email <span class="text-danger">*</span>
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    Nombres <span class="text-danger">*</span>
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    Apellidos <span class="text-danger">*</span>
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contraseña (solo para crear) -->
+                {% if not object %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-lock me-2 text-primary"></i>
+                            Contraseña
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                    Contraseña <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if form.password1.help_text %}
+                                    <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                    Confirmar Contraseña <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if form.password2.help_text %}
+                                    <small class="form-text text-muted">{{ form.password2.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Rol y Permisos -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shield-alt me-2 text-primary"></i>
+                            Rol y Permisos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.role.id_for_label }}" class="form-label">
+                                    Rol <span class="text-danger">*</span>
+                                </label>
+                                {{ form.role }}
+                                {% if form.role.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.role.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                                {% if form.role.help_text %}
+                                    <small class="form-text text-muted">{{ form.role.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    {{ form.activo }}
+                                    <label class="form-check-label" for="{{ form.activo.id_for_label }}">
+                                        Usuario activo
+                                    </label>
+                                </div>
+                                {% if form.activo.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.activo.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Solo superusuarios pueden modificar estos campos -->
+                            {% if request.user.is_superuser %}
+                            <div class="col-md-6">
+                                {% if form.is_staff %}
+                                <div class="form-check">
+                                    {{ form.is_staff }}
+                                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                                        Staff (acceso admin)
+                                    </label>
+                                </div>
+                                {% endif %}
+                                {% if form.is_staff.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.is_staff.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                {% if form.is_superuser %}
+                                <div class="form-check">
+                                    {{ form.is_superuser }}
+                                    <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">
+                                        Superusuario
+                                    </label>
+                                </div>
+                                {% endif %}
+                                {% if form.is_superuser.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.is_superuser.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información Adicional -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>
+                            Información Adicional
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.telefono.id_for_label }}" class="form-label">
+                                    Teléfono
+                                </label>
+                                {{ form.telefono }}
+                                {% if form.telefono.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.telefono.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.documento.id_for_label }}" class="form-label">
+                                    Documento
+                                </label>
+                                {{ form.documento }}
+                                {% if form.documento.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.documento.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% if object %}Actualizar Usuario{% else %}Crear Usuario{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Sidebar de ayuda -->
+        <div class="col-lg-4">
+            <div class="card sticky-top">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-1 text-info"></i>
+                        Información de Roles
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-primary">Tipos de Roles</h6>
+                        <div class="small">
+                            <div class="mb-2">
+                                <strong class="text-success">Administrador:</strong>
+                                <ul class="list-unstyled ms-3 mt-1 small text-muted">
+                                    <li>• Acceso completo al sistema</li>
+                                    <li>• Gestión de usuarios</li>
+                                    <li>• Ver costos y precios</li>
+                                    <li>• Todos los módulos</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong class="text-info">Vendedor:</strong>
+                                <ul class="list-unstyled ms-3 mt-1 small text-muted">
+                                    <li>• Crear y gestionar ventas</li>
+                                    <li>• Acceso al CRM</li>
+                                    <li>• Consultar inventario</li>
+                                    <li>• Preparar pedidos</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong class="text-warning">Almacenista:</strong>
+                                <ul class="list-unstyled ms-3 mt-1 small text-muted">
+                                    <li>• Gestión de inventario</li>
+                                    <li>• Movimientos de stock</li>
+                                    <li>• Preparar pedidos</li>
+                                    <li>• Entregar pedidos</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <strong class="text-secondary">Operativo:</strong>
+                                <ul class="list-unstyled ms-3 mt-1 small text-muted">
+                                    <li>• Preparar pedidos</li>
+                                    <li>• Entregar pedidos</li>
+                                    <li>• Consultas básicas</li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <strong class="text-muted">Solo Consulta:</strong>
+                                <ul class="list-unstyled ms-3 mt-1 small text-muted">
+                                    <li>• Solo lectura</li>
+                                    <li>• Sin modificaciones</li>
+                                    <li>• Reportes básicos</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if object %}
+                    <div class="alert alert-info small mb-3">
+                        <strong>Usuario creado:</strong><br>
+                        {{ object.date_joined|date:"d/m/Y H:i" }}
+                        {% if object.last_login %}
+                            <br><strong>Último acceso:</strong><br>
+                            {{ object.last_login|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'accounts:change_user_password' object.pk %}" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-key me-1"></i> Cambiar Contraseña
+                        </a>
+                        <a href="{% url 'accounts:user_detail' object.pk %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-eye me-1"></i> Ver Detalle Completo
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning small mb-0">
+                        <strong>Nota:</strong> El usuario recibirá las credenciales por email y deberá cambiar su contraseña en el primer acceso.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación en tiempo real
+    const form = document.querySelector('form');
+    const requiredFields = form.querySelectorAll('input[required], select[required]');
+    
+    requiredFields.forEach(field => {
+        field.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+    
+    // Formatear documento (solo números)
+    const documentoField = document.getElementById('{{ form.documento.id_for_label }}');
+    if (documentoField) {
+        documentoField.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+    
+    // Formatear teléfono
+    const telefonoField = document.getElementById('{{ form.telefono.id_for_label }}');
+    if (telefonoField) {
+        telefonoField.addEventListener('input', function() {
+            // Permitir números, espacios, guiones, paréntesis y +
+            this.value = this.value.replace(/[^0-9\s\-\(\)\+]/g, '');
+        });
+    }
+    
+    // Mostrar descripción del rol seleccionado
+    const roleField = document.getElementById('{{ form.role.id_for_label }}');
+    if (roleField) {
+        roleField.addEventListener('change', function() {
+            // Aquí podrías agregar lógica para mostrar información específica del rol
+        });
+    }
+});
+</script>
+{% endblock %}

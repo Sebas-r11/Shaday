@@ -1,0 +1,644 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes de Devoluciones{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reporte-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .reporte-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .metric-card.yellow {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .metric-card.green {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    
+    .metric-card.orange {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+    .filtros-avanzados {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .tabla-reporte {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 40px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-chart-bar text-primary"></i>
+                    Reportes de Devoluciones
+                </h1>
+                <p class="text-muted">Análisis detallado de devoluciones y tendencias</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <i class="fas fa-undo fa-2x mb-2"></i>
+                <h3 class="mb-1">{{ metricas.total_devoluciones }}</h3>
+                <small>Total Devoluciones</small>
+                <div class="mt-2">
+                    <small class="opacity-75">Este mes: {{ metricas.devoluciones_mes }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card yellow">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3 class="mb-1">{{ metricas.pendientes }}</h3>
+                <small>Pendientes</small>
+                <div class="mt-2">
+                    <small class="opacity-75">{{ metricas.porcentaje_pendientes }}% del total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card green">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <h3 class="mb-1">${{ metricas.valor_total|floatformat:0 }}</h3>
+                <small>Valor Total</small>
+                <div class="mt-2">
+                    <small class="opacity-75">Promedio: ${{ metricas.valor_promedio|floatformat:0 }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card orange">
+                <i class="fas fa-percentage fa-2x mb-2"></i>
+                <h3 class="mb-1">{{ metricas.tasa_devolucion|floatformat:1 }}%</h3>
+                <small>Tasa de Devolución</small>
+                <div class="mt-2">
+                    <small class="opacity-75">Vs. ventas totales</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Avanzados -->
+    <div class="filtros-avanzados mb-4">
+        <h5 class="mb-3">
+            <i class="fas fa-filter"></i>
+            Filtros de Análisis
+        </h5>
+        <form id="formFiltros" onsubmit="actualizarReportes(event)">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Período</label>
+                    <select name="periodo" class="form-select">
+                        <option value="7">Últimos 7 días</option>
+                        <option value="30" selected>Últimos 30 días</option>
+                        <option value="90">Últimos 90 días</option>
+                        <option value="365">Último año</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Desde</label>
+                    <input type="date" name="fecha_desde" class="form-control" disabled>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" name="fecha_hasta" class="form-control" disabled>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendientes</option>
+                        <option value="parcial">Parciales</option>
+                        <option value="completa">Completas</option>
+                        <option value="rechazada">Rechazadas</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Motivo</label>
+                    <select name="motivo" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="cliente_ausente">Cliente Ausente</option>
+                        <option value="direccion_incorrecta">Dirección Incorrecta</option>
+                        <option value="producto_danado">Producto Dañado</option>
+                        <option value="cliente_rechaza">Cliente Rechaza</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block w-100">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row">
+        <!-- Gráficos -->
+        <div class="col-lg-8">
+            <!-- Tendencia de Devoluciones -->
+            <div class="reporte-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-line-chart"></i>
+                        Tendencia de Devoluciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartTendencia"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribución por Motivos -->
+            <div class="reporte-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-pie-chart"></i>
+                        Distribución por Motivos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="chartMotivos"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Motivo</th>
+                                            <th>Cantidad</th>
+                                            <th>%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablaMotivos">
+                                        <!-- Datos dinámicos -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral -->
+        <div class="col-lg-4">
+            <!-- Top Productos Devueltos -->
+            <div class="reporte-card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-trophy"></i>
+                        Top Productos Devueltos
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="topProductos">
+                        <!-- Datos dinámicos -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Repartidores con Más Devoluciones -->
+            <div class="reporte-card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user"></i>
+                        Repartidores - Devoluciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div id="topRepartidores">
+                        <!-- Datos dinámicos -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones Rápidas -->
+            <div class="reporte-card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tools"></i>
+                        Acciones Rápidas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="exportarExcel()">
+                            <i class="fas fa-file-excel"></i>
+                            Exportar a Excel
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="exportarPDF()">
+                            <i class="fas fa-file-pdf"></i>
+                            Generar PDF
+                        </button>
+                        <button class="btn btn-outline-info" onclick="enviarEmail()">
+                            <i class="fas fa-envelope"></i>
+                            Enviar por Email
+                        </button>
+                        <hr>
+                        <a href="{% url 'inventario:lista_devoluciones' %}" class="btn btn-primary">
+                            <i class="fas fa-list"></i>
+                            Ver Todas las Devoluciones
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Detallada -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="tabla-reporte">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table"></i>
+                        Detalle de Devoluciones
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="loading-spinner" id="loadingTabla">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando datos...</p>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped mb-0" id="tablaDetalle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Repartidor</th>
+                                    <th>Items</th>
+                                    <th>Valor</th>
+                                    <th>Estado</th>
+                                    <th>Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Datos dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para exportar -->
+<div class="modal fade" id="modalExportar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Exportar Reporte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Formato</label>
+                    <select class="form-select" id="formatoExportacion">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="pdf">PDF</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Incluir</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="incluirGraficos" checked>
+                        <label class="form-check-label">Gráficos</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="incluirDetalle" checked>
+                        <label class="form-check-label">Tabla detallada</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="incluirResumen">
+                        <label class="form-check-label">Resumen ejecutivo</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="procesarExportacion()">
+                    <i class="fas fa-download"></i> Exportar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartTendencia, chartMotivos;
+
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarGraficos();
+    cargarDatos();
+    
+    // Manejar cambio de período
+    document.querySelector('select[name="periodo"]').addEventListener('change', function() {
+        const fechaDesde = document.querySelector('input[name="fecha_desde"]');
+        const fechaHasta = document.querySelector('input[name="fecha_hasta"]');
+        
+        if (this.value === 'custom') {
+            fechaDesde.disabled = false;
+            fechaHasta.disabled = false;
+        } else {
+            fechaDesde.disabled = true;
+            fechaHasta.disabled = true;
+        }
+    });
+});
+
+function inicializarGraficos() {
+    // Gráfico de Tendencia
+    const ctxTendencia = document.getElementById('chartTendencia').getContext('2d');
+    chartTendencia = new Chart(ctxTendencia, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Devoluciones',
+                data: [],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Gráfico de Motivos
+    const ctxMotivos = document.getElementById('chartMotivos').getContext('2d');
+    chartMotivos = new Chart(ctxMotivos, {
+        type: 'doughnut',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    '#667eea',
+                    '#f093fb',
+                    '#4facfe',
+                    '#fa709a',
+                    '#fee140'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function actualizarReportes(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const params = new URLSearchParams(formData).toString();
+    
+    cargarDatos(params);
+}
+
+function cargarDatos(params = '') {
+    document.getElementById('loadingTabla').style.display = 'block';
+    
+    fetch(`/inventario/devoluciones/api/datos-reporte/?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            actualizarTendencia(data.tendencia);
+            actualizarMotivos(data.motivos);
+            actualizarTopProductos(data.top_productos);
+            actualizarTopRepartidores(data.top_repartidores);
+            actualizarTablaDetalle(data.detalle);
+            
+            document.getElementById('loadingTabla').style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loadingTabla').style.display = 'none';
+        });
+}
+
+function actualizarTendencia(datos) {
+    chartTendencia.data.labels = datos.labels;
+    chartTendencia.data.datasets[0].data = datos.values;
+    chartTendencia.update();
+}
+
+function actualizarMotivos(datos) {
+    chartMotivos.data.labels = datos.labels;
+    chartMotivos.data.datasets[0].data = datos.values;
+    chartMotivos.update();
+    
+    // Actualizar tabla de motivos
+    const tbody = document.getElementById('tablaMotivos');
+    tbody.innerHTML = '';
+    
+    datos.detalle.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.motivo}</td>
+            <td>${item.cantidad}</td>
+            <td>${item.porcentaje}%</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function actualizarTopProductos(productos) {
+    const container = document.getElementById('topProductos');
+    container.innerHTML = '';
+    
+    productos.forEach((producto, index) => {
+        const item = document.createElement('div');
+        item.className = 'mb-3';
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-primary me-2">${index + 1}</span>
+                    <strong>${producto.nombre}</strong>
+                    <br><small class="text-muted">${producto.cantidad} devoluciones</small>
+                </div>
+                <div class="text-end">
+                    <strong class="text-danger">$${producto.valor}</strong>
+                </div>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function actualizarTopRepartidores(repartidores) {
+    const container = document.getElementById('topRepartidores');
+    container.innerHTML = '';
+    
+    repartidores.forEach((repartidor, index) => {
+        const item = document.createElement('div');
+        item.className = 'mb-3';
+        item.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-warning text-dark me-2">${index + 1}</span>
+                    <strong>${repartidor.nombre}</strong>
+                    <br><small class="text-muted">${repartidor.devoluciones} devoluciones</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-secondary">${repartidor.tasa}%</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function actualizarTablaDetalle(datos) {
+    const tbody = document.querySelector('#tablaDetalle tbody');
+    tbody.innerHTML = '';
+    
+    datos.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><a href="/inventario/devoluciones/${item.id}/">${item.numero}</a></td>
+            <td>${item.fecha}</td>
+            <td>${item.cliente}</td>
+            <td>${item.repartidor}</td>
+            <td>${item.items}</td>
+            <td>$${item.valor}</td>
+            <td><span class="badge bg-${item.estado_color}">${item.estado}</span></td>
+            <td>${item.motivo}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function exportarExcel() {
+    window.open('/inventario/devoluciones/exportar/excel/', '_blank');
+}
+
+function exportarPDF() {
+    window.open('/inventario/devoluciones/exportar/pdf/', '_blank');
+}
+
+function enviarEmail() {
+    new bootstrap.Modal(document.getElementById('modalExportar')).show();
+}
+
+function procesarExportacion() {
+    const formato = document.getElementById('formatoExportacion').value;
+    const incluirGraficos = document.getElementById('incluirGraficos').checked;
+    const incluirDetalle = document.getElementById('incluirDetalle').checked;
+    const incluirResumen = document.getElementById('incluirResumen').checked;
+    
+    const params = new URLSearchParams({
+        formato: formato,
+        graficos: incluirGraficos,
+        detalle: incluirDetalle,
+        resumen: incluirResumen
+    });
+    
+    window.open(`/inventario/devoluciones/exportar/?${params}`, '_blank');
+    
+    bootstrap.Modal.getInstance(document.getElementById('modalExportar')).hide();
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

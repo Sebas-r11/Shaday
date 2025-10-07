@@ -1,0 +1,212 @@
+/* Estilos para Alistamiento de Pedidos */
+
+/* Resetear conflictos con Tailwind */
+.alistamiento-page {
+    all: initial !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.alistamiento-page * {
+    box-sizing: border-box !important;
+}
+
+/* Contenedor principal */
+.alistamiento-page .alistamiento-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    min-height: calc(100vh - 100px) !important;
+    padding: 30px !important;
+    border-radius: 15px !important;
+    margin: 20px !important;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.05) !important;
+}
+
+/* Header principal */
+.alistamiento-page .alistamiento-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: white !important;
+    padding: 30px !important;
+    border-radius: 20px !important;
+    margin-bottom: 30px !important;
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.2) !important;
+    text-align: left !important;
+}
+
+.alistamiento-page .alistamiento-header h2 {
+    margin: 0 !important;
+    font-weight: 700 !important;
+    font-size: 2.2rem !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    color: white !important;
+}
+
+.alistamiento-page .alistamiento-header p {
+    margin: 8px 0 0 0 !important;
+    opacity: 0.9 !important;
+    font-size: 1.1rem !important;
+    color: white !important;
+}
+
+/* Badge contador */
+.alistamiento-page .pedidos-badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
+    padding: 15px 25px !important;
+    border-radius: 50px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    color: white !important;
+    display: inline-block !important;
+}
+
+/* Cards de pedidos */
+.alistamiento-page .pedido-card {
+    border: 3px solid transparent !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.4s ease !important;
+    background: white !important;
+    margin-bottom: 25px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.alistamiento-page .pedido-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    border-color: #007bff !important;
+}
+
+.alistamiento-page .pedido-card.pedido-pendiente {
+    border-left: 8px solid #ffc107 !important;
+}
+
+.alistamiento-page .pedido-card.pedido-proceso {
+    border-left: 8px solid #17a2b8 !important;
+}
+
+/* Header de la card */
+.alistamiento-page .pedido-card .card-header {
+    background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%) !important;
+    border-bottom: 3px solid #dee2e6 !important;
+    padding: 20px 25px !important;
+    font-weight: 700 !important;
+}
+
+/* Secciones internas */
+.alistamiento-page .cliente-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+    padding: 18px !important;
+    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #90caf9 !important;
+}
+
+.alistamiento-page .pedido-metrics {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #ce93d8 !important;
+}
+
+.alistamiento-page .items-section {
+    background: #f8f9fa !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #e9ecef !important;
+}
+
+.alistamiento-page .item-row {
+    background: white !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    margin-bottom: 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.alistamiento-page .item-row:hover {
+    background: #f8f9fa !important;
+    border-color: #007bff !important;
+    transform: translateX(8px) !important;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15) !important;
+}
+
+/* Status de stock */
+.alistamiento-page .stock-status {
+    font-weight: 700 !important;
+    padding: 8px 15px !important;
+    border-radius: 25px !important;
+    font-size: 0.9em !important;
+    text-align: center !important;
+    min-width: 120px !important;
+    display: inline-block !important;
+}
+
+.alistamiento-page .stock-suficiente {
+    background: #d4edda !important;
+    color: #155724 !important;
+    border: 2px solid #c3e6cb !important;
+}
+
+.alistamiento-page .stock-insuficiente {
+    background: #f8d7da !important;
+    color: #721c24 !important;
+    border: 2px solid #f5c6cb !important;
+}
+
+/* Botones */
+.alistamiento-page .btn-alistamiento {
+    padding: 12px 20px !important;
+    border-radius: 25px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.85em !important;
+    letter-spacing: 1px !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    text-align: center !important;
+}
+
+.alistamiento-page .btn-alistamiento:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+    text-decoration: none !important;
+}
+
+.alistamiento-page .btn-outline-primary {
+    border: 2px solid #007bff !important;
+    color: #007bff !important;
+    background: white !important;
+}
+
+.alistamiento-page .btn-outline-primary:hover {
+    background: #007bff !important;
+    color: white !important;
+}
+
+.alistamiento-page .btn-warning {
+    background: #ffc107 !important;
+    border: 2px solid #ffc107 !important;
+    color: #000 !important;
+}
+
+.alistamiento-page .btn-success {
+    background: #28a745 !important;
+    border: 2px solid #28a745 !important;
+    color: white !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .alistamiento-page .alistamiento-container {
+        padding: 15px !important;
+        margin: 10px !important;
+    }
+    
+    .alistamiento-page .alistamiento-header {
+        padding: 20px !important;
+    }
+}

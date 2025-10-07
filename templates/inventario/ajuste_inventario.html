@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Ajustes de Inventario - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'inventario:stock_list' %}" class="text-gray-500 hover:text-gray-700">Inventario</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">Ajustes de Inventario</span>
+                </li>
+            </ol>
+        </nav>
+        <h1 class="text-3xl font-bold text-gray-900 mt-2">
+            <i class="fas fa-exchange-alt mr-3"></i>
+            Ajustes de Inventario
+        </h1>
+        <p class="text-gray-600 mt-2">Registra entradas y salidas de productos en las bodegas</p>
+    </div>
+
+    <!-- Formulario de Ajuste -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">
+            <i class="fas fa-plus-circle mr-2"></i>
+            Nuevo Ajuste
+        </h2>
+        
+        <form id="ajuste-form" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Tipo de Movimiento -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tipo de Ajuste *
+                </label>
+                <div class="flex space-x-4">
+                    <label class="flex items-center">
+                        <input type="radio" name="tipo_movimiento" value="entrada" checked 
+                               class="mr-2 text-green-600 focus:ring-green-500">
+                        <span class="text-green-700 font-medium">
+                            <i class="fas fa-arrow-down mr-1"></i>
+                            Entrada
+                        </span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="tipo_movimiento" value="salida" 
+                               class="mr-2 text-red-600 focus:ring-red-500">
+                        <span class="text-red-700 font-medium">
+                            <i class="fas fa-arrow-up mr-1"></i>
+                            Salida
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Producto y Bodega -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="relative">
+                    <label for="producto_search" class="block text-sm font-medium text-gray-700">
+                        Producto *
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="producto_search" name="producto_search" 
+                               class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Escriba el código o nombre del producto..."
+                               autocomplete="off" required>
+                        <input type="hidden" id="producto_id" name="producto_id">
+                        <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                    <!-- Lista de sugerencias -->
+                    <div id="producto-suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-y-auto">
+                        {% for producto in productos %}
+                        <div class="producto-option px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100" 
+                             data-id="{{ producto.id }}" 
+                             data-codigo="{{ producto.codigo }}" 
+                             data-nombre="{{ producto.nombre }}">
+                            <div class="font-medium text-gray-900">{{ producto.codigo }}</div>
+                            <div class="text-sm text-gray-600">{{ producto.nombre }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <!-- Producto seleccionado -->
+                    <div id="producto-selected" class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md hidden">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-medium text-blue-900" id="selected-codigo"></span>
+                                <span class="text-blue-700" id="selected-nombre"></span>
+                            </div>
+                            <button type="button" onclick="clearProducto()" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="bodega_id" class="block text-sm font-medium text-gray-700">
+                        Bodega *
+                    </label>
+                    <select id="bodega_id" name="bodega_id" required
+                            class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Seleccionar bodega...</option>
+                        {% for bodega in bodegas %}
+                        <option value="{{ bodega.id }}">{{ bodega.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Cantidad y Stock Actual -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="cantidad" class="block text-sm font-medium text-gray-700">
+                        Cantidad *
+                    </label>
+                    <input type="number" id="cantidad" name="cantidad" min="1" required
+                           class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Ingrese la cantidad">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">
+                        Stock Actual
+                    </label>
+                    <div id="stock-actual" class="mt-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-900 font-medium">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Seleccione producto y bodega
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivo y Observaciones -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="motivo" class="block text-sm font-medium text-gray-700">
+                        Motivo
+                    </label>
+                    <select id="motivo" name="motivo"
+                            class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Seleccionar motivo...</option>
+                        <option value="Compra">Compra</option>
+                        <option value="Ajuste inicial">Ajuste inicial</option>
+                        <option value="Corrección">Corrección</option>
+                        <option value="Producto dañado">Producto dañado</option>
+                        <option value="Producto vencido">Producto vencido</option>
+                        <option value="Pérdida">Pérdida</option>
+                        <option value="Promoción">Promoción</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="observaciones" class="block text-sm font-medium text-gray-700">
+                        Observaciones
+                    </label>
+                    <input type="text" id="observaciones" name="observaciones"
+                           class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Observaciones adicionales (opcional)">
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="limpiarFormulario()"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-eraser mr-2"></i>
+                    Limpiar
+                </button>
+                <button type="submit" id="btn-guardar"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-save mr-2"></i>
+                    Registrar Ajuste
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Resumen de Último Ajuste -->
+    <div id="resultado-ajuste" class="hidden mb-6">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-green-800 mb-2">
+                <i class="fas fa-check-circle mr-2"></i>
+                Ajuste Registrado Exitosamente
+            </h3>
+            <div id="resumen-ajuste" class="text-sm text-green-700 mb-4"></div>
+            <div class="flex justify-between items-center">
+                <div class="text-xs text-green-600">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    El documento PDF ha sido generado automáticamente
+                </div>
+                <a id="btn-descargar-pdf" href="#" target="_blank"
+                   class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Descargar PDF
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movimientos Recientes -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-history mr-2"></i>
+                Movimientos Recientes
+            </h2>
+        </div>
+        <div class="p-6">
+            <div class="text-center text-gray-500">
+                <i class="fas fa-clock text-4xl mb-4"></i>
+                <p>Los movimientos aparecerán aquí después de realizar ajustes</p>
+                <a href="{% url 'inventario:movimiento_list' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Ver todos los movimientos →
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elementos del DOM
+    const productoSearch = document.getElementById('producto_search');
+    const productoId = document.getElementById('producto_id');
+    const productoSuggestions = document.getElementById('producto-suggestions');
+    const productoSelected = document.getElementById('producto-selected');
+    const bodegaSelect = document.getElementById('bodega_id');
+    const stockActualDiv = document.getElementById('stock-actual');
+    const ajusteForm = document.getElementById('ajuste-form');
+    const resultadoDiv = document.getElementById('resultado-ajuste');
+    const resumenDiv = document.getElementById('resumen-ajuste');
+    const btnGuardar = document.getElementById('btn-guardar');
+
+    // Variables para manejar el autocompletado
+    let productos = [];
+    let timeoutId;
+
+    // Cargar todos los productos para búsqueda
+    document.querySelectorAll('.producto-option').forEach(option => {
+        productos.push({
+            id: option.dataset.id,
+            codigo: option.dataset.codigo.toLowerCase(),
+            nombre: option.dataset.nombre.toLowerCase(),
+            display: option.dataset.codigo + ' - ' + option.dataset.nombre
+        });
+    });
+
+    // Función para filtrar productos
+    function filtrarProductos(query) {
+        if (!query || query.length < 2) return [];
+        
+        query = query.toLowerCase();
+        return productos.filter(producto => 
+            producto.codigo.includes(query) || 
+            producto.nombre.includes(query)
+        ).slice(0, 10); // Limitar a 10 resultados
+    }
+
+    // Mostrar sugerencias
+    function mostrarSugerencias(productos) {
+        productoSuggestions.innerHTML = '';
+        
+        if (productos.length === 0) {
+            productoSuggestions.classList.add('hidden');
+            return;
+        }
+
+        productos.forEach(producto => {
+            const div = document.createElement('div');
+            div.className = 'producto-option px-3 py-2 cursor-pointer hover:bg-blue-50 border-b border-gray-100';
+            div.innerHTML = `
+                <div class="font-medium text-gray-900">${producto.codigo.toUpperCase()}</div>
+                <div class="text-sm text-gray-600">${producto.nombre}</div>
+            `;
+            div.addEventListener('click', () => seleccionarProducto(producto));
+            productoSuggestions.appendChild(div);
+        });
+
+        productoSuggestions.classList.remove('hidden');
+    }
+
+    // Seleccionar producto
+    function seleccionarProducto(producto) {
+        productoSearch.value = producto.display;
+        productoId.value = producto.id;
+        productoSuggestions.classList.add('hidden');
+        
+        // Mostrar producto seleccionado
+        document.getElementById('selected-codigo').textContent = producto.codigo.toUpperCase();
+        document.getElementById('selected-nombre').textContent = ' - ' + producto.nombre;
+        productoSelected.classList.remove('hidden');
+        
+        // Actualizar stock
+        actualizarStock();
+    }
+
+    // Limpiar selección de producto
+    window.clearProducto = function() {
+        productoSearch.value = '';
+        productoId.value = '';
+        productoSelected.classList.add('hidden');
+        productoSuggestions.classList.add('hidden');
+        actualizarStock();
+    }
+
+    // Event listeners para el campo de búsqueda
+    productoSearch.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            if (query.length >= 2) {
+                const productosEncontrados = filtrarProductos(query);
+                mostrarSugerencias(productosEncontrados);
+            } else {
+                productoSuggestions.classList.add('hidden');
+            }
+        }, 300);
+    });
+
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#producto_search') && !e.target.closest('#producto-suggestions')) {
+            productoSuggestions.classList.add('hidden');
+        }
+    });
+
+    // Navegación con teclado
+    productoSearch.addEventListener('keydown', function(e) {
+        const opciones = productoSuggestions.querySelectorAll('.producto-option');
+        const activa = productoSuggestions.querySelector('.bg-blue-100');
+        let indiceActual = -1;
+
+        if (activa) {
+            indiceActual = Array.from(opciones).indexOf(activa);
+        }
+
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (activa) activa.classList.remove('bg-blue-100');
+                indiceActual = (indiceActual + 1) % opciones.length;
+                if (opciones[indiceActual]) {
+                    opciones[indiceActual].classList.add('bg-blue-100');
+                }
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                if (activa) activa.classList.remove('bg-blue-100');
+                indiceActual = indiceActual <= 0 ? opciones.length - 1 : indiceActual - 1;
+                if (opciones[indiceActual]) {
+                    opciones[indiceActual].classList.add('bg-blue-100');
+                }
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (activa) {
+                    const productoData = productos.find(p => 
+                        p.codigo.toUpperCase() === activa.querySelector('.font-medium').textContent
+                    );
+                    if (productoData) {
+                        seleccionarProducto(productoData);
+                    }
+                }
+                break;
+            case 'Escape':
+                productoSuggestions.classList.add('hidden');
+                break;
+        }
+    });
+
+    // Actualizar stock cuando cambie producto o bodega
+    function actualizarStock() {
+        const productoIdValue = productoId.value;
+        const bodegaId = bodegaSelect.value;
+
+        if (productoIdValue && bodegaId) {
+            stockActualDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Consultando...';
+            
+            fetch(`{% url 'inventario:stock_api' %}?producto=${productoIdValue}&bodega=${bodegaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.stock !== undefined) {
+                        stockActualDiv.innerHTML = `<i class="fas fa-box mr-2"></i>${data.stock} unidades`;
+                        stockActualDiv.className = stockActualDiv.className.replace('bg-gray-100', 
+                            data.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800');
+                    } else {
+                        stockActualDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error al consultar';
+                    }
+                })
+                .catch(error => {
+                    stockActualDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>0 unidades';
+                    stockActualDiv.className = stockActualDiv.className.replace('bg-gray-100', 'bg-yellow-100 text-yellow-800');
+                });
+        } else {
+            stockActualDiv.innerHTML = '<i class="fas fa-info-circle mr-2"></i>Seleccione producto y bodega';
+            stockActualDiv.className = 'mt-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-900 font-medium';
+        }
+    }
+
+    bodegaSelect.addEventListener('change', actualizarStock);
+
+    // Envío del formulario
+    ajusteForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!productoId.value) {
+            alert('Por favor seleccione un producto válido');
+            return;
+        }
+        
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Procesando...';
+        
+        const formData = new FormData(ajusteForm);
+        
+        fetch('{% url "inventario:crear_ajuste_inventario" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar resultado exitoso
+                const productoTexto = document.getElementById('selected-codigo').textContent + 
+                                    document.getElementById('selected-nombre').textContent;
+                resumenDiv.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <strong>Producto:</strong> ${productoTexto}<br>
+                            <strong>Bodega:</strong> ${bodegaSelect.options[bodegaSelect.selectedIndex].text}<br>
+                            <strong>Tipo:</strong> ${formData.get('tipo_movimiento') === 'entrada' ? 'Entrada' : 'Salida'}
+                        </div>
+                        <div>
+                            <strong>Cantidad:</strong> ${data.cantidad_ajustada} unidades<br>
+                            <strong>Stock anterior:</strong> ${data.stock_anterior}<br>
+                            <strong>Stock actual:</strong> ${data.stock_actual}
+                        </div>
+                    </div>
+                `;
+                
+                // Configurar enlace del PDF
+                const pdfBtn = document.getElementById('btn-descargar-pdf');
+                pdfBtn.href = data.pdf_url;
+                
+                resultadoDiv.classList.remove('hidden');
+                
+                // Limpiar formulario
+                limpiarFormulario();
+                
+                // Scroll al resultado
+                resultadoDiv.scrollIntoView({ behavior: 'smooth' });
+                
+            } else {
+                alert('Error: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error de conexión. Intente nuevamente.');
+        })
+        .finally(() => {
+            btnGuardar.disabled = false;
+            btnGuardar.innerHTML = '<i class="fas fa-save mr-2"></i>Registrar Ajuste';
+        });
+    });
+
+    // Función para limpiar formulario
+    window.limpiarFormulario = function() {
+        ajusteForm.reset();
+        clearProducto();
+        resultadoDiv.classList.add('hidden');
+        stockActualDiv.innerHTML = '<i class="fas fa-info-circle mr-2"></i>Seleccione producto y bodega';
+        stockActualDiv.className = 'mt-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-900 font-medium';
+    }
+});
+</script>
+
+{% endblock %}

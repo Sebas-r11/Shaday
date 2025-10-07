@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar Actividad{% else %}Nueva Actividad{% endif %} - CRM DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'crm:dashboard' %}" class="text-gray-500 hover:text-gray-700">CRM</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">
+                        {% if object %}Editar Actividad{% else %}Nueva Actividad{% endif %}
+                    </span>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="mt-4">
+            <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl sm:truncate">
+                <i class="fas fa-calendar-plus text-blue-600 mr-2"></i>
+                {% if object %}Editar Actividad{% else %}Nueva Actividad{% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white shadow rounded-lg">
+        <form method="post" class="space-y-6 p-6">
+            {% csrf_token %}
+            
+            <!-- Información Básica -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Información de la Actividad</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Oportunidad -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.oportunidad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.oportunidad.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.oportunidad }}
+                        {% if form.oportunidad.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.oportunidad.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Tipo -->
+                    <div>
+                        <label for="{{ form.tipo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.tipo.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.tipo }}
+                        {% if form.tipo.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tipo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Responsable -->
+                    <div>
+                        <label for="{{ form.responsable.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.responsable.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.responsable }}
+                        {% if form.responsable.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.responsable.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Asunto -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.asunto.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.asunto.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.asunto }}
+                        {% if form.asunto.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.asunto.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <!-- Programación -->
+            <div class="border-b border-gray-200 pb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Programación</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Fecha y Hora -->
+                    <div>
+                        <label for="{{ form.fecha_actividad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.fecha_actividad.label }}
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.fecha_actividad }}
+                        {% if form.fecha_actividad.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.fecha_actividad.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Duración -->
+                    <div>
+                        <label for="{{ form.duracion_minutos.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.duracion_minutos.label }}
+                        </label>
+                        {{ form.duracion_minutos }}
+                        {% if form.duracion_minutos.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.duracion_minutos.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Duración en minutos</p>
+                    </div>
+                    
+                </div>
+                
+                {% if object %}
+                <!-- Estado (solo para editar) -->
+                <div class="mt-6">
+                    <div class="flex items-center">
+                        {{ form.completada }}
+                        <label for="{{ form.completada.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                            {{ form.completada.label }}
+                        </label>
+                    </div>
+                    {% if form.completada.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.completada.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Descripción -->
+            <div class="{% if object %}border-b border-gray-200 pb-6{% endif %}">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Descripción</h3>
+                <div>
+                    <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.descripcion.label }}
+                        <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.descripcion.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if object %}
+            <!-- Resultados y Seguimiento (solo para editar) -->
+            <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Resultados y Seguimiento</h3>
+                <div class="space-y-6">
+                    
+                    <!-- Resultado -->
+                    <div>
+                        <label for="{{ form.resultado.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.resultado.label }}
+                        </label>
+                        {{ form.resultado }}
+                        {% if form.resultado.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.resultado.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">¿Qué resultado tuvo la actividad?</p>
+                    </div>
+                    
+                    <!-- Próxima Acción -->
+                    <div>
+                        <label for="{{ form.proxima_accion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.proxima_accion.label }}
+                        </label>
+                        {{ form.proxima_accion }}
+                        {% if form.proxima_accion.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.proxima_accion.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">¿Cuáles son los próximos pasos?</p>
+                    </div>
+                    
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Botones -->
+            <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="{% if object and object.oportunidad %}{{ object.oportunidad.get_absolute_url }}{% else %}{% url 'crm:dashboard' %}{% endif %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar
+                </a>
+                
+                <button type="submit" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-save mr-2"></i>
+                    {% if object %}Actualizar Actividad{% else %}Crear Actividad{% endif %}
+                </button>
+            </div>
+            
+        </form>
+    </div>
+
+</div>
+
+<script>
+// Configurar fecha por defecto para nuevas actividades
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInput = document.getElementById('{{ form.fecha_actividad.id_for_label }}');
+    
+    // Si es una nueva actividad, establecer fecha por defecto
+    if (fechaInput && !fechaInput.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        fechaInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    // Auto-mostrar campos de resultado si la actividad está completada
+    const completadaCheckbox = document.getElementById('{{ form.completada.id_for_label }}');
+    const resultadoContainer = document.querySelector('#{{ form.resultado.id_for_label }}').closest('div');
+    const proximaAccionContainer = document.querySelector('#{{ form.proxima_accion.id_for_label }}').closest('div');
+    
+    if (completadaCheckbox && resultadoContainer && proximaAccionContainer) {
+        function toggleResultadoFields() {
+            if (completadaCheckbox.checked) {
+                resultadoContainer.style.display = 'block';
+                proximaAccionContainer.style.display = 'block';
+            } else {
+                resultadoContainer.style.display = 'none';
+                proximaAccionContainer.style.display = 'none';
+            }
+        }
+        
+        completadaCheckbox.addEventListener('change', toggleResultadoFields);
+        toggleResultadoFields(); // Ejecutar al cargar
+    }
+});
+</script>
+
+{% endblock %}

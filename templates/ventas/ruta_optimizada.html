@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ruta Optimizada - Repartidor{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-6">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        <i class="fas fa-route mr-3 text-blue-600"></i>
+                        Ruta Optimizada del Día
+                    </h1>
+                    <p class="mt-2 text-gray-600">Orden sugerido para tus entregas basado en ubicaciones GPS</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button onclick="recalcularRuta()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>Recalcular Ruta
+                    </button>
+                    <a href="{% url 'ventas:entregas_repartidor' %}" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver a Entregas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        {% if ruta_data %}
+        <!-- Resumen de la Ruta -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                    Resumen de la Ruta
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">{{ ruta_data.numero_entregas }}</div>
+                        <div class="text-sm text-gray-500">Entregas Total</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">{{ ruta_data.distancia_total }} km</div>
+                        <div class="text-sm text-gray-500">Distancia Total</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">{{ ruta_data.tiempo_estimado_horas|floatformat:1 }}h</div>
+                        <div class="text-sm text-gray-500">Tiempo Estimado</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-orange-600">{{ ruta_data.entregas_con_gps }}</div>
+                        <div class="text-sm text-gray-500">Con GPS</div>
+                    </div>
+                </div>
+                
+                {% if ruta_data.bodega_origen %}
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-warehouse text-blue-600 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Punto de Inicio</h4>
+                            <p class="text-sm text-gray-600">{{ ruta_data.bodega_origen.nombre }} - {{ ruta_data.bodega_origen.direccion }}</p>
+                            {% if ruta_data.bodega_origen.latitud %}
+                                <p class="text-xs text-gray-500">GPS: {{ ruta_data.bodega_origen.latitud }}, {{ ruta_data.bodega_origen.longitud }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ruta Paso a Paso -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-list-ol mr-2 text-green-600"></i>
+                    Orden Sugerido de Entregas
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">
+                    Sigue este orden para minimizar la distancia total recorrida
+                </p>
+            </div>
+            
+            <div class="divide-y divide-gray-200">
+                {% for item in ruta_data.ruta_detallada %}
+                <div class="p-6 hover:bg-gray-50">
+                    <div class="flex items-start space-x-4">
+                        <!-- Número de orden -->
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full font-bold">
+                                {{ item.orden }}
+                            </div>
+                        </div>
+                        
+                        <!-- Información del cliente -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h4 class="text-lg font-medium text-gray-900">
+                                        {{ item.cliente.nombre_completo }}
+                                    </h4>
+                                    <p class="text-sm text-gray-500">
+                                        Pedido #{{ item.entrega.pedido.numero }}
+                                    </p>
+                                </div>
+                                
+                                <!-- Estado de la entrega -->
+                                <div class="flex-shrink-0">
+                                    {% if item.entrega.estado == 'programada' %}
+                                        <span class="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                            Pendiente
+                                        </span>
+                                    {% elif item.entrega.estado == 'en_camino' %}
+                                        <span class="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                            En Camino
+                                        </span>
+                                    {% elif item.entrega.estado == 'entregado' %}
+                                        <span class="px-3 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                            Entregado ✓
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Dirección -->
+                            <div class="mt-2 flex items-center text-sm text-gray-600">
+                                <i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                                {{ item.entrega.direccion_entrega }}
+                            </div>
+                            
+                            <!-- Teléfono -->
+                            {% if item.entrega.telefono_contacto %}
+                            <div class="mt-1 flex items-center text-sm text-gray-600">
+                                <i class="fas fa-phone mr-2 text-blue-500"></i>
+                                {{ item.entrega.telefono_contacto }}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Información GPS -->
+                            <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                {% if not item.sin_gps %}
+                                    <div class="flex items-center text-green-600">
+                                        <i class="fas fa-satellite mr-2"></i>
+                                        <span>Distancia desde anterior: {{ item.distancia_desde_anterior|floatformat:2 }} km</span>
+                                    </div>
+                                    <div class="flex items-center text-blue-600">
+                                        <i class="fas fa-crosshairs mr-2"></i>
+                                        <span>GPS: {{ item.cliente.latitud|floatformat:4 }}, {{ item.cliente.longitud|floatformat:4 }}</span>
+                                    </div>
+                                {% else %}
+                                    <div class="flex items-center text-orange-600">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                        <span>Sin GPS - Entregar al final</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Observaciones -->
+                            {% if item.entrega.observaciones %}
+                            <div class="mt-2 p-2 bg-yellow-50 border-l-4 border-yellow-400">
+                                <p class="text-sm text-yellow-800">
+                                    <i class="fas fa-sticky-note mr-1"></i>
+                                    <strong>Observaciones:</strong> {{ item.entrega.observaciones }}
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Acciones -->
+                        <div class="flex-shrink-0 flex flex-col space-y-2">
+                            {% if item.entrega.estado == 'programada' %}
+                                <button onclick="marcarSalida('{{ item.entrega.id }}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs">
+                                    Marcar Salida
+                                </button>
+                            {% elif item.entrega.estado == 'en_camino' %}
+                                <button onclick="abrirModalEntrega('{{ item.entrega.id }}')" 
+                                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">
+                                    Completar
+                                </button>
+                            {% endif %}
+                            
+                            <!-- Botón de navegación GPS -->
+                            {% if not item.sin_gps %}
+                                <button onclick="abrirNavegacion('{{ item.cliente.latitud }}', '{{ item.cliente.longitud }}')" 
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs">
+                                    <i class="fas fa-directions mr-1"></i>Navegar
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if ruta_data.entregas_sin_gps > 0 %}
+        <!-- Advertencia sobre entregas sin GPS -->
+        <div class="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-orange-400 text-xl"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-orange-800">
+                        Entregas sin GPS
+                    </h3>
+                    <div class="mt-2 text-sm text-orange-700">
+                        <p>
+                            Hay {{ ruta_data.entregas_sin_gps }} entrega(s) sin coordenadas GPS que se colocaron al final de la ruta.
+                            Para optimizar mejor, considera solicitar a los clientes que actualicen su ubicación.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- No hay entregas -->
+        <div class="bg-white rounded-lg shadow text-center py-12">
+            <i class="fas fa-truck text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay entregas programadas</h3>
+            <p class="text-gray-500 mb-6">No tienes entregas asignadas para optimizar ruta</p>
+            <a href="{% url 'ventas:entregas_repartidor' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                Ver Entregas
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function recalcularRuta() {
+    if (confirm('¿Recalcular la ruta optimizada? Esto puede cambiar el orden sugerido.')) {
+        window.location.href = window.location.href + '?recalcular=1';
+    }
+}
+
+function marcarSalida(entregaId) {
+    fetch(`/ventas/entregas/${entregaId}/marcar-salida/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    });
+}
+
+function abrirModalEntrega(entregaId) {
+    // Implementar modal de completar entrega
+    alert('Modal de completar entrega para ID: ' + entregaId);
+}
+
+function abrirNavegacion(lat, lng) {
+    // Abrir aplicación de navegación del dispositivo
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    window.open(url, '_blank');
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}

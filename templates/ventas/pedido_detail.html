@@ -1,0 +1,572 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load permissions %}
+
+{% block title %}Pedido {{ pedido.numero }} - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            <i class="fas fa-shopping-cart mr-3 text-green-600"></i>
+                            Pedido {{ pedido.numero }}
+                        </h1>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Creado el {{ pedido.fecha|date:"d/m/Y" }} por 
+                            {% if pedido.vendedor %}
+                                {{ pedido.vendedor.get_full_name|default:pedido.vendedor.username }}
+                            {% else %}
+                                <span class="text-gray-500 italic">Sin asignar</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        {% if pedido.estado == 'pendiente' %}
+                            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-clock mr-2"></i>Pendiente
+                            </span>
+                        {% elif pedido.estado == 'proceso' %}
+                            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
+                                <i class="fas fa-cog mr-2"></i>En Proceso
+                            </span>
+                        {% elif pedido.estado == 'completado' %}
+                            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+                                <i class="fas fa-check mr-2"></i>Completado
+                            </span>
+                            {% if pedido.entrega_inmediata %}
+                                <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                                    <i class="fas fa-truck mr-1"></i>Entrega Inmediata
+                                </span>
+                            {% endif %}
+                        {% elif pedido.estado == 'cancelado' %}
+                            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+                                <i class="fas fa-times mr-2"></i>Cancelado
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acciones del header -->
+            <div class="px-6 py-3 bg-gray-50">
+                <div class="flex justify-between items-center">
+                    <div class="flex space-x-2">
+                        <a href="{% url 'ventas:pedido_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm">
+                            <i class="fas fa-arrow-left mr-2"></i>Volver
+                        </a>
+                        {% if user.can_create_sales %}
+                            <a href="{% url 'ventas:imprimir_pedido' pedido.pk %}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
+                                <i class="fas fa-print mr-2"></i>Imprimir
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if user.can_create_sales and pedido.estado != 'cancelado' and pedido.estado != 'entregado' %}
+                    <div class="flex space-x-2">
+                        <!-- Dropdown para cambiar estado -->
+                        <div class="relative inline-block text-left">
+                            <button type="button" onclick="toggleEstadoDropdown()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm inline-flex items-center" id="estadoDropdownButton">
+                                <i class="fas fa-exchange-alt mr-2"></i>Cambiar Estado
+                                <i class="fas fa-chevron-down ml-2"></i>
+                            </button>
+                            
+                            <div id="estadoDropdown" class="hidden absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                <div class="py-1" role="menu">
+                                    {% if pedido.estado == 'borrador' %}
+                                        <button onclick="cambiarEstado('enviada')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                            <i class="fas fa-paper-plane mr-2 text-blue-500"></i>Marcar como Enviada
+                                        </button>
+                                        <button onclick="cambiarEstado('proceso')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                            <i class="fas fa-play mr-2 text-green-500"></i>Iniciar Proceso
+                                        </button>
+                                    {% elif pedido.estado == 'enviada' %}
+                                        <button onclick="cambiarEstado('proceso')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                            <i class="fas fa-play mr-2 text-green-500"></i>Iniciar Proceso
+                                        </button>
+                                    {% elif pedido.estado == 'pendiente' %}
+                                        <button onclick="cambiarEstado('proceso')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                            <i class="fas fa-play mr-2 text-green-500"></i>Iniciar Proceso
+                                        </button>
+                                    {% elif pedido.estado == 'proceso' %}
+                                        <button onclick="cambiarEstado('completado')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                            <i class="fas fa-check mr-2 text-purple-500"></i>Marcar como Completado
+                                        </button>
+                                    {% elif pedido.estado == 'completado' %}
+                                        <button onclick="cambiarEstado('entregado')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                            <i class="fas fa-truck mr-2 text-indigo-500"></i>Marcar como Entregado
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <!-- Siempre mostrar opción de cancelar -->
+                                    {% if pedido.estado != 'completado' %}
+                                        <hr class="my-1">
+                                        <button onclick="cambiarEstado('cancelado')" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" role="menuitem">
+                                            <i class="fas fa-times mr-2"></i>Cancelar Pedido
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botón Completar Inmediato -->
+                        {% if pedido.estado != 'completado' and pedido.estado != 'cancelado' and perms.ventas.change_pedido %}
+                            <button onclick="confirmarCompletarInmediato()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm">
+                                <i class="fas fa-check-double mr-2"></i>Completar Inmediato
+                            </button>
+                        {% endif %}
+                        
+                        <!-- Botón Facturar (si está completado y no facturado) -->
+                        {% if pedido.estado == 'completado' and not pedido.facturado %}
+                            <a href="#" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm">
+                                <i class="fas fa-file-invoice mr-2"></i>Generar Factura
+                            </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Información principal -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- Información del cliente -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-user mr-2 text-blue-600"></i>Información del Cliente
+                    </h3>
+                </div>
+                <div class="px-6 py-4 space-y-3">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Nombre:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.cliente.nombre_completo }}</p>
+                    </div>
+                    {% if pedido.cliente.documento %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">{{ pedido.cliente.get_tipo_documento_display }}:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.cliente.documento }}</p>
+                    </div>
+                    {% endif %}
+                    {% if pedido.cliente.telefono %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Teléfono:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.cliente.telefono }}</p>
+                    </div>
+                    {% endif %}
+                    {% if pedido.cliente.email %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Email:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.cliente.email }}</p>
+                    </div>
+                    {% endif %}
+                    {% if pedido.cliente.direccion %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Dirección:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.cliente.direccion }}</p>
+                    </div>
+                    {% endif %}
+                    {% if pedido.cliente.ciudad %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Ciudad:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.cliente.ciudad }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Información del pedido -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-info-circle mr-2 text-green-600"></i>Detalles del Pedido
+                    </h3>
+                </div>
+                <div class="px-6 py-4 space-y-3">
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Fecha:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.fecha|date:"d/m/Y" }}</p>
+                    </div>
+                    {% if pedido.fecha_entrega_estimada %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Entrega estimada:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.fecha_entrega_estimada|date:"d/m/Y" }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Vendedor:</span>
+                        <p class="text-sm text-gray-900">
+                            {% if pedido.vendedor %}
+                                {{ pedido.vendedor.get_full_name|default:pedido.vendedor.username }}
+                            {% else %}
+                                <span class="text-gray-500 italic">Sin asignar</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Bodega:</span>
+                        <p class="text-sm text-gray-900">{{ pedido.bodega.nombre }}</p>
+                    </div>
+                    {% if pedido.cotizacion_origen %}
+                    <div>
+                        <span class="text-sm font-medium text-gray-500">Cotización origen:</span>
+                        <p class="text-sm text-gray-900">
+                            <a href="{% url 'ventas:cotizacion_detail' pedido.cotizacion_origen.pk %}" class="text-blue-600 hover:underline">
+                                {{ pedido.cotizacion_origen.numero }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if user|can_see_prices %}
+            <!-- Resumen financiero -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-calculator mr-2 text-purple-600"></i>Resumen Financiero
+                    </h3>
+                </div>
+                <div class="px-6 py-4 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-gray-500">Subtotal:</span>
+                        <span class="text-sm text-gray-900">${{ pedido.subtotal|floatformat:0 }}</span>
+                    </div>
+                    {% if pedido.descuento_valor > 0 %}
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-gray-500">
+                            Descuento
+                            {% if pedido.descuento_porcentaje %}
+                                ({{ pedido.descuento_porcentaje }}%)
+                            {% endif %}:
+                        </span>
+                        <span class="text-sm text-red-600">-${{ pedido.descuento_valor|floatformat:0 }}</span>
+                    </div>
+                    {% endif %}
+                    {% if pedido.impuestos > 0 %}
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-gray-500">Impuestos:</span>
+                        <span class="text-sm text-gray-900">${{ pedido.impuestos|floatformat:0 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="border-t border-gray-200 pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-base font-bold text-gray-900">TOTAL:</span>
+                            <span class="text-base font-bold text-gray-900">${{ pedido.total|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Información de alistamiento para bodega -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-boxes mr-2 text-blue-600"></i>Información de Alistamiento
+                    </h3>
+                </div>
+                <div class="px-6 py-4 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-gray-500">Total de productos:</span>
+                        <span class="text-sm text-gray-900">{{ pedido.items.count }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-gray-500">Unidades totales:</span>
+                        <span class="text-sm text-gray-900">
+                            {% for item in pedido.items.all %}{{ item.cantidad|floatformat:0 }}{% if not forloop.last %} + {% endif %}{% endfor %} unidades
+                        </span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm font-medium text-gray-500">Estado del pedido:</span>
+                        <span class="text-sm font-medium text-blue-600">{{ pedido.get_estado_display }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Items del pedido -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-list mr-2 text-indigo-600"></i>Items del Pedido
+                </h3>
+            </div>
+            
+            {% if pedido.items.exists %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                                {% if user|can_see_prices %}
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Desc.</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                {% else %}
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in pedido.items.all %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ forloop.counter }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ item.producto.nombre }}</div>
+                                        {% if item.variante %}
+                                            <div class="text-sm text-gray-500">{{ item.variante.nombre }}</div>
+                                        {% endif %}
+                                        {% if item.producto.codigo %}
+                                            <div class="text-xs text-gray-400">Código: {{ item.producto.codigo }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                                        {{ item.cantidad|floatformat:0 }}
+                                    </td>
+                                    {% if user|can_see_prices %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        ${{ item.precio_unitario|floatformat:0 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                                        {% if item.descuento_porcentaje %}
+                                            {{ item.descuento_porcentaje }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">
+                                        ${{ item.total|floatformat:0 }}
+                                    </td>
+                                    {% else %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i class="fas fa-check-circle mr-1"></i>Por alistar
+                                        </span>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-box-open text-gray-400 text-4xl mb-3"></i>
+                    <p class="text-gray-500">No hay items en este pedido</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Observaciones -->
+        {% if pedido.observaciones %}
+        <div class="bg-white rounded-lg shadow mt-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-sticky-note mr-2 text-yellow-600"></i>Observaciones
+                </h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-sm text-gray-700">{{ pedido.observaciones|linebreaks }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para cambiar estado -->
+<div id="estadoModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Cambiar Estado</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="estadoMessage">
+                    ¿Está seguro de cambiar el estado de este pedido?
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="confirmarEstado" 
+                        class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700">
+                    Confirmar
+                </button>
+                <button onclick="cerrarModal()" 
+                        class="mt-3 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let estadoNuevo = null;
+
+function cambiarEstado(nuevoEstado) {
+    estadoNuevo = nuevoEstado;
+    
+    const messages = {
+        'enviada': '¿Desea marcar este pedido como "Enviada"?',
+        'proceso': '¿Desea marcar este pedido como "En Proceso"? Se iniciará el alistamiento en bodega.',
+        'completado': '¿Desea marcar este pedido como "Completado"? El pedido estará listo para entrega.',
+        'entregado': '¿Desea marcar este pedido como "Entregado"? Esta acción confirma la entrega al cliente.',
+        'cancelado': '¿Desea CANCELAR este pedido? Esta acción no se puede deshacer.'
+    };
+    
+    // Cerrar dropdown si está abierto
+    const dropdown = document.getElementById('estadoDropdown');
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+    }
+    
+    document.getElementById('estadoMessage').textContent = messages[nuevoEstado] || '¿Está seguro de cambiar el estado de este pedido?';
+    document.getElementById('estadoModal').classList.remove('hidden');
+}
+
+function cerrarModal() {
+    document.getElementById('estadoModal').classList.add('hidden');
+    estadoNuevo = null;
+}
+
+document.getElementById('confirmarEstado').addEventListener('click', function() {
+    if (estadoNuevo) {
+        // Crear formulario para enviar cambio de estado
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "ventas:cambiar_estado_pedido" pedido.pk %}';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        form.appendChild(csrfInput);
+        
+        const estadoInput = document.createElement('input');
+        estadoInput.type = 'hidden';
+        estadoInput.name = 'estado';
+        estadoInput.value = estadoNuevo;
+        form.appendChild(estadoInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+});
+
+// Funciones globales para completar inmediato
+function confirmarCompletarInmediato() {
+    // Crear modal de confirmación personalizado
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-orange-100 rounded-full">
+                    <i class="fas fa-check-double text-orange-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mt-5 text-center">Completar Pedido Inmediatamente</h3>
+                <div class="mt-4 px-7 py-3">
+                    <p class="text-sm text-gray-600 text-center">
+                        ¿Estás seguro de que quieres marcar este pedido como <strong>completado con entrega inmediata</strong>?
+                    </p>
+                    <p class="text-xs text-gray-500 text-center mt-2">
+                        Esta acción es ideal para ventas en punto de venta donde la entrega es inmediata.
+                    </p>
+                    <div class="mt-4 flex items-center">
+                        <input type="checkbox" id="generar_factura_check" class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                        <label for="generar_factura_check" class="ml-2 text-sm text-gray-600">
+                            Generar factura automáticamente
+                        </label>
+                    </div>
+                </div>
+                <div class="flex items-center px-4 py-3 space-x-2">
+                    <button onclick="cancelarCompletarInmediato()" class="flex-1 px-4 py-2 bg-gray-300 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-400">
+                        Cancelar
+                    </button>
+                    <button onclick="ejecutarCompletarInmediato()" class="flex-1 px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700">
+                        Confirmar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function cancelarCompletarInmediato() {
+    const modal = document.querySelector('.fixed.inset-0.bg-gray-600');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+function ejecutarCompletarInmediato() {
+    const generarFactura = document.getElementById('generar_factura_check').checked;
+    
+    // Crear formulario para enviar la acción
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "ventas:completar_pedido_inmediato" pedido.pk %}';
+    
+    // CSRF Token
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = '{{ csrf_token }}';
+    form.appendChild(csrfInput);
+    
+    // Confirmación
+    const confirmarInput = document.createElement('input');
+    confirmarInput.type = 'hidden';
+    confirmarInput.name = 'confirmar';
+    confirmarInput.value = '1';
+    form.appendChild(confirmarInput);
+    
+    // Generar factura si está marcado
+    if (generarFactura) {
+        const facturaInput = document.createElement('input');
+        facturaInput.type = 'hidden';
+        facturaInput.name = 'generar_factura';
+        facturaInput.value = '1';
+        form.appendChild(facturaInput);
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Cerrar modal con Escape
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        cancelarCompletarInmediato();
+    }
+});
+
+// JavaScript para el dropdown de estados
+function toggleEstadoDropdown() {
+    const dropdown = document.getElementById('estadoDropdown');
+    dropdown.classList.toggle('hidden');
+}
+
+// Cerrar dropdown si se hace clic fuera
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('estadoDropdown');
+    const button = document.getElementById('estadoDropdownButton');
+    
+    if (dropdown && button && !button.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+</script>
+
+{% endblock %}

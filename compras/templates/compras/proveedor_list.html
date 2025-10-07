@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Proveedores - Compras{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Proveedores</h1>
+            <p class="text-muted mb-0">Gestión de la base de proveedores</p>
+        </div>
+        <a href="{% url 'compras:proveedor_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> Nuevo Proveedor
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Búsqueda</label>
+                    <input type="text" class="form-control" name="search" id="search" 
+                           value="{{ filtro_search }}" 
+                           placeholder="Buscar por razón social, documento o código...">
+                </div>
+                <div class="col-md-3">
+                    <label for="activo" class="form-label">Estado</label>
+                    <select class="form-select" name="activo" id="activo">
+                        <option value="all" {% if filtro_activo == 'all' %}selected{% endif %}>Todos</option>
+                        <option value="true" {% if filtro_activo == 'true' %}selected{% endif %}>Activos</option>
+                        <option value="false" {% if filtro_activo == 'false' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> Buscar
+                        </button>
+                        <a href="{% url 'compras:proveedor_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Proveedores -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                Lista de Proveedores
+                {% if proveedores %}
+                    <span class="badge bg-primary ms-2">{{ page_obj.paginator.count }} total</span>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if proveedores %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Código</th>
+                            <th>Proveedor</th>
+                            <th>Documento</th>
+                            <th>Contacto</th>
+                            <th>Ciudad</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for proveedor in proveedores %}
+                        <tr>
+                            <td>
+                                <strong class="text-primary">{{ proveedor.codigo }}</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ proveedor.razon_social }}</strong>
+                                    {% if proveedor.nombre_comercial and proveedor.nombre_comercial != proveedor.razon_social %}
+                                        <br><small class="text-muted">{{ proveedor.nombre_comercial }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ proveedor.get_tipo_documento_display }}</span>
+                                <br><small>{{ proveedor.numero_documento }}</small>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    {% if proveedor.telefono %}
+                                        <i class="fas fa-phone text-muted me-1"></i> {{ proveedor.telefono }}<br>
+                                    {% endif %}
+                                    {% if proveedor.email %}
+                                        <i class="fas fa-envelope text-muted me-1"></i> {{ proveedor.email }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="small">
+                                {% if proveedor.ciudad %}
+                                    {{ proveedor.ciudad.nombre }}<br>
+                                    <span class="text-muted">{{ proveedor.ciudad.departamento.nombre }}</span>
+                                {% else %}
+                                    <span class="text-muted">No especificada</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if proveedor.activo %}
+                                    <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'compras:proveedor_detail' proveedor.pk %}" 
+                                       class="btn btn-outline-primary" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'compras:proveedor_update' proveedor.pk %}" 
+                                       class="btn btn-outline-secondary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'compras:orden_create' %}?proveedor={{ proveedor.pk }}" 
+                                       class="btn btn-outline-success" title="Nueva orden">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="Paginación de proveedores">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.activo %}&activo={{ request.GET.activo }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.activo %}&activo={{ request.GET.activo }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.activo %}&activo={{ request.GET.activo }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.activo %}&activo={{ request.GET.activo }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.activo %}&activo={{ request.GET.activo }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} 
+                        de {{ page_obj.paginator.count }} proveedores
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No se encontraron proveedores</h4>
+                {% if filtro_search or filtro_activo != 'all' %}
+                    <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                    <a href="{% url 'compras:proveedor_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-times me-1"></i> Limpiar filtros
+                    </a>
+                {% else %}
+                    <p class="text-muted">Comienza agregando tu primer proveedor</p>
+                    <a href="{% url 'compras:proveedor_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> Crear Primer Proveedor
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit del formulario de búsqueda con delay
+    let searchTimeout;
+    const searchInput = document.getElementById('search');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                // Auto-submit después de 1 segundo de inactividad
+                // Comentado para evitar demasiadas consultas
+                // searchInput.form.submit();
+            }, 1000);
+        });
+    }
+    
+    // Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

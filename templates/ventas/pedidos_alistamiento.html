@@ -1,0 +1,510 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load permissions %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Reset específico para alistamiento */
+div.alistamiento-container * {
+    box-sizing: border-box;
+}
+
+/* Contenedor principal */
+div.alistamiento-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    min-height: calc(100vh - 80px) !important;
+    padding: 30px !important;
+    border-radius: 15px !important;
+    margin: 0 !important;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.05) !important;
+}
+
+/* Header mejorado */
+div.alistamiento-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: white !important;
+    padding: 30px !important;
+    border-radius: 20px !important;
+    margin-bottom: 30px !important;
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.2) !important;
+    border: none !important;
+}
+
+div.alistamiento-header h2 {
+    margin: 0 !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+div.alistamiento-header p {
+    margin: 8px 0 0 0 !important;
+    opacity: 0.9 !important;
+    font-size: 1.1rem !important;
+}
+
+/* Badge mejorado */
+.pedidos-badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
+    padding: 15px 25px !important;
+    border-radius: 50px !important;
+    backdrop-filter: blur(15px) !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    font-size: 1rem !important;
+}
+
+/* Estilos para botones de filtro */
+.btn-filter {
+    font-weight: 600 !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    margin-right: 0 !important;
+    transition: all 0.3s ease !important;
+    border: 2px solid transparent !important;
+}
+
+.btn-filter:first-child {
+    border-top-left-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+}
+
+.btn-filter:last-child {
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+.btn-filter .badge {
+    background: rgba(255,255,255,0.9) !important;
+    color: #333 !important;
+    font-weight: 700 !important;
+}
+
+/* Cards de pedidos mejoradas */
+.pedido-card {
+    border: 3px solid transparent !important;
+    border-radius: 20px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    background: white !important;
+    overflow: hidden !important;
+    margin-bottom: 25px !important;
+    position: relative !important;
+}
+
+.pedido-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    border-color: #007bff !important;
+}
+
+.pedido-card.pedido-pendiente {
+    border-left: 8px solid #ffc107 !important;
+}
+
+.pedido-card.pedido-proceso {
+    border-left: 8px solid #17a2b8 !important;
+}
+
+/* Header de card */
+.pedido-card .card-header {
+    background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%) !important;
+    border-bottom: 3px solid #dee2e6 !important;
+    padding: 20px 25px !important;
+    font-weight: 700 !important;
+    border-radius: 17px 17px 0 0 !important;
+}
+
+/* Body de card */
+.pedido-card .card-body {
+    padding: 25px !important;
+}
+
+/* Información del cliente */
+.cliente-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+    padding: 18px !important;
+    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #90caf9 !important;
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.1) !important;
+}
+
+.cliente-info h6 {
+    color: #1976d2 !important;
+    margin: 0 !important;
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+}
+
+/* Información de asignación */
+.asignacion-info {
+    padding: 12px 18px !important;
+    border-radius: 10px !important;
+    margin-bottom: 15px !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    border: 2px solid transparent !important;
+}
+
+.asignado-a-mi {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+    border-color: #28a745 !important;
+    color: #155724 !important;
+}
+
+.asignado-a-otro {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+    border-color: #ffc107 !important;
+    color: #856404 !important;
+}
+
+/* Elementos básicos mejorados */
+.pedido-metrics {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #ce93d8 !important;
+}
+
+.items-section {
+    background: #f8f9fa !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+    margin-bottom: 20px !important;
+    border: 2px solid #e9ecef !important;
+}
+
+.item-row {
+    background: white !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 10px !important;
+    padding: 15px !important;
+    margin-bottom: 12px !important;
+    transition: all 0.3s ease !important;
+}
+
+.item-row:hover {
+    background: #f8f9fa !important;
+    border-color: #007bff !important;
+    transform: translateX(8px) !important;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.15) !important;
+}
+
+.stock-status {
+    font-weight: 700 !important;
+    padding: 8px 15px !important;
+    border-radius: 25px !important;
+    font-size: 0.9em !important;
+    text-align: center !important;
+    min-width: 120px !important;
+    display: inline-block !important;
+}
+
+.stock-suficiente {
+    background: #d4edda !important;
+    color: #155724 !important;
+    border: 2px solid #c3e6cb !important;
+}
+
+.stock-insuficiente {
+    background: #f8d7da !important;
+    color: #721c24 !important;
+    border: 2px solid #f5c6cb !important;
+}
+
+.btn-alistamiento {
+    padding: 12px 20px !important;
+    border-radius: 25px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.85em !important;
+    letter-spacing: 1px !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-alistamiento:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alistamiento-container">
+    <div class="alistamiento-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-boxes"></i> {{ title }}</h2>
+                <p>Pedidos pendientes de alistamiento y preparación</p>
+            </div>
+            <div>
+                <span class="pedidos-badge">
+                    <i class="fas fa-list-ol"></i> {{ total_pedidos }} pedidos 
+                    {% if filtro_actual == 'pendiente' %}pendientes
+                    {% elif filtro_actual == 'proceso' %}en proceso
+                    {% else %}para alistar{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Filtros de Estado -->
+    <div class="filtros-container" style="margin-bottom: 30px;">
+        <div class="card" style="border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <div class="card-header" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border-radius: 15px 15px 0 0;">
+                <h6 class="mb-0"><i class="fas fa-filter"></i> Filtros de Estado</h6>
+            </div>
+            <div class="card-body" style="padding: 20px;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="btn-group w-100" role="group" aria-label="Filtros de estado">
+                            <a href="{% url 'ventas:pedidos_alistamiento' %}" 
+                               class="btn {% if filtro_actual == 'todos' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-filter">
+                                <i class="fas fa-list"></i> Todos
+                                <span class="badge badge-light ml-2">{{ total_pendientes|add:total_proceso }}</span>
+                            </a>
+                            <a href="{% url 'ventas:pedidos_alistamiento' %}?estado=pendiente" 
+                               class="btn {% if filtro_actual == 'pendiente' %}btn-warning{% else %}btn-outline-warning{% endif %} btn-filter">
+                                <i class="fas fa-clock"></i> Pendientes
+                                <span class="badge badge-light ml-2">{{ total_pendientes }}</span>
+                            </a>
+                            <a href="{% url 'ventas:pedidos_alistamiento' %}?estado=proceso" 
+                               class="btn {% if filtro_actual == 'proceso' %}btn-info{% else %}btn-outline-info{% endif %} btn-filter">
+                                <i class="fas fa-cog"></i> En Proceso
+                                <span class="badge badge-light ml-2">{{ total_proceso }}</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if pedidos %}
+        <div class="row">
+            {% for pedido in pedidos %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card pedido-card {% if pedido.estado == 'pendiente' %}pedido-pendiente{% else %}pedido-proceso{% endif %} h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <strong>Pedido #{{ pedido.numero }}</strong>
+                        </h6>
+                        <span class="badge {% if pedido.estado == 'pendiente' %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ pedido.get_estado_display }}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Información del cliente -->
+                        <div class="cliente-info">
+                            <h6><i class="fas fa-user"></i> {{ pedido.cliente.nombre_display }}</h6>
+                            <small class="text-muted">{{ pedido.cliente.numero_documento }}</small>
+                        </div>
+
+                        <!-- Información de asignación -->
+                        {% if pedido.estado == 'proceso' %}
+                        <div class="asignacion-info {% if pedido.asignado_a == usuario_actual %}asignado-a-mi{% else %}asignado-a-otro{% endif %}">
+                            {% if pedido.asignado_a %}
+                                {% if pedido.asignado_a == usuario_actual %}
+                                    <i class="fas fa-user-check text-success"></i> 
+                                    <strong class="text-success">Asignado a ti</strong>
+                                {% else %}
+                                    <i class="fas fa-user-lock text-warning"></i> 
+                                    <strong class="text-warning">Asignado a {{ pedido.asignado_a.get_full_name }}</strong>
+                                {% endif %}
+                            {% else %}
+                                <i class="fas fa-user-question text-muted"></i> 
+                                <span class="text-muted">Sin asignar</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Métricas del pedido -->
+                        <div class="pedido-metrics">
+                            <div class="row">
+                                <div class="col-6 metric-item">
+                                    <div class="metric-label">Fecha</div>
+                                    <div class="metric-value">{{ pedido.fecha|date:"d/m/Y" }}</div>
+                                </div>
+                                <div class="col-6 metric-item">
+                                    <div class="metric-label">Items</div>
+                                    <div class="metric-value">{{ pedido.items.count }} productos</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Items del pedido -->
+                        <div class="items-section">
+                            <div class="items-header">
+                                <i class="fas fa-list"></i> Items del Pedido ({{ pedido.items.count }})
+                            </div>
+                            <div class="items-container">
+                                {% for item in pedido.items.all %}
+                                <div class="item-row">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="font-weight-bold">{{ item.producto.nombre }}</div>
+                                            <small class="text-muted">{{ item.producto.codigo }}</small>
+                                        </div>
+                                        <div class="text-right ml-2">
+                                            <div class="font-weight-bold mb-1">{{ item.cantidad }} uds</div>
+                                            <div class="stock-status {% if item.stock_suficiente %}stock-suficiente{% else %}stock-insuficiente{% endif %}">
+                                                {% if item.stock_suficiente %}
+                                                    <i class="fas fa-check-circle"></i> {{ item.stock_disponible }}
+                                                {% else %}
+                                                    <i class="fas fa-exclamation-triangle"></i> {{ item.stock_disponible }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Vendedor -->
+                        {% if pedido.vendedor %}
+                        <div class="vendedor-info">
+                            <i class="fas fa-user-tie"></i> <strong>Vendedor:</strong> {{ pedido.vendedor.get_full_name }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100" role="group">
+                            <a href="{% url 'ventas:pedido_detail' pedido.pk %}" 
+                               class="btn btn-outline-primary btn-alistamiento">
+                                <i class="fas fa-eye"></i> Detalle
+                            </a>
+                            {% if pedido.estado == 'pendiente' %}
+                            <a href="{% url 'ventas:cambiar_estado_pedido' pedido.pk %}?estado=proceso" 
+                               class="btn btn-warning btn-alistamiento"
+                               onclick="return confirm('¿Iniciar pedido y asignarlo a ti?')">
+                                <i class="fas fa-play"></i> Iniciar
+                            </a>
+                            {% elif pedido.estado == 'proceso' %}
+                                {% if not pedido.asignado_a %}
+                                <a href="{% url 'ventas:asignar_pedido_bodega' pedido.pk %}" 
+                                   class="btn btn-primary btn-alistamiento"
+                                   onclick="return confirm('¿Asignar este pedido a ti para alistamiento?')">
+                                    <i class="fas fa-hand-paper"></i> Asignar a mí
+                                </a>
+                                {% elif pedido.asignado_a == usuario_actual %}
+                                <a href="{% url 'ventas:cambiar_estado_pedido' pedido.pk %}?estado=completado" 
+                                   class="btn btn-success btn-alistamiento"
+                                   onclick="return confirm('¿Marcar pedido como Completado?')">
+                                    <i class="fas fa-check"></i> Completar
+                                </a>
+                                {% else %}
+                                <span class="btn btn-secondary btn-alistamiento disabled" 
+                                      title="Pedido asignado a {{ pedido.asignado_a.get_full_name }}">
+                                    <i class="fas fa-lock"></i> No disponible
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <nav aria-label="Paginación de pedidos">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Anterior</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Siguiente</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">Última</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+    {% else %}
+        <div class="alert alert-info text-center">
+            <div class="mb-3">
+                <i class="fas fa-clipboard-check" style="font-size: 3rem; color: #17a2b8;"></i>
+            </div>
+            <h4><i class="fas fa-info-circle"></i> ¡Todo al día!</h4>
+            <p class="mb-0">No hay pedidos pendientes de alistamiento en este momento.</p>
+            <small class="text-muted">Los nuevos pedidos aparecerán aquí automáticamente.</small>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Leyenda de estados de stock -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card leyenda-card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Leyenda de Estados y Controles</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 leyenda-item">
+                        <span class="stock-status stock-suficiente">
+                            <i class="fas fa-check-circle"></i> Stock OK
+                        </span>
+                    </div>
+                    <div class="col-md-3 leyenda-item">
+                        <span class="stock-status stock-insuficiente">
+                            <i class="fas fa-exclamation-triangle"></i> Sin Stock
+                        </span>
+                    </div>
+                    <div class="col-md-3 leyenda-item">
+                        <span class="badge badge-warning">Pendiente</span>
+                        <small class="text-muted">Sin iniciar</small>
+                    </div>
+                    <div class="col-md-3 leyenda-item">
+                        <span class="badge badge-info">En Proceso</span>
+                        <small class="text-muted">Alistando</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> <!-- Cierre alistamiento-container -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-refresh cada 30 segundos
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    
+    // Tooltip para elementos con título
+    $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+{% endblock %}

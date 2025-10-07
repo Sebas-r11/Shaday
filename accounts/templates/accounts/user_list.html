@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Gestión de Usuarios</h1>
+            <p class="text-muted mb-0">Administrar usuarios del sistema</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'accounts:user_management_dashboard' %}" class="btn btn-outline-info">
+                <i class="fas fa-chart-bar me-1"></i> Dashboard
+            </a>
+            <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-1"></i> Nuevo Usuario
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros de Búsqueda -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label for="search" class="form-label">Búsqueda</label>
+                    <input type="text" class="form-control" name="search" id="search" 
+                           value="{{ search_form.search }}" 
+                           placeholder="Buscar por nombre, email o documento...">
+                </div>
+                <div class="col-md-2">
+                    <label for="role" class="form-label">Rol</label>
+                    <select class="form-select" name="role" id="role">
+                        <option value="all" {% if search_form.role == 'all' %}selected{% endif %}>Todos</option>
+                        {% for role_key, role_name in roles %}
+                        <option value="{{ role_key }}" {% if search_form.role == role_key %}selected{% endif %}>
+                            {{ role_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="activo" class="form-label">Estado</label>
+                    <select class="form-select" name="activo" id="activo">
+                        <option value="all" {% if search_form.activo == 'all' %}selected{% endif %}>Todos</option>
+                        <option value="true" {% if search_form.activo == 'true' %}selected{% endif %}>Activos</option>
+                        <option value="false" {% if search_form.activo == 'false' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i> Buscar
+                        </button>
+                        <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Limpiar
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                Usuarios del Sistema
+                {% if usuarios %}
+                    <span class="badge bg-primary ms-2">{{ page_obj.paginator.count }} total</span>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if usuarios %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Información</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle me-3">
+                                        {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ usuario.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ usuario.get_full_name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="small">
+                                    <i class="fas fa-envelope text-muted me-1"></i> {{ usuario.email }}<br>
+                                    {% if usuario.telefono %}
+                                        <i class="fas fa-phone text-muted me-1"></i> {{ usuario.telefono }}<br>
+                                    {% endif %}
+                                    {% if usuario.documento %}
+                                        <i class="fas fa-id-card text-muted me-1"></i> {{ usuario.documento }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ usuario.get_role_display }}</span>
+                                {% if usuario.is_superuser %}
+                                    <br><span class="badge bg-danger mt-1">Superusuario</span>
+                                {% elif usuario.is_staff %}
+                                    <br><span class="badge bg-warning mt-1">Staff</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column align-items-start">
+                                    {% if usuario.activo %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                    
+                                    {% if usuario.last_login %}
+                                        <small class="text-muted mt-1">
+                                            Último: {{ usuario.last_login|date:"d/m/Y H:i" }}
+                                        </small>
+                                    {% else %}
+                                        <small class="text-muted mt-1">Nunca ingresó</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="small">
+                                {{ usuario.date_joined|date:"d/m/Y" }}<br>
+                                <span class="text-muted">{{ usuario.date_joined|date:"H:i" }}</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'accounts:user_detail' usuario.pk %}" 
+                                       class="btn btn-outline-primary" title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'accounts:user_update' usuario.pk %}" 
+                                       class="btn btn-outline-secondary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'accounts:change_user_password' usuario.pk %}" 
+                                       class="btn btn-outline-warning" title="Cambiar contraseña">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                    
+                                    {% if usuario != request.user and not usuario.is_superuser or request.user.is_superuser %}
+                                    <button type="button" 
+                                            class="btn btn-outline-{% if usuario.activo %}danger{% else %}success{% endif %} btn-toggle-status" 
+                                            data-user-id="{{ usuario.pk }}"
+                                            data-current-status="{{ usuario.activo|yesno:'true,false' }}"
+                                            title="{% if usuario.activo %}Desactivar{% else %}Activar{% endif %}">
+                                        <i class="fas fa-{% if usuario.activo %}times{% else %}check{% endif %}"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="Paginación de usuarios">
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} 
+                        de {{ page_obj.paginator.count }} usuarios
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No se encontraron usuarios</h4>
+                {% if search_form.search or search_form.role != 'all' or search_form.activo != 'all' %}
+                    <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+                    <a href="{% url 'accounts:user_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-times me-1"></i> Limpiar filtros
+                    </a>
+                {% else %}
+                    <p class="text-muted">Comienza creando tu primer usuario</p>
+                    <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-1"></i> Crear Primer Usuario
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Manejar toggle de estado de usuario
+    document.querySelectorAll('.btn-toggle-status').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const currentStatus = this.dataset.currentStatus === 'true';
+            const newStatus = !currentStatus;
+            
+            if (confirm(`¿Estás seguro de que quieres ${newStatus ? 'activar' : 'desactivar'} este usuario?`)) {
+                fetch(`/accounts/usuarios/${userId}/toggle-status/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Error al cambiar el estado del usuario');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error de conexión');
+                });
+            }
+        });
+    });
+
+    // Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

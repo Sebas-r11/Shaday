@@ -1,0 +1,316 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Transferir Producto - DistribucioneShaddai{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+.select2-container--default .select2-selection--single {
+    height: 42px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 26px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 40px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'inventario:stock_list' %}" class="text-gray-500 hover:text-gray-700">Stock</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">Transferir Producto</span>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="mt-4">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <i class="fas fa-exchange-alt text-green-600 mr-3"></i>Transferir Producto entre Bodegas
+            </h1>
+            <p class="text-gray-600 mt-1">Mover stock de una bodega a otra</p>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="mb-6 p-4 rounded-md {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-green-50 text-green-700 border border-green-200{% endif %}">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                    {% else %}
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    {{ message }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Stock actual por bodegas -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg mb-6 p-4">
+        <h3 class="text-lg font-medium text-blue-900 mb-3">
+            <i class="fas fa-info-circle mr-2"></i>Stock Disponible por Bodegas
+        </h3>
+        <div class="max-h-48 overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for stock in stocks %}
+                <div class="bg-white rounded border p-3">
+                    <div class="font-medium text-gray-900">{{ stock.producto.nombre }}</div>
+                    <div class="text-sm text-gray-600">{{ stock.producto.codigo }}</div>
+                    <div class="mt-1 flex justify-between items-center">
+                        <span class="text-sm font-medium text-blue-600">{{ stock.bodega.nombre }}</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {{ stock.cantidad }} unidades
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center text-gray-500 py-4">
+                    No hay stock disponible para transferir
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de transferencia -->
+    <div class="bg-white shadow rounded-lg">
+        <form method="post" class="p-6" id="transferenciaForm">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Selección de producto -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Seleccionar Producto</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="producto_id" class="block text-sm font-medium text-gray-700">
+                                Producto *
+                            </label>
+                            <select name="producto_id" id="producto_id" required 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 select2-productos">
+                                <option value="">Busque un producto por código o nombre...</option>
+                                {% for producto in productos %}
+                                <option value="{{ producto.id }}" data-codigo="{{ producto.codigo }}">
+                                    {{ producto.codigo }} - {{ producto.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <p class="mt-1 text-sm text-gray-500">Escriba para buscar el producto por código o nombre</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selección de bodegas -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Bodegas</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="bodega_origen" class="block text-sm font-medium text-gray-700">
+                                Bodega Origen *
+                            </label>
+                            <select name="bodega_origen" id="bodega_origen" required 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Seleccione bodega origen...</option>
+                                {% for bodega in bodegas %}
+                                <option value="{{ bodega.id }}">
+                                    {{ bodega.nombre }}
+                                    {% if bodega.es_principal %} (Principal){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div id="stock_origen" class="mt-2 text-sm text-gray-600 hidden">
+                                Stock disponible: <span id="cantidad_origen" class="font-medium">0</span> unidades
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="bodega_destino" class="block text-sm font-medium text-gray-700">
+                                Bodega Destino *
+                            </label>
+                            <select name="bodega_destino" id="bodega_destino" required 
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Seleccione bodega destino...</option>
+                                {% for bodega in bodegas %}
+                                <option value="{{ bodega.id }}">
+                                    {{ bodega.nombre }}
+                                    {% if bodega.es_principal %} (Principal){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cantidad y observaciones -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Detalles de la Transferencia</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="cantidad" class="block text-sm font-medium text-gray-700">
+                                Cantidad *
+                            </label>
+                            <input type="number" name="cantidad" id="cantidad" min="1" required 
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Ingrese cantidad a transferir">
+                            <p class="mt-1 text-sm text-gray-500">Cantidad de unidades a transferir</p>
+                        </div>
+                        
+                        <div>
+                            <label for="observaciones" class="block text-sm font-medium text-gray-700">
+                                Observaciones
+                            </label>
+                            <textarea name="observaciones" id="observaciones" rows="3" 
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Motivo o detalles de la transferencia (opcional)"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                <a href="{% url 'inventario:stock_list' %}" 
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" id="btnTransferir" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-exchange-alt mr-2"></i>Realizar Transferencia
+                </button>
+                <button type="submit" name="generar_pdf" value="1" id="btnTransferirYPdf" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-file-pdf mr-2"></i>Transferir y Generar PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productoSelect = document.getElementById('producto_id');
+    const bodegaOrigenSelect = document.getElementById('bodega_origen');
+    const stockOrigenDiv = document.getElementById('stock_origen');
+    const cantidadOrigenSpan = document.getElementById('cantidad_origen');
+    const cantidadInput = document.getElementById('cantidad');
+    const btnTransferir = document.getElementById('btnTransferir');
+    
+    // Stock data desde el backend
+    const stockData = {
+        {% for stock in stocks %}
+        '{{ stock.producto.id }}_{{ stock.bodega.id }}': {{ stock.cantidad }},
+        {% endfor %}
+    };
+    
+    function updateStockDisplay() {
+        const productoId = productoSelect.value;
+        const bodegaOrigenId = bodegaOrigenSelect.value;
+        
+        if (productoId && bodegaOrigenId) {
+            const stockKey = productoId + '_' + bodegaOrigenId;
+            const stockDisponible = stockData[stockKey] || 0;
+            
+            cantidadOrigenSpan.textContent = stockDisponible;
+            stockOrigenDiv.classList.remove('hidden');
+            
+            // Actualizar máximo de cantidad
+            cantidadInput.max = stockDisponible;
+            
+            if (stockDisponible === 0) {
+                cantidadOrigenSpan.className = 'font-medium text-red-600';
+                btnTransferir.disabled = true;
+            } else {
+                cantidadOrigenSpan.className = 'font-medium text-green-600';
+                btnTransferir.disabled = false;
+            }
+        } else {
+            stockOrigenDiv.classList.add('hidden');
+            btnTransferir.disabled = true;
+        }
+    }
+    
+    // Event listeners
+    productoSelect.addEventListener('change', updateStockDisplay);
+    bodegaOrigenSelect.addEventListener('change', updateStockDisplay);
+    
+    // Validar cantidad
+    cantidadInput.addEventListener('input', function() {
+        const cantidad = parseInt(this.value);
+        const maxCantidad = parseInt(this.max);
+        
+        if (cantidad > maxCantidad) {
+            this.value = maxCantidad;
+        }
+    });
+    
+    // Prevenir selección de misma bodega
+    const bodegaDestinoSelect = document.getElementById('bodega_destino');
+    bodegaOrigenSelect.addEventListener('change', function() {
+        if (this.value === bodegaDestinoSelect.value && this.value !== '') {
+            alert('La bodega de origen debe ser diferente a la de destino');
+            bodegaDestinoSelect.value = '';
+        }
+    });
+    
+    bodegaDestinoSelect.addEventListener('change', function() {
+        if (this.value === bodegaOrigenSelect.value && this.value !== '') {
+            alert('La bodega de destino debe ser diferente a la de origen');
+            this.value = '';
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Inicializar Select2 para productos
+    $('.select2-productos').select2({
+        placeholder: 'Busque un producto por código o nombre...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "No se encontraron productos";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        }
+    });
+    
+    // También para las bodegas si quieres búsqueda
+    $('#bodega_origen, #bodega_destino').select2({
+        placeholder: function() {
+            return $(this).attr('placeholder') || 'Seleccione una opción...';
+        },
+        allowClear: true,
+        width: '100%'
+    });
+});
+</script>
+{% endblock %}

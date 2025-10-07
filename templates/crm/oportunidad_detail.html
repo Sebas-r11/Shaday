@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ oportunidad.nombre }} - CRM DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'crm:dashboard' %}" class="text-gray-500 hover:text-gray-700">CRM</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <a href="{% url 'crm:oportunidad_list' %}" class="text-gray-500 hover:text-gray-700">Oportunidades</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">{{ oportunidad.nombre }}</span>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="mt-4 md:flex md:items-center md:justify-between">
+            <div class="flex-1 min-w-0">
+                <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl sm:truncate">
+                    <i class="fas fa-bullseye text-blue-600 mr-2"></i>
+                    {{ oportunidad.nombre }}
+                </h1>
+                <div class="mt-2 flex items-center space-x-4">
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full {{ oportunidad.estado_display_color }}">
+                        {{ oportunidad.get_estado_display }}
+                    </span>
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full {{ oportunidad.prioridad_display_color }}">
+                        {{ oportunidad.get_prioridad_display }}
+                    </span>
+                    <span class="text-sm text-gray-500">
+                        <i class="fas fa-calendar mr-1"></i>
+                        Creada hace {{ oportunidad.dias_desde_creacion }} días
+                    </span>
+                </div>
+            </div>
+            <div class="mt-4 flex md:mt-0 md:ml-4 space-x-3">
+                <a href="{% url 'crm:oportunidad_update' oportunidad.pk %}" 
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-edit mr-2"></i>
+                    Editar
+                </a>
+                <a href="{% url 'crm:actividad_create' %}?oportunidad={{ oportunidad.pk }}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-calendar-plus mr-2"></i>
+                    Nueva Actividad
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Columna Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Información de la Oportunidad -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información General</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Cliente</dt>
+                            <dd class="text-base text-gray-900">
+                                <a href="{% url 'ventas:cliente_detail' oportunidad.cliente.pk %}" class="text-blue-600 hover:text-blue-800">
+                                    {{ oportunidad.cliente.nombre_display }}
+                                </a>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Vendedor</dt>
+                            <dd class="text-base text-gray-900">
+                                {% if oportunidad.vendedor %}
+                                    {{ oportunidad.vendedor.get_full_name }}
+                                {% else %}
+                                    <span class="text-gray-400">Sin asignar</span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Valor Estimado</dt>
+                            <dd class="text-base font-semibold text-gray-900">${{ oportunidad.valor_estimado|floatformat:0 }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Valor Ponderado</dt>
+                            <dd class="text-base text-gray-900">${{ oportunidad.valor_ponderado|floatformat:0 }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Probabilidad</dt>
+                            <dd class="text-base text-gray-900">
+                                <div class="flex items-center">
+                                    <div class="flex-grow bg-gray-200 rounded-full h-2 mr-3">
+                                        <div class="h-2 rounded-full 
+                                            {% if oportunidad.probabilidad >= 75 %}bg-green-600
+                                            {% elif oportunidad.probabilidad >= 50 %}bg-yellow-600
+                                            {% elif oportunidad.probabilidad >= 25 %}bg-orange-600
+                                            {% else %}bg-red-600{% endif %}" 
+                                             style="width: {{ oportunidad.probabilidad }}%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium">{{ oportunidad.probabilidad }}%</span>
+                                </div>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Fuente</dt>
+                            <dd class="text-base text-gray-900">{{ oportunidad.get_fuente_display }}</dd>
+                        </div>
+                        {% if oportunidad.fecha_cierre_estimada %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Fecha Cierre Estimada</dt>
+                            <dd class="text-base text-gray-900">{{ oportunidad.fecha_cierre_estimada|date:"d/m/Y" }}</dd>
+                        </div>
+                        {% endif %}
+                        {% if oportunidad.fecha_cierre_real %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500 mb-1">Fecha Cierre Real</dt>
+                            <dd class="text-base text-gray-900">{{ oportunidad.fecha_cierre_real|date:"d/m/Y H:i" }}</dd>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if oportunidad.descripcion %}
+                    <div class="mt-6">
+                        <dt class="text-sm font-medium text-gray-500 mb-2">Descripción</dt>
+                        <dd class="text-base text-gray-900">{{ oportunidad.descripcion }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if oportunidad.productos_interes %}
+                    <div class="mt-4">
+                        <dt class="text-sm font-medium text-gray-500 mb-2">Productos de Interés</dt>
+                        <dd class="text-base text-gray-900">{{ oportunidad.productos_interes }}</dd>
+                    </div>
+                    {% endif %}
+                    
+                    {% if oportunidad.competencia %}
+                    <div class="mt-4">
+                        <dt class="text-sm font-medium text-gray-500 mb-2">Competencia</dt>
+                        <dd class="text-base text-gray-900">{{ oportunidad.competencia }}</dd>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Documentos Relacionados -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Documentos Comerciales</h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <!-- Cotizaciones -->
+                        {% if cotizaciones %}
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">
+                                <i class="fas fa-file-alt mr-2"></i>Cotizaciones Relacionadas
+                            </h4>
+                            <div class="space-y-2">
+                                {% for cotizacion in cotizaciones %}
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-file-alt text-blue-600"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">
+                                                <a href="{% url 'ventas:cotizacion_detail' cotizacion.pk %}" class="hover:text-blue-600">
+                                                    COT-{{ cotizacion.numero }}
+                                                </a>
+                                            </p>
+                                            <p class="text-xs text-gray-500">{{ cotizacion.fecha_creacion|date:"d/m/Y" }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-sm font-semibold text-gray-900">${{ cotizacion.total|floatformat:0 }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Enlace para crear cotización -->
+                        <div class="pt-4 border-t border-gray-200">
+                            <a href="{% url 'ventas:cotizacion_create' %}?cliente={{ oportunidad.cliente.pk }}" 
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <i class="fas fa-plus mr-2"></i>
+                                Crear Cotización para este Cliente
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline de Actividades -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Timeline de Actividades</h3>
+                    <a href="{% url 'crm:actividad_create' %}?oportunidad={{ oportunidad.pk }}" 
+                       class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        + Nueva Actividad
+                    </a>
+                </div>
+                <div class="p-6">
+                    {% if actividades %}
+                    <div class="flow-root">
+                        <ul role="list" class="-mb-8">
+                            {% for actividad in actividades %}
+                            <li>
+                                <div class="relative pb-8">
+                                    {% if not forloop.last %}
+                                    <span class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                    {% endif %}
+                                    <div class="relative flex space-x-3">
+                                        <div>
+                                            <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white 
+                                                {% if actividad.completada %}bg-green-500
+                                                {% elif actividad.esta_vencida %}bg-red-500
+                                                {% else %}bg-blue-500{% endif %}">
+                                                <i class="fas fa-{% if actividad.tipo == 'llamada' %}phone
+                                                    {% elif actividad.tipo == 'email' %}envelope
+                                                    {% elif actividad.tipo == 'reunion' %}users
+                                                    {% elif actividad.tipo == 'presentacion' %}presentation
+                                                    {% elif actividad.tipo == 'visita' %}map-marker-alt
+                                                    {% else %}calendar{% endif %} text-white text-xs"></i>
+                                            </span>
+                                        </div>
+                                        <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-900">
+                                                    {{ actividad.asunto }}
+                                                    {% if not actividad.completada and actividad.esta_vencida %}
+                                                        <span class="ml-2 px-2 py-1 text-xs font-semibold bg-red-100 text-red-800 rounded-full">
+                                                            Vencida
+                                                        </span>
+                                                    {% elif actividad.completada %}
+                                                        <span class="ml-2 px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                                                            Completada
+                                                        </span>
+                                                    {% endif %}
+                                                </p>
+                                                <p class="text-sm text-gray-500">{{ actividad.descripcion }}</p>
+                                                {% if actividad.resultado %}
+                                                <div class="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
+                                                    <strong>Resultado:</strong> {{ actividad.resultado }}
+                                                </div>
+                                                {% endif %}
+                                                {% if actividad.proxima_accion %}
+                                                <div class="mt-1 p-2 bg-blue-50 rounded text-sm text-blue-700">
+                                                    <strong>Próxima acción:</strong> {{ actividad.proxima_accion }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                                <time>{{ actividad.fecha_actividad|date:"d/m/Y H:i" }}</time>
+                                                <p class="text-xs">{{ actividad.responsable.get_full_name }}</p>
+                                                {% if not actividad.completada %}
+                                                <div class="mt-1">
+                                                    <button onclick="completarActividad('{{ actividad.id }}')" 
+                                                            class="text-green-600 hover:text-green-800 text-xs">
+                                                        <i class="fas fa-check mr-1"></i>Completar
+                                                    </button>
+                                                    <a href="{% url 'crm:actividad_update' actividad.pk %}" 
+                                                       class="ml-2 text-blue-600 hover:text-blue-800 text-xs">
+                                                        <i class="fas fa-edit mr-1"></i>Editar
+                                                    </a>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-6">
+                        <i class="fas fa-calendar text-gray-400 text-4xl mb-2"></i>
+                        <p class="text-gray-500">No hay actividades registradas</p>
+                        <a href="{% url 'crm:actividad_create' %}?oportunidad={{ oportunidad.pk }}" 
+                           class="mt-2 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>
+                            Primera Actividad
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Sidebar Derecho -->
+        <div class="space-y-6">
+            
+            <!-- Notas Rápidas -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Notas</h3>
+                </div>
+                <div class="p-6">
+                    <!-- Formulario para nueva nota -->
+                    <form id="form-nueva-nota" class="mb-4">
+                        {% csrf_token %}
+                        <textarea id="contenido-nota" name="contenido" 
+                                  placeholder="Agregar una nota..." 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                  rows="3"></textarea>
+                        <div class="mt-2 flex justify-between items-center">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="es-publica" name="es_publica" checked 
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="es-publica" class="ml-2 text-sm text-gray-700">Visible para todo el equipo</label>
+                            </div>
+                            <button type="submit" 
+                                    class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                <i class="fas fa-plus mr-1"></i>Agregar
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Lista de notas -->
+                    <div id="lista-notas" class="space-y-3">
+                        {% for nota in notas %}
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-xs font-medium text-gray-600">{{ nota.usuario_creacion.get_full_name }}</span>
+                                <span class="text-xs text-gray-500">{{ nota.fecha_creacion|date:"d/m H:i" }}</span>
+                            </div>
+                            <p class="text-sm text-gray-900">{{ nota.contenido }}</p>
+                            {% if not nota.es_publica %}
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-lock mr-1"></i>Privada
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p class="text-gray-500 text-sm text-center py-4">Sin notas</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+    </div>
+
+</div>
+
+<script>
+// Completar actividad
+function completarActividad(actividadId) {
+    if (confirm('¿Marcar esta actividad como completada?')) {
+        fetch(`/crm/actividades/${actividadId}/completar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al completar la actividad');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al completar la actividad');
+        });
+    }
+}
+
+// Agregar nueva nota
+document.getElementById('form-nueva-nota').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const contenido = document.getElementById('contenido-nota').value.trim();
+    if (!contenido) return;
+    
+    const formData = new FormData();
+    formData.append('contenido', contenido);
+    formData.append('es_publica', document.getElementById('es-publica').checked);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`/crm/oportunidades/{{ oportunidad.pk }}/agregar-nota/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar la nota a la lista
+            const listNotas = document.getElementById('lista-notas');
+            const nuevaNota = document.createElement('div');
+            nuevaNota.className = 'p-3 bg-gray-50 rounded-lg';
+            nuevaNota.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-xs font-medium text-gray-600">${data.nota.autor}</span>
+                    <span class="text-xs text-gray-500">${data.nota.fecha}</span>
+                </div>
+                <p class="text-sm text-gray-900">${data.nota.contenido}</p>
+            `;
+            
+            if (listNotas.querySelector('p.text-center')) {
+                listNotas.innerHTML = '';
+            }
+            
+            listNotas.insertBefore(nuevaNota, listNotas.firstChild);
+            
+            // Limpiar formulario
+            document.getElementById('contenido-nota').value = '';
+        } else {
+            alert('Error al agregar la nota');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al agregar la nota');
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block extra_js %}
+{% csrf_token %}
+{% endblock %}

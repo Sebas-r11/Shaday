@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ajuste de Inventario{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-balance-scale"></i> Ajuste de Inventario
+        </h1>
+        <a href="{% url 'inventario:stock-list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Datos del Ajuste</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="ajuste-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.producto.id_for_label }}">Producto:</label>
+                                    {{ form.producto }}
+                                    {% if form.producto.errors %}
+                                        <div class="text-danger">{{ form.producto.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.bodega.id_for_label }}">Bodega:</label>
+                                    {{ form.bodega }}
+                                    {% if form.bodega.errors %}
+                                        <div class="text-danger">{{ form.bodega.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Stock Actual:</label>
+                                    <input type="number" id="stock-actual" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.cantidad_fisica.id_for_label }}">Cantidad Física Contada:</label>
+                                    {{ form.cantidad_fisica }}
+                                    {% if form.cantidad_fisica.errors %}
+                                        <div class="text-danger">{{ form.cantidad_fisica.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Diferencia:</label>
+                                    <input type="number" id="diferencia" class="form-control" readonly>
+                                    <small class="form-text text-muted">Se calculará automáticamente</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.tipo_ajuste.id_for_label }}">Tipo de Ajuste:</label>
+                                    {{ form.tipo_ajuste }}
+                                    {% if form.tipo_ajuste.errors %}
+                                        <div class="text-danger">{{ form.tipo_ajuste.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.motivo.id_for_label }}">Motivo:</label>
+                                    {{ form.motivo }}
+                                    {% if form.motivo.errors %}
+                                        <div class="text-danger">{{ form.motivo.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.observaciones.id_for_label }}">Observaciones:</label>
+                                    {{ form.observaciones }}
+                                    {% if form.observaciones.errors %}
+                                        <div class="text-danger">{{ form.observaciones.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary" id="btn-guardar">
+                                <i class="fas fa-save"></i> Guardar Ajuste
+                            </button>
+                            <a href="{% url 'inventario:stock-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Información del Producto -->
+            <div class="card shadow mb-4" id="info-producto" style="display: none;">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Producto</h6>
+                </div>
+                <div class="card-body">
+                    <div id="producto-info">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas de Ajuste -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">⚠️ Importante</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <strong>Advertencia:</strong> Los ajustes de inventario afectan directamente el stock disponible. Asegúrese de contar físicamente el producto antes de realizar el ajuste.
+                    </div>
+                    
+                    <h6>Tipos de Ajuste:</h6>
+                    <ul class="small">
+                        <li><strong>Entrada:</strong> Aumenta el stock (productos encontrados)</li>
+                        <li><strong>Salida:</strong> Disminuye el stock (productos faltantes)</li>
+                        <li><strong>Corrección:</strong> Ajuste por error de sistema</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Últimos Ajustes -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Últimos Ajustes</h6>
+                </div>
+                <div class="card-body">
+                    {% if ultimos_ajustes %}
+                    {% for ajuste in ultimos_ajustes %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <div>
+                            <small class="text-muted">{{ ajuste.fecha|date:"d/m/Y H:i" }}</small><br>
+                            <strong>{{ ajuste.producto.nombre|truncatechars:20 }}</strong><br>
+                            <span class="badge badge-{% if ajuste.tipo_ajuste == 'entrada' %}success{% elif ajuste.tipo_ajuste == 'salida' %}danger{% else %}warning{% endif %}">
+                                {{ ajuste.get_tipo_ajuste_display }}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <strong>{{ ajuste.diferencia|floatformat:0 }}</strong>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center">No hay ajustes recientes</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Configurar campos de formulario
+    $('input, select, textarea').addClass('form-control');
+    
+    // Evento para cargar información del producto cuando se selecciona
+    $('#id_producto, #id_bodega').change(function() {
+        var producto_id = $('#id_producto').val();
+        var bodega_id = $('#id_bodega').val();
+        
+        if (producto_id && bodega_id) {
+            cargarStockActual(producto_id, bodega_id);
+            cargarInfoProducto(producto_id);
+        }
+    });
+    
+    // Calcular diferencia automáticamente
+    $('#id_cantidad_fisica').on('input', function() {
+        calcularDiferencia();
+    });
+    
+    // Validación del formulario
+    $('#ajuste-form').on('submit', function(e) {
+        var diferencia = parseFloat($('#diferencia').val()) || 0;
+        
+        if (diferencia === 0) {
+            e.preventDefault();
+            alert('No hay diferencia entre el stock actual y la cantidad física contada. No es necesario realizar un ajuste.');
+            return false;
+        }
+        
+        if (Math.abs(diferencia) > 100) {
+            if (!confirm('La diferencia es muy grande (' + diferencia + ' unidades). ¿Está seguro de que los datos son correctos?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+});
+
+function cargarStockActual(producto_id, bodega_id) {
+    $.ajax({
+        url: '/inventario/api/stock-actual/',
+        data: {
+            'producto_id': producto_id,
+            'bodega_id': bodega_id
+        },
+        success: function(data) {
+            $('#stock-actual').val(data.stock_actual);
+            calcularDiferencia();
+        },
+        error: function() {
+            $('#stock-actual').val(0);
+            alert('Error al cargar el stock actual');
+        }
+    });
+}
+
+function cargarInfoProducto(producto_id) {
+    $.ajax({
+        url: '/inventario/api/producto-info/' + producto_id + '/',
+        success: function(data) {
+            var html = '<p><strong>Código:</strong> ' + data.codigo + '</p>';
+            html += '<p><strong>Categoría:</strong> ' + data.categoria + '</p>';
+            html += '<p><strong>Precio:</strong> $' + data.precio + '</p>';
+            if (data.descripcion) {
+                html += '<p><strong>Descripción:</strong> ' + data.descripcion + '</p>';
+            }
+            
+            $('#producto-info').html(html);
+            $('#info-producto').show();
+        },
+        error: function() {
+            $('#info-producto').hide();
+        }
+    });
+}
+
+function calcularDiferencia() {
+    var stockActual = parseFloat($('#stock-actual').val()) || 0;
+    var cantidadFisica = parseFloat($('#id_cantidad_fisica').val()) || 0;
+    var diferencia = cantidadFisica - stockActual;
+    
+    $('#diferencia').val(diferencia);
+    
+    // Cambiar color según si es positivo o negativo
+    if (diferencia > 0) {
+        $('#diferencia').removeClass('text-danger').addClass('text-success');
+        $('#id_tipo_ajuste').val('entrada');
+    } else if (diferencia < 0) {
+        $('#diferencia').removeClass('text-success').addClass('text-danger');
+        $('#id_tipo_ajuste').val('salida');
+    } else {
+        $('#diferencia').removeClass('text-success text-danger');
+        $('#id_tipo_ajuste').val('');
+    }
+}
+</script>
+{% endblock %}

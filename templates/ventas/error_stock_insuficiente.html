@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stock Insuficiente - Pedido {{ pedido.numero }}{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header con ícono de alerta -->
+        <div class="mb-8">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    Stock Insuficiente
+                </h1>
+                <p class="text-lg text-gray-600">
+                    No es posible cambiar el estado del pedido por falta de inventario
+                </p>
+            </div>
+        </div>
+
+        <!-- Información del pedido -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-file-alt mr-3 text-blue-600"></i>
+                    Información del Pedido
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Datos del Pedido
+                        </h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Número:</span>
+                                <span class="font-medium">{{ pedido.numero }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Cliente:</span>
+                                <span class="font-medium">{{ pedido.cliente.nombre_completo }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Estado actual:</span>
+                                <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                    {{ pedido.get_estado_display }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Estado deseado:</span>
+                                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                    {{ estado_deseado|capfirst }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+                            Detalles Comerciales
+                        </h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Vendedor:</span>
+                                <span class="font-medium">{{ pedido.vendedor.get_full_name|default:"Sin asignar" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Bodega:</span>
+                                <span class="font-medium">{{ pedido.bodega.nombre }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Fecha:</span>
+                                <span class="font-medium">{{ pedido.fecha|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Total:</span>
+                                <span class="font-bold text-lg">${{ pedido.total|floatformat:0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detalles del problema de stock -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-boxes mr-3 text-red-600"></i>
+                    Problema de Inventario
+                </h3>
+            </div>
+            <div class="p-6">
+                {% if stock_info %}
+                    <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-exclamation-circle text-red-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="text-sm font-medium text-red-800">
+                                    Stock Insuficiente para: {{ producto_nombre }}
+                                </h4>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <p>No hay suficiente inventario disponible para procesar este pedido.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Producto
+                                    </th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Cantidad Pedida
+                                    </th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Stock Disponible
+                                    </th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Faltante
+                                    </th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for item in stock_info %}
+                                <tr class="{% if item.faltante > 0 %}bg-red-50{% else %}bg-green-50{% endif %}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-cube text-gray-400 mr-3"></i>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ item.producto.nombre }}
+                                                </div>
+                                                <div class="text-sm text-gray-500">
+                                                    {{ item.producto.codigo|default:"Sin código" }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <span class="text-sm font-medium text-gray-900">
+                                            {{ item.cantidad_pedida }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <span class="text-sm {% if item.stock_disponible > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ item.stock_disponible }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        {% if item.faltante > 0 %}
+                                            <span class="text-sm font-bold text-red-600">
+                                                -{{ item.faltante }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-sm text-green-600">
+                                                <i class="fas fa-check"></i>
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        {% if item.faltante > 0 %}
+                                            <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                                Insuficiente
+                                            </span>
+                                        {% else %}
+                                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                Disponible
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recomendaciones y acciones -->
+        <div class="bg-white rounded-lg shadow-md mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-lightbulb mr-3 text-yellow-600"></i>
+                    Opciones Disponibles
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Recomendaciones -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
+                            Recomendaciones
+                        </h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-start">
+                                <i class="fas fa-arrow-right text-blue-500 mt-1 mr-3"></i>
+                                <div>
+                                    <span class="text-sm text-gray-700">
+                                        <strong>Contactar al proveedor</strong> para reabastecer el producto faltante
+                                    </span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-arrow-right text-blue-500 mt-1 mr-3"></i>
+                                <div>
+                                    <span class="text-sm text-gray-700">
+                                        <strong>Ajustar las cantidades</strong> del pedido según stock disponible
+                                    </span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-arrow-right text-blue-500 mt-1 mr-3"></i>
+                                <div>
+                                    <span class="text-sm text-gray-700">
+                                        <strong>Dividir el pedido</strong> en entregas parciales
+                                    </span>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-arrow-right text-blue-500 mt-1 mr-3"></i>
+                                <div>
+                                    <span class="text-sm text-gray-700">
+                                        <strong>Ofrecer productos alternativos</strong> al cliente
+                                    </span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Acciones rápidas -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
+                            Acciones Rápidas
+                        </h4>
+                        <div class="space-y-3">
+                            <a href="{% url 'ventas:pedido_detail' pedido.pk %}" 
+                               class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center justify-center">
+                                <i class="fas fa-edit mr-2"></i>
+                                Editar Pedido
+                            </a>
+                            <a href="{% url 'inventario:producto_list' %}" 
+                               class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center justify-center">
+                                <i class="fas fa-boxes mr-2"></i>
+                                Ver Inventario
+                            </a>
+                            <a href="{% url 'ventas:pedido_list' %}" 
+                               class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center justify-center">
+                                <i class="fas fa-list mr-2"></i>
+                                Lista de Pedidos
+                            </a>
+                            <button onclick="contactarCliente()" 
+                                    class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center justify-center">
+                                <i class="fas fa-phone mr-2"></i>
+                                Contactar Cliente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de contacto -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">
+                        ¿Necesitas ayuda?
+                    </h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p>
+                            Si tienes dudas sobre el manejo de inventario o necesitas asistencia técnica,
+                            contacta al administrador del sistema o al departamento de inventarios.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function contactarCliente() {
+    const telefono = '{{ pedido.cliente.telefono }}';
+    const mensaje = `Hola {{ pedido.cliente.nombre_completo }}, necesitamos hablar sobre tu pedido #{{ pedido.numero }} debido a disponibilidad de inventario.`;
+    
+    if (telefono) {
+        // Intentar abrir WhatsApp
+        const whatsappUrl = `https://wa.me/${telefono.replace(/[^\d]/g, '')}?text=${encodeURIComponent(mensaje)}`;
+        window.open(whatsappUrl, '_blank');
+    } else {
+        alert('El cliente no tiene teléfono registrado. Por favor, contacta por otros medios.');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuración GPS - Repartidor{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        <i class="fas fa-map-marker-alt mr-3 text-green-600"></i>
+                        Configuración GPS
+                    </h1>
+                    <p class="mt-2 text-gray-600">Actualiza tu ubicación y configura tu zona de cobertura</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <a href="{% url 'ventas:entregas_repartidor' %}" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Volver a Entregas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado actual -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Estado Actual del GPS</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-crosshairs mr-2 text-blue-600"></i>
+                            <span class="text-sm font-medium text-gray-700">Ubicación Actual</span>
+                        </div>
+                        {% if user.latitud and user.longitud %}
+                            <p class="text-sm text-gray-900">
+                                <strong>Lat:</strong> {{ user.latitud }}<br>
+                                <strong>Lng:</strong> {{ user.longitud }}
+                            </p>
+                            {% if user.ubicacion_actualizada %}
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Actualizado: {{ user.ubicacion_actualizada|date:"d/m/Y H:i" }}
+                                </p>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-sm text-gray-500">Sin ubicación registrada</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-circle mr-2 text-purple-600"></i>
+                            <span class="text-sm font-medium text-gray-700">Zona de Cobertura</span>
+                        </div>
+                        <p class="text-sm text-gray-900">
+                            <strong>Radio:</strong> {{ user.radio_cobertura_km }} km
+                        </p>
+                        {% if user.zona_cobertura %}
+                            <p class="text-sm text-gray-900">
+                                <strong>Zona:</strong> {{ user.zona_cobertura }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex items-center">
+                    <div class="flex items-center">
+                        {% if user.disponible_entregas %}
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            <span class="text-green-700 font-medium">Disponible para entregas</span>
+                        {% else %}
+                            <i class="fas fa-pause-circle text-red-500 mr-2"></i>
+                            <span class="text-red-700 font-medium">No disponible para entregas</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actualizar ubicación GPS -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-satellite mr-2 text-blue-600"></i>
+                    Actualizar Ubicación GPS
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="mb-6">
+                    <button type="button" id="btn-obtener-gps" onclick="obtenerUbicacionActual()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md text-lg font-medium flex items-center">
+                        <i class="fas fa-location-arrow mr-3"></i>
+                        Obtener Mi Ubicación Actual
+                    </button>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Haz clic para capturar tu ubicación GPS actual usando el dispositivo
+                    </p>
+                </div>
+                
+                <!-- Coordenadas manuales -->
+                <form id="form-coordenadas" method="post" class="hidden">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="actualizar_gps">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                        <div>
+                            <label for="latitud" class="block text-sm font-medium text-gray-700 mb-2">
+                                Latitud
+                            </label>
+                            <input type="number" id="latitud" name="latitud" step="0.0000001"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                   placeholder="4.6097100">
+                        </div>
+                        
+                        <div>
+                            <label for="longitud" class="block text-sm font-medium text-gray-700 mb-2">
+                                Longitud
+                            </label>
+                            <input type="number" id="longitud" name="longitud" step="0.0000001"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                   placeholder="-74.0817500">
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
+                        Guardar Coordenadas
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Configuración de cobertura -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    <i class="fas fa-cog mr-2 text-gray-600"></i>
+                    Configuración de Cobertura
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="accion" value="configurar_cobertura">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="radio_cobertura" class="block text-sm font-medium text-gray-700 mb-2">
+                                Radio de Cobertura (km)
+                            </label>
+                            <input type="number" id="radio_cobertura" name="radio_cobertura" 
+                                   step="0.1" min="1" max="50"
+                                   value="{{ user.radio_cobertura_km }}"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">
+                                Distancia máxima para aceptar entregas (1-50 km)
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label for="zona_cobertura" class="block text-sm font-medium text-gray-700 mb-2">
+                                Zona de Cobertura
+                            </label>
+                            <input type="text" id="zona_cobertura" name="zona_cobertura" 
+                                   value="{{ user.zona_cobertura }}"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                   placeholder="Ej: Centro, Zona Norte, etc.">
+                            <p class="text-xs text-gray-500 mt-1">
+                                Descripción de tu zona de trabajo
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="disponible_entregas" name="disponible_entregas" 
+                                   {% if user.disponible_entregas %}checked{% endif %}
+                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <label for="disponible_entregas" class="ml-2 block text-sm text-gray-700">
+                                Disponible para recibir nuevas entregas
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 ml-6">
+                            Desmarca esta opción si no quieres recibir nuevas asignaciones
+                        </p>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium">
+                            Guardar Configuración
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function obtenerUbicacionActual() {
+    const boton = document.getElementById('btn-obtener-gps');
+    const formulario = document.getElementById('form-coordenadas');
+    
+    boton.disabled = true;
+    boton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Obteniendo ubicación...';
+    
+    if (!navigator.geolocation) {
+        alert('Tu navegador no soporta geolocalización');
+        boton.disabled = false;
+        boton.innerHTML = '<i class="fas fa-location-arrow mr-3"></i>Obtener Mi Ubicación Actual';
+        return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            // Verificar si está en Colombia (aproximadamente)
+            if (lat < -4.5 || lat > 13.5 || lng < -82 || lng > -66) {
+                if (!confirm('La ubicación parece estar fuera de Colombia. ¿Deseas continuar?')) {
+                    boton.disabled = false;
+                    boton.innerHTML = '<i class="fas fa-location-arrow mr-3"></i>Obtener Mi Ubicación Actual';
+                    return;
+                }
+            }
+            
+            // Llenar los campos
+            document.getElementById('latitud').value = lat.toFixed(7);
+            document.getElementById('longitud').value = lng.toFixed(7);
+            
+            // Mostrar formulario
+            formulario.classList.remove('hidden');
+            
+            // Enviar automáticamente
+            formulario.submit();
+        },
+        function(error) {
+            let mensaje = 'Error obteniendo ubicación: ';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    mensaje += 'Permiso denegado. Permite el acceso a la ubicación.';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    mensaje += 'Ubicación no disponible.';
+                    break;
+                case error.TIMEOUT:
+                    mensaje += 'Tiempo de espera agotado.';
+                    break;
+                default:
+                    mensaje += 'Error desconocido.';
+                    break;
+            }
+            alert(mensaje);
+            
+            boton.disabled = false;
+            boton.innerHTML = '<i class="fas fa-location-arrow mr-3"></i>Obtener Mi Ubicación Actual';
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+</script>
+{% endblock %}

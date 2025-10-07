@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura {{ factura.numero_fiscal }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20mm;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        
+        .company-details {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .invoice-info {
+            flex: 1;
+            text-align: right;
+        }
+        
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+        
+        .invoice-number {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .invoice-details {
+            font-size: 11px;
+        }
+        
+        .billing-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .billing-info, .invoice-meta {
+            flex: 1;
+            margin-right: 20px;
+        }
+        
+        .billing-info:last-child, .invoice-meta:last-child {
+            margin-right: 0;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #374151;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 5px;
+        }
+        
+        .info-line {
+            margin-bottom: 5px;
+        }
+        
+        .label {
+            font-weight: bold;
+            color: #4b5563;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .items-table th {
+            background-color: #f9fafb;
+            border: 1px solid #d1d5db;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        .items-table td {
+            border: 1px solid #d1d5db;
+            padding: 10px 8px;
+            vertical-align: top;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals {
+            float: right;
+            width: 300px;
+            margin-top: 20px;
+        }
+        
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .totals td {
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .totals .total-row {
+            background-color: #f3f4f6;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .totals .total-row td {
+            border-top: 2px solid #374151;
+            border-bottom: 2px solid #374151;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            clear: both;
+        }
+        
+        .footer-section {
+            margin-bottom: 20px;
+        }
+        
+        .notes {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-left: 4px solid #2563eb;
+            margin: 20px 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-emitida { background-color: #dbeafe; color: #1e40af; }
+        .status-pagada { background-color: #dcfce7; color: #166534; }
+        .status-vencida { background-color: #fee2e2; color: #dc2626; }
+        .status-anulada { background-color: #f3f4f6; color: #374151; }
+        
+        @media print {
+            .container {
+                padding: 0;
+            }
+            
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        
+        .qr-section {
+            float: right;
+            margin-top: 20px;
+        }
+        
+        .cufe-info {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-info">
+                <div class="company-name">DistribucioneShaddai</div>
+                <div class="company-details">
+                    <div>NIT: 123.456.789-0</div>
+                    <div>Dirección: Calle Principal #123</div>
+                    <div>Teléfono: (601) 234-5678</div>
+                    <div>Email: info@distribucioneshaddai.com</div>
+                    <div>Ciudad: Bogotá, Colombia</div>
+                </div>
+            </div>
+            <div class="invoice-info">
+                <div class="invoice-title">FACTURA DE VENTA</div>
+                <div class="invoice-number">{{ factura.numero_fiscal }}</div>
+                <div class="invoice-details">
+                    <div class="info-line">Fecha: {{ factura.fecha|date:"d/m/Y" }}</div>
+                    {% if factura.fecha_vencimiento %}
+                    <div class="info-line">Vencimiento: {{ factura.fecha_vencimiento|date:"d/m/Y" }}</div>
+                    {% endif %}
+                    <div class="info-line">
+                        Estado: 
+                        <span class="status-badge status-{{ factura.estado }}">
+                            {{ factura.get_estado_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de Facturación -->
+        <div class="billing-section">
+            <div class="billing-info">
+                <div class="section-title">Facturar a:</div>
+                <div class="info-line">
+                    <span class="label">Cliente:</span> {{ factura.cliente.nombre_completo }}
+                </div>
+                <div class="info-line">
+                    <span class="label">{{ factura.cliente.get_tipo_documento_display }}:</span> {{ factura.cliente.numero_documento }}
+                </div>
+                {% if factura.cliente.email %}
+                <div class="info-line">
+                    <span class="label">Email:</span> {{ factura.cliente.email }}
+                </div>
+                {% endif %}
+                {% if factura.cliente.telefono %}
+                <div class="info-line">
+                    <span class="label">Teléfono:</span> {{ factura.cliente.telefono }}
+                </div>
+                {% endif %}
+                {% if factura.cliente.direccion %}
+                <div class="info-line">
+                    <span class="label">Dirección:</span> {{ factura.cliente.direccion }}
+                </div>
+                {% endif %}
+                {% if factura.cliente.ciudad %}
+                <div class="info-line">
+                    <span class="label">Ciudad:</span> {{ factura.cliente.ciudad }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="invoice-meta">
+                <div class="section-title">Información de la Factura:</div>
+                <div class="info-line">
+                    <span class="label">Vendedor:</span> 
+                    {% if factura.cliente.vendedor_asignado %}
+                        {{ factura.cliente.vendedor_asignado.get_full_name|default:factura.cliente.vendedor_asignado.username }}
+                    {% else %}
+                        Sin vendedor asignado
+                    {% endif %}
+                </div>
+                <!-- Comentado hasta que se implemente el campo pedido_origen
+                {% if factura.pedido_origen %}
+                <div class="info-line">
+                    <span class="label">Pedido:</span> {{ factura.pedido_origen.numero }}
+                </div>
+                {% endif %}
+                -->
+                {% if factura.orden_compra %}
+                <div class="info-line">
+                    <span class="label">Orden de Compra:</span> {{ factura.orden_compra }}
+                </div>
+                {% endif %}
+                <div class="info-line">
+                    <span class="label">Método de Pago:</span> {{ factura.get_metodo_pago_display }}
+                </div>
+                {% if factura.fecha_pago %}
+                <div class="info-line">
+                    <span class="label">Fecha de Pago:</span> {{ factura.fecha_pago|date:"d/m/Y" }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Items -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="10%">Código</th>
+                    <th width="35%">Descripción</th>
+                    <th width="10%" class="text-center">Cantidad</th>
+                    <th width="15%" class="text-right">Precio Unit.</th>
+                    <th width="10%" class="text-center">Desc.</th>
+                    <th width="20%" class="text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in factura.itemfactura_set.all %}
+                <tr>
+                    <!-- El modelo ItemFactura actual no tiene campo producto -->
+                    <td>Item #{{ forloop.counter }}</td>
+                    <td>
+                        <strong>Producto</strong>
+                        <!-- Comentado hasta que se implemente el campo producto
+                        <strong>{{ item.producto.nombre }}</strong>
+                        {% if item.variante %}
+                        <br><small>Variante: {{ item.variante.valor }}</small>
+                        {% endif %}
+                        -->
+                        <!-- Comentado hasta que se implemente el campo producto
+                        {% if item.producto.descripcion %}
+                        <br><small class="text-gray-600">{{ item.producto.descripcion|truncatechars:100 }}</small>
+                        {% endif %}
+                        -->
+                    </td>
+                    <td class="text-center">{{ item.cantidad|floatformat:0 }}</td>
+                    <td class="text-right">${{ item.precio|floatformat:0 }}</td>
+                    <td class="text-center">
+                        <!-- Comentado hasta que se implemente el campo descuento
+                        {% if item.descuento_porcentaje > 0 %}
+                            {{ item.descuento_porcentaje|floatformat:1 }}%
+                        {% else %}
+                        -->
+                            -
+                        <!-- {% endif %} comentado -->
+                    </td>
+                    <td class="text-right">
+                        {% widthratio item.cantidad 1 item.precio as subtotal %}
+                        ${{ subtotal|floatformat:0 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No hay items en esta factura</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totales -->
+        <div class="totals">
+            <table>
+                <tr>
+                    <td><strong>Subtotal:</strong></td>
+                    <td class="text-right">${{ factura.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% if factura.descuento_valor > 0 %}
+                <tr>
+                    <td>
+                        <strong>Descuento{% if factura.descuento_porcentaje > 0 %} ({{ factura.descuento_porcentaje }}%){% endif %}:</strong>
+                    </td>
+                    <td class="text-right">-${{ factura.descuento_valor|floatformat:0 }}</td>
+                </tr>
+                {% endif %}
+                {% if factura.impuestos > 0 %}
+                <tr>
+                    <td><strong>Impuestos (IVA):</strong></td>
+                    <td class="text-right">${{ factura.impuestos|floatformat:0 }}</td>
+                </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td><strong>TOTAL:</strong></td>
+                    <td class="text-right"><strong>${{ factura.total|floatformat:0 }}</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="clear: both;"></div>
+
+        <!-- Notas y observaciones -->
+        {% if factura.observaciones %}
+        <div class="notes">
+            <div class="section-title">Observaciones:</div>
+            {{ factura.observaciones }}
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-section">
+                <div class="section-title">Términos y Condiciones:</div>
+                <ul style="margin-left: 20px; font-size: 10px;">
+                    <li>Esta factura debe ser pagada dentro de los términos acordados.</li>
+                    <li>Los pagos tardíos pueden generar intereses de mora.</li>
+                    <li>En caso de dudas, contactar al departamento de facturación.</li>
+                </ul>
+            </div>
+
+            <!-- Información fiscal -->
+            {% if factura.cufde %}
+            <div class="cufe-info">
+                <div><strong>CUFE/CUFDE:</strong> {{ factura.cufde }}</div>
+                <div>Factura generada por sistema computarizado - Resolución DIAN</div>
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 30px; font-size: 10px; text-align: center; color: #6b7280;">
+                Factura generada el {{ "now"|date:"d/m/Y H:i" }} - DistribucioneShaddai v1.0
+            </div>
+        </div>
+    </div>
+</body>
+</html>

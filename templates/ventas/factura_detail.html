@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Factura {{ factura.numero_fiscal }} - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Factura {{ factura.numero_fiscal }}</h1>
+    <div class="flex space-x-3">
+        <a href="{% url 'ventas:factura_list' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+            Volver a Facturas
+        </a>
+        <a href="{% url 'ventas:imprimir_factura' factura.pk %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Imprimir
+        </a>
+        
+        {% if factura.estado == 'emitida' %}
+        <button onclick="toggleModal('pagoModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Marcar Pagada
+        </button>
+        {% endif %}
+        
+        {% if request.user.role in 'superadmin,administrador' and factura.estado not in 'pagada,anulada' %}
+        <button onclick="toggleModal('anularModal')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Anular
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estado y Alertas -->
+<div class="mb-6">
+    <div class="inline-flex px-3 py-1 text-sm font-semibold rounded-full 
+        {% if factura.estado == 'emitida' %}bg-blue-100 text-blue-800
+        {% elif factura.estado == 'pagada' %}bg-green-100 text-green-800
+        {% elif factura.estado == 'vencida' %}bg-red-100 text-red-800
+        {% elif factura.estado == 'anulada' %}bg-gray-100 text-gray-800
+        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+        Estado: {{ factura.get_estado_display }}
+    </div>
+    
+    {% if factura.esta_vencida %}
+    <div class="mt-2 p-4 bg-red-100 border-l-4 border-red-500 text-red-700">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">
+                    Factura Vencida
+                </h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <p>Esta factura venció el {{ factura.fecha_vencimiento|date:"d/m/Y" }}.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif factura.dias_vencimiento <= 7 and factura.dias_vencimiento >= 0 %}
+    <div class="mt-2 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">
+                    Próximo a Vencer
+                </h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <p>Esta factura vence en {{ factura.dias_vencimiento }} días ({{ factura.fecha_vencimiento|date:"d/m/Y" }}).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Información Principal -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Información del Cliente -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información del Cliente</h3>
+        <dl class="space-y-2">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Cliente</dt>
+                <dd class="text-sm text-gray-900">
+                    <a href="{% url 'ventas:cliente_detail' factura.cliente.pk %}" class="text-blue-600 hover:text-blue-800">
+                        {{ factura.cliente.nombre_completo }}
+                    </a>
+                </dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Documento</dt>
+                <dd class="text-sm text-gray-900">{{ factura.cliente.get_tipo_documento_display }} {{ factura.cliente.numero_documento }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Email</dt>
+                <dd class="text-sm text-gray-900">{{ factura.cliente.email|default:"No especificado" }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                <dd class="text-sm text-gray-900">{{ factura.cliente.telefono|default:"No especificado" }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Dirección</dt>
+                <dd class="text-sm text-gray-900">{{ factura.cliente.direccion|default:"No especificada" }}</dd>
+            </div>
+        </dl>
+    </div>
+
+    <!-- Información de la Factura -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información de Facturación</h3>
+        <dl class="space-y-2">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Número Fiscal</dt>
+                <dd class="text-sm text-gray-900">{{ factura.numero_fiscal }}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Fecha</dt>
+                <dd class="text-sm text-gray-900">{{ factura.fecha|date:"d/m/Y" }}</dd>
+            </div>
+            {% if factura.fecha_vencimiento %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Fecha de Vencimiento</dt>
+                <dd class="text-sm text-gray-900">{{ factura.fecha_vencimiento|date:"d/m/Y" }}</dd>
+            </div>
+            {% endif %}
+            {% if factura.fecha_pago %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Fecha de Pago</dt>
+                <dd class="text-sm text-gray-900">{{ factura.fecha_pago|date:"d/m/Y" }}</dd>
+            </div>
+            {% endif %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Método de Pago</dt>
+                <dd class="text-sm text-gray-900">{{ factura.get_metodo_pago_display }}</dd>
+            </div>
+            {% if factura.orden_compra %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Orden de Compra</dt>
+                <dd class="text-sm text-gray-900">{{ factura.orden_compra }}</dd>
+            </div>
+            {% endif %}
+            <!-- Comentado hasta que se implemente el campo cufde
+            {% if factura.cufde %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">CUFE</dt>
+                <dd class="text-sm text-gray-900 font-mono">{{ factura.cufde }}</dd>
+            </div>
+            {% endif %}
+            -->
+        </dl>
+    </div>
+
+    <!-- Información del Vendedor y Referencias -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Información Adicional</h3>
+        <dl class="space-y-2">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Vendedor</dt>
+                <dd class="text-sm text-gray-900">
+                    {% if factura.cliente.vendedor_asignado %}
+                        {{ factura.cliente.vendedor_asignado.get_full_name|default:factura.cliente.vendedor_asignado.username }}
+                    {% else %}
+                        <span class="text-gray-500 italic">Sin vendedor asignado</span>
+                    {% endif %}
+                </dd>
+            </div>
+            <!-- Comentado hasta que se implemente el campo pedido_origen
+            {% if factura.pedido_origen %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Pedido Origen</dt>
+                <dd class="text-sm text-gray-900">
+                    <a href="{% url 'ventas:pedido_detail' factura.pedido_origen.pk %}" class="text-blue-600 hover:text-blue-800">
+                        Pedido {{ factura.pedido_origen.numero }}
+                    </a>
+                </dd>
+            </div>
+            {% endif %}
+            -->
+            {% if factura.observaciones %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Observaciones</dt>
+                <dd class="text-sm text-gray-900">{{ factura.observaciones }}</dd>
+            </div>
+            {% endif %}
+            {% if factura.nota_interna %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Nota Interna</dt>
+                <dd class="text-sm text-gray-900">{{ factura.nota_interna }}</dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+</div>
+
+<!-- Items de la Factura -->
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Items de la Factura</h3>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Unit.</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Descuento</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for item in factura.items.all %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ item.producto.nombre }}</div>
+                        <div class="text-sm text-gray-500">Código: {{ item.producto.codigo }}</div>
+                        {% if item.variante %}
+                        <div class="text-sm text-gray-500">Variante: {{ item.variante.valor }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        {{ item.cantidad|floatformat:0 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        ${{ item.precio_unitario|floatformat:0 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                        {% if item.descuento_porcentaje > 0 %}
+                            {{ item.descuento_porcentaje }}%
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                        ${{ item.total|floatformat:0 }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        No hay items en esta factura
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Totales -->
+<div class="bg-white shadow rounded-lg p-6">
+    <div class="flex justify-end">
+        <div class="w-full max-w-md">
+            <dl class="space-y-2">
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500">Subtotal:</dt>
+                    <dd class="text-sm text-gray-900">${{ factura.subtotal|floatformat:0 }}</dd>
+                </div>
+                {% if factura.descuento_valor > 0 %}
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500">
+                        Descuento 
+                        {% if factura.descuento_porcentaje > 0 %}({{ factura.descuento_porcentaje }}%){% endif %}:
+                    </dt>
+                    <dd class="text-sm text-gray-900">-${{ factura.descuento_valor|floatformat:0 }}</dd>
+                </div>
+                {% endif %}
+                {% if factura.impuestos > 0 %}
+                <div class="flex justify-between">
+                    <dt class="text-sm text-gray-500">Impuestos:</dt>
+                    <dd class="text-sm text-gray-900">${{ factura.impuestos|floatformat:0 }}</dd>
+                </div>
+                {% endif %}
+                <div class="flex justify-between border-t pt-2">
+                    <dt class="text-lg font-medium text-gray-900">Total:</dt>
+                    <dd class="text-lg font-bold text-gray-900">${{ factura.total|floatformat:0 }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Pago -->
+<div id="pagoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Marcar Factura como Pagada</h3>
+            <form method="post" action="{% url 'ventas:marcar_factura_pagada' factura.pk %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="fecha_pago" class="block text-sm font-medium text-gray-700 mb-2">Fecha de Pago</label>
+                    <input type="date" id="fecha_pago" name="fecha_pago" value="{{ today|date:'Y-m-d' }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="toggleModal('pagoModal')" 
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                        Marcar Pagada
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Anulación -->
+<div id="anularModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Anular Factura</h3>
+            <form method="post" action="{% url 'ventas:anular_factura' factura.pk %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="motivo" class="block text-sm font-medium text-gray-700 mb-2">Motivo de Anulación</label>
+                    <textarea id="motivo" name="motivo" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Especifique el motivo de la anulación..." required></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="toggleModal('anularModal')" 
+                            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md">
+                        Anular Factura
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleModal(modalId) {
+    const modal = document.getElementById(modalId);
+    modal.classList.toggle('hidden');
+}
+
+// Cerrar modal al hacer click fuera
+window.onclick = function(event) {
+    const pagoModal = document.getElementById('pagoModal');
+    const anularModal = document.getElementById('anularModal');
+    if (event.target === pagoModal) {
+        pagoModal.classList.add('hidden');
+    }
+    if (event.target === anularModal) {
+        anularModal.classList.add('hidden');
+    }
+}
+</script>
+
+{% endblock %}

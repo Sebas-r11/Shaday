@@ -1,0 +1,1 @@
+# Analytics App - Sistema de IA y MRP

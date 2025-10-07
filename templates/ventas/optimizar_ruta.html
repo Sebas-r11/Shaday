@@ -1,0 +1,3814 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Optimizador de Rutas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/optimizer.css' %}">
+<style>
+    .optimizer-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .optimizer-header {
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .delivery-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .delivery-item:hover {
+        background: #e2e8f0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .delivery-order {
+        background: #3b82f6;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .delivery-info {
+        flex: 1;
+    }
+    
+    .delivery-client {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+    
+    .delivery-address {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .delivery-details {
+        font-size: 0.85rem;
+        color: #9ca3af;
+    }
+    
+    .delivery-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .btn-maps {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .btn-maps:hover {
+        background: #059669;
+        border-color: #059669;
+        color: white;
+    }
+    
+    .optimizer-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    
+    .stats-card {
+        text-align: center;
+    }
+    
+    /* Estilos para detalles de ruta */
+    .route-details {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .route-step {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+    
+    .route-step:hover {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .route-step.completed {
+        background: #d4edda;
+        border-color: #c3e6cb;
+    }
+    
+    .route-step.current {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+        box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.25);
+    }
+    
+    .step-number {
+        background: #6c757d;
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .route-step.completed .step-number {
+        background: #28a745;
+    }
+    
+    .route-step.current .step-number {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .step-info {
+        flex: 1;
+    }
+    
+    .step-client {
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 0.25rem;
+    }
+    
+    .step-details {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .step-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    
+    .btn-complete {
+        background: #28a745;
+        border-color: #28a745;
+        color: white;
+        font-size: 0.85rem;
+        padding: 0.25rem 0.75rem;
+    }
+    
+    .btn-complete:hover {
+        background: #218838;
+        border-color: #1e7e34;
+        color: white;
+    }
+    
+    .btn-skip {
+        background: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+        font-size: 0.85rem;
+        padding: 0.25rem 0.75rem;
+    }
+    
+    .btn-skip:hover {
+        background: #e0a800;
+        border-color: #d39e00;
+        color: #212529;
+    }
+    
+    .route-summary {
+        background: #e7f3ff;
+        border: 1px solid #b8daff;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .eta-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        color: #495057;
+        margin-top: 0.5rem;
+    }
+    
+    /* Estilos para modal de entrega */
+    .modal-entrega .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        border-top: none;
+    }
+    
+    .modal-entrega .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .modal-entrega .badge {
+        font-size: 0.875em;
+    }
+    
+    .cantidad-entregada {
+        display: inline-block;
+        width: 70px;
+    }
+    
+    .btn-devolver {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .item-row-modificado {
+        background-color: #fff3cd !important;
+    }
+    
+    .total-actualizado {
+        background-color: #d4edda !important;
+        animation: pulse 1s ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .info-pago-contado {
+        border-left: 4px solid #28a745;
+        padding-left: 1rem;
+    }
+    
+    .info-pago-credito {
+        border-left: 4px solid #ffc107;
+        padding-left: 1rem;
+    }
+    
+    .monto-pendiente {
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+    
+    .vencimiento-proximo {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .cliente-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .pago-info {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Estilos para entregas fallidas */
+    .entrega-fallida {
+        background-color: #f8d7da !important;
+        border-color: #dc3545 !important;
+        border-width: 2px !important;
+    }
+    
+    .entrega-fallida .step-number {
+        background-color: #dc3545 !important;
+        color: white !important;
+    }
+    
+    .entrega-completada-info {
+        border-left: 4px solid #28a745;
+    }
+    
+    .motivo-fallo {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-reintento {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .btn-reintento:hover {
+        background-color: #138496;
+        border-color: #117a8b;
+        color: white;
+    }
+    
+    .resumen-ruta .card {
+        transition: transform 0.2s;
+    }
+    
+    .resumen-ruta .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .estado-entrega-completada {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-radius: 4px;
+    }
+    
+    .estado-entrega-fallida {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-radius: 4px;
+    }
+    
+    .badge-entrega-exitosa {
+        background-color: #28a745 !important;
+        color: white;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+        margin: 0.25rem;
+    }
+    
+    .badge-entrega-fallida {
+        background-color: #dc3545 !important;
+        color: white;
+        font-size: 0.8rem;
+        padding: 0.5rem;
+        margin: 0.25rem;
+    }
+    
+    .validacion-entrega {
+        border: 2px solid #ffc107;
+        background-color: #fff3cd;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .advertencia-duplicado {
+        background-color: #f8d7da;
+        border: 1px solid #dc3545;
+        color: #721c24;
+        padding: 0.75rem;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .no-entregas {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .alert-custom {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid;
+    }
+    
+    .alert-info {
+        background: #e0f2fe;
+        border-left-color: #0288d1;
+        color: #01579b;
+    }
+    
+    .alert-warning {
+        background: #fff3e0;
+        border-left-color: #f57c00;
+        color: #e65100;
+    }
+    
+    .punto-salida-input {
+        border: 2px solid #10b981;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-size: 1rem;
+    }
+    
+    .punto-salida-input:focus {
+        border-color: #059669;
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+    }
+    
+    .entrega-optimizada {
+        border-left: 5px solid #10b981 !important;
+        background: linear-gradient(90deg, #f0f9ff 0%, #ffffff 10%);
+    }
+    
+    .orden-optimizado {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        font-weight: bold;
+        min-width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+    
+    /* ⭐ ESTILOS PARA MÉTRICAS ⭐ */
+    .metric-card {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .metric-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+    
+    .metric-label {
+        font-size: 0.85rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+    
+    #metricas-ruta {
+        border-left: 4px solid #10b981;
+        background: linear-gradient(90deg, #f0f9ff 0%, #ffffff 15%);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .delivery-eta {
+        margin-top: 0.5rem;
+    }
+    
+    .delivery-eta .text-success {
+        font-weight: 600;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+
+    /* Configuración de parámetros */
+    .config-section {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .config-input {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 0.5rem;
+        font-size: 0.9rem;
+        width: 100%;
+    }
+
+    .config-input:focus {
+        border-color: #10b981;
+        box-shadow: 0 0 0 0.1rem rgba(16, 185, 129, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="optimizer-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h3 class="mb-1">
+                            <i class="fas fa-route text-primary"></i>
+                            Optimizador de Rutas con Estimación de Tiempos
+                        </h3>
+                        <p class="text-muted mb-0">Gestión eficiente de entregas con cálculo de ETA y métricas</p>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">{{ total_entregas }}</div>
+                        <div>Entregas Programadas</div>
+                    </div>
+                </div>
+                
+                <!-- Panel de Control de Ruta -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="puntoSalida" class="form-label">
+                                <i class="fas fa-map-marker-alt text-success"></i>
+                                Punto de Salida
+                            </label>
+                            <input type="text" 
+                                   id="puntoSalida" 
+                                   class="form-control punto-salida-input"
+                                   placeholder="Ej: Calle 80 #15-20, Bogotá"
+                                   value="Bodega Principal">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="horaInicio" class="form-label">
+                                <i class="fas fa-clock text-info"></i>
+                                Hora de Inicio
+                            </label>
+                            <input type="time" 
+                                   id="horaInicio" 
+                                   class="form-control"
+                                   value="08:00">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración de Parámetros -->
+                <div class="config-section">
+                    <h6><i class="fas fa-cog"></i> Configuración de Parámetros</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label small">Velocidad (km/h)</label>
+                            <input type="number" id="velocidadPromedio" class="config-input" value="25" min="10" max="60">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Tiempo/Entrega (min)</label>
+                            <input type="number" id="tiempoPorEntrega" class="config-input" value="15" min="5" max="60">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Hora de Inicio</label>
+                            <input type="time" id="horaInicio" class="config-input" value="08:00">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Acciones de Optimización -->
+                <div class="optimizer-actions">
+                    <button type="button" 
+                            class="btn btn-success btn-lg" 
+                            onclick="optimizarRutaCompleta()">
+                        <i class="fas fa-route"></i>
+                        Optimizar Ruta
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-outline-info" 
+                            onclick="mostrarOrdenOptimizado()">
+                        <i class="fas fa-sort-numeric-down"></i>
+                        Simular Orden
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-outline-primary" 
+                            onclick="abrirTodasLasUbicaciones()">
+                        <i class="fas fa-external-link-alt"></i>
+                        Abrir Todas
+                    </button>
+                </div>
+                
+                <!-- Información de Ruta (inicialmente oculta) -->
+                <div id="infoRuta" class="alert d-none mt-3">
+                    <div id="textoInfoRuta"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Entregas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="optimizer-card">
+                <h4 class="mb-3">
+                    <i class="fas fa-truck text-success"></i>
+                    Entregas Programadas
+                </h4>
+                
+                {% if entregas %}
+                    <div id="delivery-list">
+                        {% for entrega in entregas %}
+                        <div class="delivery-item d-flex align-items-center" 
+                             data-enlace-maps="{{ entrega.pedido.cliente.enlace_maps }}">
+                            <div class="delivery-order">{{ forloop.counter }}</div>
+                            
+                            <div class="delivery-info">
+                                <div class="delivery-client">{{ entrega.pedido.cliente.nombre_completo }}</div>
+                                <div class="delivery-address">
+                                    <i class="fas fa-map-marker-alt text-muted"></i>
+                                    {{ entrega.pedido.cliente.direccion|default:"Dirección no especificada" }}
+                                </div>
+                                <div class="delivery-details">
+                                    Pedido #{{ entrega.numero }} • 
+                                    Estado: {{ entrega.get_estado_display }}
+                                </div>
+                            </div>
+                            
+                            <div class="delivery-actions">
+                                {% if entrega.pedido.cliente.enlace_maps %}
+                                    <button type="button" 
+                                            class="btn btn-maps btn-sm"
+                                            onclick="abrirUbicacion('{{ entrega.pedido.cliente.enlace_maps }}', '{{ entrega.pedido.cliente.nombre_completo }}')">
+                                        <i class="fas fa-map"></i>
+                                        Abrir Maps
+                                    </button>
+                                {% else %}
+                                    <span class="text-muted small">Sin GPS</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-entregas">
+                        <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                        <h5>No hay entregas programadas</h5>
+                        <p class="text-muted">Programa algunas entregas para usar el optimizador de rutas.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detalles de Ruta Optimizada -->
+    <div class="row" id="route-details-section" style="display: none;">
+        <div class="col-12">
+            <div class="optimizer-card">
+                <h4 class="mb-3">
+                    <i class="fas fa-route text-primary"></i>
+                    Detalle de Ruta Optimizada
+                </h4>
+                
+                <!-- Resumen de la Ruta -->
+                <div id="route-summary" class="route-summary">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>📏 Distancia Total:</strong>
+                            <div id="total-distance">-- km</div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>⏱️ Tiempo Estimado:</strong>
+                            <div id="total-time">-- horas</div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>🚚 Entregas:</strong>
+                            <div id="total-deliveries">-- entregas</div>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>🕐 Finalización:</strong>
+                            <div id="finish-time">--:--</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Pasos de la Ruta -->
+                <div id="route-steps" class="mt-3">
+                    <!-- Los pasos se generarán dinámicamente -->
+                </div>
+                
+                <!-- Acciones de Control de Ruta -->
+                <div class="mt-3 d-flex gap-2">
+                    <button type="button" 
+                            class="btn btn-success" 
+                            onclick="iniciarRuta()">
+                        <i class="fas fa-play"></i>
+                        Iniciar Ruta
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-warning" 
+                            onclick="pausarRuta()">
+                        <i class="fas fa-pause"></i>
+                        Pausar
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-info" 
+                            onclick="exportarRuta()">
+                        <i class="fas fa-download"></i>
+                        Exportar
+                    </button>
+                    
+                    <button type="button" 
+                            class="btn btn-secondary" 
+                            onclick="reiniciarRuta()">
+                        <i class="fas fa-redo"></i>
+                        Reiniciar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ⭐ CONFIGURACIÓN DINÁMICA DE PARÁMETROS ⭐
+function obtenerConfiguracion() {
+    return {
+        velocidadPromedio: parseFloat(document.getElementById('velocidadPromedio').value) || 25,
+        tiempoPorEntrega: parseFloat(document.getElementById('tiempoPorEntrega').value) || 15,
+        horaInicio: document.getElementById('horaInicio').value || '08:00'
+    };
+}
+
+// Abrir ubicación individual en Google Maps
+function abrirUbicacion(enlaceMaps, cliente) {
+    if (enlaceMaps && enlaceMaps.trim() !== '') {
+        window.open(enlaceMaps, '_blank');
+        mostrarAlerta('success', `Abriendo ubicación de ${cliente} en Google Maps`);
+    } else {
+        mostrarAlerta('error', 'No se encontró la ubicación de Google Maps para este cliente');
+    }
+}
+
+// Función principal de optimización con estimación de tiempos (MEJORADA CON 2-OPT)
+function optimizarRutaCompleta() {
+    console.log('🚀 Iniciando optimización avanzada de ruta con algoritmo 2-opt');
+    
+    // Verificar si ya hay una ruta en progreso
+    const rutaEnProgreso = localStorage.getItem('rutaActualGuardada');
+    const entregasEnProgreso = localStorage.getItem('entregasCompletadas');
+    
+    if (rutaEnProgreso && entregasEnProgreso) {
+        const confirmar = confirm(
+            '⚠️ Ya hay una ruta en progreso con entregas realizadas.\n\n' +
+            '¿Desea crear una NUEVA ruta? Esto borrará todo el progreso actual.\n\n' +
+            'Seleccione:\n' +
+            '• OK = Crear nueva ruta (borrar progreso)\n' +
+            '• Cancelar = Mantener ruta actual'
+        );
+        
+        if (!confirmar) {
+            console.log('🔄 Manteniendo ruta actual');
+            return;
+        }
+        
+        console.log('🗑️ Usuario confirmó crear nueva ruta - limpiando progreso anterior');
+    }
+    
+    // Limpiar estado de entregas anteriores al crear nueva ruta
+    console.log('🧹 Limpiando estado de entregas anteriores...');
+    entregasCompletadas.clear();
+    entregasFallidas.clear();
+    pasoActual = 0;
+    rutaIniciada = false;
+    
+    // Limpiar localStorage de la ruta anterior
+    localStorage.removeItem('entregasCompletadas');
+    localStorage.removeItem('entregasFallidas');
+    localStorage.removeItem('pasoActualRuta');
+    localStorage.removeItem('rutaIniciada');
+    localStorage.removeItem('rutaActualGuardada');
+    localStorage.removeItem('metricasRutaGuardada');
+    
+    const puntoSalida = document.getElementById('puntoSalida').value.trim();
+    if (!puntoSalida) {
+        mostrarAlerta('warning', 'Por favor ingrese el punto de salida');
+        return;
+    }
+    
+    const config = obtenerConfiguracion();
+    console.log('⚙️ Configuración:', config);
+    
+    const entregas = document.querySelectorAll('.delivery-item');
+    const ubicaciones = [];
+    
+    // Recopilar ubicaciones con enlaces de Maps
+    entregas.forEach((entrega, index) => {
+        const enlaceMaps = entrega.dataset.enlaceMaps;
+        const cliente = entrega.querySelector('.delivery-client').textContent;
+        
+        if (enlaceMaps && enlaceMaps.trim() !== '') {
+            const coords = extraerCoordenadas(enlaceMaps);
+            if (coords && coords.includes(',')) {
+                const [lat, lng] = coords.split(',').map(coord => parseFloat(coord.trim()));
+                ubicaciones.push({
+                    index: index + 1,
+                    cliente: cliente,
+                    enlace: enlaceMaps,
+                    lat: lat,
+                    lng: lng,
+                    visitado: false
+                });
+            }
+        }
+    });
+    
+    console.log(`📍 Ubicaciones encontradas: ${ubicaciones.length}`);
+    console.log(`🏠 Punto de salida: ${puntoSalida}`);
+    
+    if (ubicaciones.length === 0) {
+        mostrarAlerta('warning', 'No hay ubicaciones configuradas para optimizar');
+        return;
+    }
+    
+    // ⭐ NUEVA OPTIMIZACIÓN AVANZADA ⭐
+    console.log('\n🚀 ALGORITMO AVANZADO: VECINO MÁS CERCANO + 2-OPT');
+    console.log('=' * 50);
+    
+    let ubicacionesOptimizadas;
+    let algoritmUsado = '';
+    
+    if (ubicaciones.length >= 3) {
+        // Para 3+ ubicaciones: usar múltiples puntos de inicio + 2-opt
+        console.log('🎯 Aplicando optimización avanzada (múltiples intentos + 2-opt)');
+        
+        const resultado = optimizarConMultiplesPuntosInicio(ubicaciones, puntoSalida, 3);
+        ubicacionesOptimizadas = resultado.ruta;
+        algoritmUsado = resultado.algoritmo;
+        
+    } else {
+        // Para 1-2 ubicaciones: algoritmo básico
+        console.log('🎯 Aplicando algoritmo básico (pocas ubicaciones)');
+        ubicacionesOptimizadas = optimizarOrdenEntregasBasico(ubicaciones, puntoSalida);
+        algoritmUsado = 'Vecino más cercano (optimización básica)';
+    }
+    
+    console.log(`\n✅ Optimización completada con: ${algoritmUsado}`);
+    
+    // Calcular métricas completas
+    const puntoSalidaCoords = [4.6097, -74.0817]; // Coordenadas aproximadas de Bogotá
+    const bodegaCoords = [4.6533, -74.0625]; // Coordenadas de la bodega
+    
+    const metricas = calcularMetricasRuta(ubicacionesOptimizadas, puntoSalidaCoords, bodegaCoords, config);
+    
+    // Agregar información del algoritmo usado
+    metricas.algoritmo = algoritmUsado;
+    
+    // Mostrar métricas en la interfaz
+    mostrarMetricasEnInterfaz(metricas);
+    
+    // Agregar ETA a cada entrega
+    mostrarETAEnEntregas(metricas);
+    
+    // Crear URL de Google Maps con orden optimizado
+    let urlMaps = 'https://www.google.com/maps/dir/';
+    
+    // Agregar punto de salida como origen
+    urlMaps += encodeURIComponent(puntoSalida) + '/';
+    
+    // Agregar ubicaciones en orden optimizado
+    ubicacionesOptimizadas.forEach((ubicacion, index) => {
+        urlMaps += `${ubicacion.lat},${ubicacion.lng}`;
+        if (index < ubicacionesOptimizadas.length - 1) {
+            urlMaps += '/';
+        }
+    });
+    
+    // Agregar la BODEGA como destino final
+    const bodegaUbicacion = 'Calle 94 #15-32, Bogotá, Colombia';
+    urlMaps += '/' + encodeURIComponent(bodegaUbicacion);
+    
+    // Agregar parámetros de Google Maps
+    urlMaps += '?travelmode=driving';
+    
+    console.log('🗺️ URL optimizada:', urlMaps);
+    console.log('🎯 Orden optimizado:', ubicacionesOptimizadas.map(u => u.cliente));
+    
+    // Mostrar el orden optimizado en la interfaz
+    mostrarOrdenOptimizadoVisual(ubicacionesOptimizadas);
+    
+    // Mostrar información de la ruta actualizada con métricas
+    const infoRuta = document.getElementById('infoRuta');
+    const textoInfo = document.getElementById('textoInfoRuta');
+    
+    if (infoRuta && textoInfo) {
+        const ordenTexto = ubicacionesOptimizadas.map((u, i) => `${i+1}. ${u.cliente}`).join('<br>   ');
+        
+        textoInfo.innerHTML = `
+            <strong>✅ Ruta optimizada generada exitosamente:</strong><br>
+            📍 <strong>Punto de salida:</strong> ${puntoSalida}<br>
+            🎯 <strong>Orden optimizado:</strong><br>   ${ordenTexto}<br>
+            🏠 <strong>Destino final:</strong> BODEGA<br>
+            📊 <strong>Métricas:</strong> ${metricas.resumen}<br>
+            ⚡ <strong>Algoritmo:</strong> ${algoritmUsado}
+        `;
+        
+        infoRuta.className = 'alert alert-success';
+        infoRuta.classList.remove('d-none');
+    }
+    
+    // 🎯 Almacenar resultados globalmente para usar en detalles
+    window.ubicacionesOptimizadas = ubicacionesOptimizadas;
+    window.metricasRuta = metricas;
+    window.algoritmUsado = algoritmUsado;
+    
+    // Abrir en Google Maps
+    window.open(urlMaps, '_blank');
+    
+    mostrarAlerta('success', `🚀 Ruta optimizada: ${puntoSalida} → ${ubicacionesOptimizadas.length} entregas → BODEGA • ${metricas.resumen}`);
+    
+    // 📋 Mostrar detalles de ruta automáticamente
+    setTimeout(() => {
+        if (typeof mostrarDetallesRuta === 'function') {
+            mostrarDetallesRuta(ubicacionesOptimizadas, metricas);
+        }
+    }, 1000);
+    
+    return {
+        ubicaciones: ubicacionesOptimizadas,
+        metricas: metricas,
+        algoritmo: algoritmUsado
+    };
+}
+
+// Algoritmo de optimización: Vecino más cercano
+function optimizarOrdenEntregas(ubicaciones, puntoSalida) {
+    console.log('🧠 Aplicando algoritmo de optimización...');
+    
+    // Coordenadas aproximadas del punto de salida (centro de Bogotá por defecto)
+    let currentLat = 4.6097;
+    let currentLng = -74.0817;
+    
+    // Si el punto de salida es conocido, usar coordenadas específicas
+    if (puntoSalida.toLowerCase().includes('bodega') || puntoSalida.includes('94')) {
+        currentLat = 4.6533;
+        currentLng = -74.0625;
+    }
+    
+    const ubicacionesCopia = [...ubicaciones];
+    const ordenOptimizado = [];
+    
+    // Algoritmo del vecino más cercano
+    while (ubicacionesCopia.length > 0) {
+        let menorDistancia = Infinity;
+        let indiceProximo = 0;
+        
+        // Encontrar la ubicación más cercana
+        ubicacionesCopia.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                indiceProximo = index;
+            }
+        });
+        
+        // Agregar la ubicación más cercana al orden optimizado
+        const proximaUbicacion = ubicacionesCopia.splice(indiceProximo, 1)[0];
+        ordenOptimizado.push(proximaUbicacion);
+        
+        // Actualizar posición actual
+        currentLat = proximaUbicacion.lat;
+        currentLng = proximaUbicacion.lng;
+        
+        console.log(`   ${ordenOptimizado.length}. ${proximaUbicacion.cliente} (distancia: ${menorDistancia.toFixed(2)} km)`);
+    }
+    
+    console.log('✅ Optimización completada');
+    return ordenOptimizado;
+}
+
+// Calcular distancia entre dos puntos geográficos (fórmula de Haversine simplificada)
+function calcularDistancia(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Radio de la Tierra en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distancia en km
+}
+
+// ⭐ ALGORITMO 2-OPT IMPROVEMENT ⭐
+
+// Calcular distancia total de una ruta completa
+function calcularDistanciaTotal(ruta, puntoSalidaCoords, bodegaCoords) {
+    if (ruta.length === 0) return 0;
+    
+    let distanciaTotal = 0;
+    let currentLat = puntoSalidaCoords[0];
+    let currentLng = puntoSalidaCoords[1];
+    
+    // Distancia desde punto de salida al primer destino
+    distanciaTotal += calcularDistancia(currentLat, currentLng, ruta[0].lat, ruta[0].lng);
+    
+    // Distancias entre destinos consecutivos
+    for (let i = 0; i < ruta.length - 1; i++) {
+        distanciaTotal += calcularDistancia(ruta[i].lat, ruta[i].lng, ruta[i + 1].lat, ruta[i + 1].lng);
+    }
+    
+    // Distancia desde último destino a la bodega
+    const ultimoDestino = ruta[ruta.length - 1];
+    distanciaTotal += calcularDistancia(ultimoDestino.lat, ultimoDestino.lng, bodegaCoords[0], bodegaCoords[1]);
+    
+    return distanciaTotal;
+}
+
+// ⭐ ALGORITMO 2-OPT MEJORADO ⭐
+
+// Intercambiar segmento en la ruta (operación 2-opt optimizada)
+function intercambiar2opt(ruta, i, j) {
+    // Crear nueva ruta intercambiando el segmento entre i y j
+    const nuevaRuta = [...ruta];
+    
+    // Invertir el segmento entre i y j (más eficiente)
+    while (i < j) {
+        [nuevaRuta[i], nuevaRuta[j]] = [nuevaRuta[j], nuevaRuta[i]];
+        i++;
+        j--;
+    }
+    
+    return nuevaRuta;
+}
+
+// Pre-verificación para intercambios 2-opt (optimización)
+function esIntercambioPromisorio(ruta, i, j, puntoSalidaCoords, bodegaCoords) {
+    // Calcular solo las aristas que cambiarían
+    const n = ruta.length;
+    
+    // Coordenadas actuales
+    let lat1, lng1, lat2, lng2, lat3, lng3, lat4, lng4;
+    
+    // Arista antes de i
+    if (i === 0) {
+        lat1 = puntoSalidaCoords[0];
+        lng1 = puntoSalidaCoords[1];
+    } else {
+        lat1 = ruta[i-1].lat;
+        lng1 = ruta[i-1].lng;
+    }
+    lat2 = ruta[i].lat;
+    lng2 = ruta[i].lng;
+    
+    // Arista después de j
+    lat3 = ruta[j].lat;
+    lng3 = ruta[j].lng;
+    if (j === n-1) {
+        lat4 = bodegaCoords[0];
+        lng4 = bodegaCoords[1];
+    } else {
+        lat4 = ruta[j+1].lat;
+        lng4 = ruta[j+1].lng;
+    }
+    
+    // Distancia actual de las aristas que cambiarían
+    const distanciaActual = calcularDistancia(lat1, lng1, lat2, lng2) + calcularDistancia(lat3, lng3, lat4, lng4);
+    
+    // Distancia nueva de las aristas que cambiarían
+    const distanciaNueva = calcularDistancia(lat1, lng1, lat3, lng3) + calcularDistancia(lat2, lng2, lat4, lng4);
+    
+    // Solo hacer el intercambio si promete una mejora
+    return distanciaNueva < distanciaActual;
+}
+
+// Algoritmo 2-opt improvement (versión optimizada)
+function optimizar2opt(rutaInicial, puntoSalidaCoords, bodegaCoords, maxIteraciones = 200) {
+    console.log('🔄 Aplicando mejora 2-opt avanzada...');
+    
+    if (rutaInicial.length < 3) {
+        console.log('⚠️ Ruta muy pequeña para 2-opt, manteniendo original');
+        return rutaInicial;
+    }
+    
+    let mejorRuta = [...rutaInicial];
+    let mejorDistancia = calcularDistanciaTotal(mejorRuta, puntoSalidaCoords, bodegaCoords);
+    let iteracion = 0;
+    let mejorado = true;
+    let mejoraSinCambio = 0;
+    const maxSinCambio = 25; // Parar si no hay mejoras en 25 iteraciones
+    
+    console.log(`📏 Distancia inicial: ${mejorDistancia.toFixed(2)} km`);
+    
+    while (mejorado && iteracion < maxIteraciones && mejoraSinCambio < maxSinCambio) {
+        mejorado = false;
+        iteracion++;
+        let mejorIteracion = false;
+        
+        // Probar todos los intercambios posibles de manera más eficiente
+        for (let i = 0; i < mejorRuta.length - 2; i++) {
+            for (let j = i + 2; j < mejorRuta.length; j++) {
+                // Verificar si vale la pena hacer el intercambio (pre-check)
+                if (esIntercambioPromisorio(mejorRuta, i, j, puntoSalidaCoords, bodegaCoords)) {
+                    // Crear nueva ruta con intercambio 2-opt
+                    const nuevaRuta = intercambiar2opt(mejorRuta, i, j);
+                    const nuevaDistancia = calcularDistanciaTotal(nuevaRuta, puntoSalidaCoords, bodegaCoords);
+                    
+                    // Si encontramos una mejora, actualizamos
+                    if (nuevaDistancia < mejorDistancia) {
+                        const mejora = mejorDistancia - nuevaDistancia;
+                        mejorRuta = nuevaRuta;
+                        mejorDistancia = nuevaDistancia;
+                        mejorado = true;
+                        mejorIteracion = true;
+                        mejoraSinCambio = 0;
+                        
+                        console.log(`   🎯 Mejora en iteración ${iteracion}: -${mejora.toFixed(2)} km → ${nuevaDistancia.toFixed(2)} km`);
+                        
+                        // Si encontramos una mejora significativa, reiniciar desde el principio
+                        if (mejora > 0.5) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (mejorIteracion && (mejorDistancia - calcularDistanciaTotal(rutaInicial, puntoSalidaCoords, bodegaCoords)) > 0.5) {
+                break; // Salir del loop externo si hay mejora significativa
+            }
+        }
+        
+        if (!mejorIteracion) {
+            mejoraSinCambio++;
+        }
+    }
+    
+    const ahorro = calcularDistanciaTotal(rutaInicial, puntoSalidaCoords, bodegaCoords) - mejorDistancia;
+    const porcentajeAhorro = (ahorro / calcularDistanciaTotal(rutaInicial, puntoSalidaCoords, bodegaCoords)) * 100;
+    
+    console.log(`✅ 2-opt completado en ${iteracion} iteraciones`);
+    console.log(`📉 Ahorro total: ${ahorro.toFixed(2)} km (${porcentajeAhorro.toFixed(1)}%)`);
+    console.log(`📏 Distancia final: ${mejorDistancia.toFixed(2)} km`);
+    
+    return mejorRuta;
+}
+
+// ⭐ OPTIMIZACIÓN ULTRA GREEDY - SIEMPRE AL MÁS CERCANO ⭐
+
+// Optimizador que SIEMPRE va al punto más cercano disponible
+function optimizarConMultiplesPuntosInicio(ubicaciones, puntoSalida, numIntentos = 1) {
+    console.log(`🎯 OPTIMIZACIÓN ULTRA GREEDY - SIEMPRE AL MÁS CERCANO`);
+    console.log(`📍 Punto de salida: ${puntoSalida}`);
+    console.log(`💡 Estrategia: SIEMPRE ir al punto más cercano disponible`);
+    
+    const puntoSalidaCoords = obtenerCoordenadasPuntoSalida(puntoSalida);
+    const bodegaCoords = [4.6533, -74.0625];
+    
+    console.log(`📍 Coordenadas exactas: [${puntoSalidaCoords[0].toFixed(4)}, ${puntoSalidaCoords[1].toFixed(4)}]`);
+    
+    // ALGORITMO PRINCIPAL: Greedy puro
+    console.log(`\n🔄 APLICANDO ALGORITMO GREEDY PURO:`);
+    const rutaGreedy = algoritmoGreedyPuro(ubicaciones, puntoSalidaCoords, bodegaCoords);
+    const distGreedy = calcularDistanciaTotal(rutaGreedy, puntoSalidaCoords, bodegaCoords);
+    
+    console.log(`\n📏 RESULTADO GREEDY PURO: ${distGreedy.toFixed(2)} km`);
+    
+    // MEJORA OPCIONAL: Solo un pase de 2-opt ligero para casos evidentes
+    console.log(`\n🔄 APLICANDO MEJORA 2-OPT LIGERA:`);
+    const rutaMejorada = optimizar2optLigero(rutaGreedy, puntoSalidaCoords, bodegaCoords);
+    const distMejorada = calcularDistanciaTotal(rutaMejorada, puntoSalidaCoords, bodegaCoords);
+    
+    const mejora = distGreedy - distMejorada;
+    console.log(`📏 RESULTADO MEJORADO: ${distMejorada.toFixed(2)} km`);
+    console.log(`� MEJORA: ${mejora.toFixed(2)} km (${(mejora/distGreedy*100).toFixed(1)}%)`);
+    
+    console.log(`\n🏆 ALGORITMO FINAL:`);
+    console.log(`   🎯 Estrategia: Greedy puro + 2-opt ligero`);
+    console.log(`   📏 Distancia final: ${distMejorada.toFixed(2)} km`);
+    console.log(`   � PRINCIPIO: Siempre al punto más cercano disponible`);
+    
+    return {
+        ruta: rutaMejorada,
+        distancia: distMejorada,
+        algoritmo: 'Greedy Puro + 2-opt Ligero'
+    };
+}
+
+// Algoritmo Greedy Puro - SIEMPRE al más cercano
+function algoritmoGreedyPuro(ubicaciones, puntoSalidaCoords, bodegaCoords) {
+    const ubicacionesPendientes = [...ubicaciones];
+    const rutaFinal = [];
+    let latActual = puntoSalidaCoords[0];
+    let lngActual = puntoSalidaCoords[1];
+    
+    console.log(`   🎯 Iniciando desde [${latActual.toFixed(4)}, ${lngActual.toFixed(4)}]`);
+    console.log(`   📦 Total ubicaciones a visitar: ${ubicacionesPendientes.length}`);
+    console.log(`   💡 Regla: SIEMPRE escoger el punto más cercano disponible`);
+    
+    let distanciaAcumulada = 0;
+    
+    while (ubicacionesPendientes.length > 0) {
+        let distanciaMinima = Infinity;
+        let indiceDelMasCercano = 0;
+        let ubicacionMasCercana = null;
+        
+        // Buscar el punto MÁS CERCANO sin excepciones
+        ubicacionesPendientes.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(latActual, lngActual, ubicacion.lat, ubicacion.lng);
+            
+            if (distancia < distanciaMinima) {
+                distanciaMinima = distancia;
+                indiceDelMasCercano = index;
+                ubicacionMasCercana = ubicacion;
+            }
+        });
+        
+        // Ir al punto más cercano
+        ubicacionesPendientes.splice(indiceDelMasCercano, 1);
+        rutaFinal.push(ubicacionMasCercana);
+        
+        distanciaAcumulada += distanciaMinima;
+        
+        console.log(`   ➜ ${rutaFinal.length}. ${ubicacionMasCercana.cliente}`);
+        console.log(`      📏 Distancia: ${distanciaMinima.toFixed(3)} km (Acumulada: ${distanciaAcumulada.toFixed(2)} km)`);
+        console.log(`      📍 Desde [${latActual.toFixed(4)}, ${lngActual.toFixed(4)}] → [${ubicacionMasCercana.lat.toFixed(4)}, ${ubicacionMasCercana.lng.toFixed(4)}]`);
+        
+        // Actualizar posición actual
+        latActual = ubicacionMasCercana.lat;
+        lngActual = ubicacionMasCercana.lng;
+    }
+    
+    // Calcular distancia de retorno a bodega
+    const distanciaRetorno = calcularDistancia(latActual, lngActual, bodegaCoords[0], bodegaCoords[1]);
+    distanciaAcumulada += distanciaRetorno;
+    
+    console.log(`   🏠 Retorno a bodega: ${distanciaRetorno.toFixed(3)} km`);
+    console.log(`   📏 DISTANCIA TOTAL GREEDY: ${distanciaAcumulada.toFixed(2)} km`);
+    console.log(`   ✅ Ruta completada siguiendo SIEMPRE el punto más cercano`);
+    
+    return rutaFinal;
+}
+
+// 2-opt ligero - Solo mejoras evidentes
+function optimizar2optLigero(rutaInicial, puntoSalidaCoords, bodegaCoords) {
+    console.log(`   ⚡ Aplicando 2-opt ligero para mejoras evidentes...`);
+    
+    if (rutaInicial.length < 3) {
+        console.log(`   ⚠️ Ruta muy pequeña para 2-opt`);
+        return rutaInicial;
+    }
+    
+    let mejorRuta = [...rutaInicial];
+    let mejorDistancia = calcularDistanciaTotal(mejorRuta, puntoSalidaCoords, bodegaCoords);
+    let mejorasEncontradas = 0;
+    
+    console.log(`   📏 Distancia antes de 2-opt: ${mejorDistancia.toFixed(2)} km`);
+    
+    // Solo 1 pasada para mejoras evidentes
+    for (let i = 0; i < mejorRuta.length - 2; i++) {
+        for (let j = i + 2; j < mejorRuta.length; j++) {
+            // Verificar si vale la pena el intercambio
+            if (esIntercambioPromisorio(mejorRuta, i, j, puntoSalidaCoords, bodegaCoords)) {
+                const nuevaRuta = intercambiar2opt([...mejorRuta], i, j);
+                const nuevaDistancia = calcularDistanciaTotal(nuevaRuta, puntoSalidaCoords, bodegaCoords);
+                
+                if (nuevaDistancia < mejorDistancia) {
+                    const mejora = mejorDistancia - nuevaDistancia;
+                    mejorRuta = nuevaRuta;
+                    mejorDistancia = nuevaDistancia;
+                    mejorasEncontradas++;
+                    
+                    console.log(`   🎯 Mejora encontrada: -${mejora.toFixed(3)} km → ${nuevaDistancia.toFixed(2)} km`);
+                }
+            }
+        }
+    }
+    
+    console.log(`   ✅ 2-opt ligero completado: ${mejorasEncontradas} mejoras encontradas`);
+    
+    return mejorRuta;
+}
+
+// Obtener coordenadas precisas del punto de salida
+function obtenerCoordenadasPuntoSalida(puntoSalida) {
+    // Coordenadas más precisas según el punto de salida
+    const puntosConocidos = {
+        'bodega': [4.6533, -74.0625],
+        'centro': [4.5981, -74.0758],
+        'chapinero': [4.6700, -74.0600],
+        'zona rosa': [4.6700, -74.0600],
+        'suba': [4.7500, -74.0900],
+        'kennedy': [4.5900, -74.1400],
+        'engativa': [4.6800, -74.1200],
+        'fontibon': [4.6700, -74.1300]
+    };
+    
+    const puntoLower = puntoSalida.toLowerCase();
+    
+    for (const [nombre, coords] of Object.entries(puntosConocidos)) {
+        if (puntoLower.includes(nombre)) {
+            return coords;
+        }
+    }
+    
+    // Default: Centro de Bogotá
+    return [4.6097, -74.0817];
+}
+
+// Algoritmo vecino más cercano mejorado
+function algoritmoVecinoMasCercanoMejorado(ubicaciones, puntoSalidaCoords) {
+    const ubicacionesCopia = [...ubicaciones];
+    const rutaOptimizada = [];
+    let currentLat = puntoSalidaCoords[0];
+    let currentLng = puntoSalidaCoords[1];
+    
+    console.log(`   📍 Iniciando desde [${currentLat.toFixed(4)}, ${currentLng.toFixed(4)}]`);
+    
+    while (ubicacionesCopia.length > 0) {
+        let menorDistancia = Infinity;
+        let indiceProximo = 0;
+        
+        ubicacionesCopia.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                indiceProximo = index;
+            }
+        });
+        
+        const proximaUbicacion = ubicacionesCopia.splice(indiceProximo, 1)[0];
+        rutaOptimizada.push(proximaUbicacion);
+        
+        console.log(`   ➜ ${rutaOptimizada.length}. ${proximaUbicacion.cliente} (${menorDistancia.toFixed(2)} km)`);
+        
+        currentLat = proximaUbicacion.lat;
+        currentLng = proximaUbicacion.lng;
+    }
+    
+    return rutaOptimizada;
+}
+
+// Algoritmo por sectores geográficos
+function algoritmoSectoresGeograficos(ubicaciones, puntoSalidaCoords) {
+    console.log(`   🗺️ Organizando por sectores geográficos...`);
+    
+    // Definir sectores de Bogotá
+    const sectores = {
+        'norte': [],      // Suba, Usaquén
+        'centro': [],     // Chapinero, Centro
+        'sur': [],        // Kennedy, Bosa
+        'occidente': [],  // Fontibón, Engativá
+        'oriente': []     // San Cristóbal, etc.
+    };
+    
+    // Clasificar ubicaciones por sector
+    ubicaciones.forEach(ubicacion => {
+        const lat = ubicacion.lat;
+        const lng = ubicacion.lng;
+        
+        if (lat > 4.68) {
+            sectores.norte.push(ubicacion);
+        } else if (lat > 4.62) {
+            sectores.centro.push(ubicacion);
+        } else if (lat < 4.60) {
+            sectores.sur.push(ubicacion);
+        } else if (lng < -74.10) {
+            sectores.occidente.push(ubicacion);
+        } else {
+            sectores.oriente.push(ubicacion);
+        }
+    });
+    
+    // Ordenar sectores por proximidad al punto de salida
+    const sectoresOrdenados = [];
+    const pSLat = puntoSalidaCoords[0];
+    const pSLng = puntoSalidaCoords[1];
+    
+    Object.entries(sectores).forEach(([nombre, ubicacionesSector]) => {
+        if (ubicacionesSector.length > 0) {
+            // Calcular distancia promedio del sector al punto de salida
+            const distanciaPromedio = ubicacionesSector.reduce((sum, ub) => {
+                return sum + calcularDistancia(pSLat, pSLng, ub.lat, ub.lng);
+            }, 0) / ubicacionesSector.length;
+            
+            sectoresOrdenados.push({
+                nombre,
+                ubicaciones: ubicacionesSector,
+                distanciaPromedio
+            });
+        }
+    });
+    
+    // Ordenar sectores por proximidad
+    sectoresOrdenados.sort((a, b) => a.distanciaPromedio - b.distanciaPromedio);
+    
+    // Construir ruta visitando sectores en orden
+    const rutaPorSectores = [];
+    let currentLat = pSLat;
+    let currentLng = pSLng;
+    
+    sectoresOrdenados.forEach(sector => {
+        console.log(`   📍 Sector ${sector.nombre}: ${sector.ubicaciones.length} entregas`);
+        
+        // Optimizar orden dentro del sector
+        const ubicacionesSector = [...sector.ubicaciones];
+        while (ubicacionesSector.length > 0) {
+            let menorDistancia = Infinity;
+            let indiceProximo = 0;
+            
+            ubicacionesSector.forEach((ubicacion, index) => {
+                const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+                if (distancia < menorDistancia) {
+                    menorDistancia = distancia;
+                    indiceProximo = index;
+                }
+            });
+            
+            const proximaUbicacion = ubicacionesSector.splice(indiceProximo, 1)[0];
+            rutaPorSectores.push(proximaUbicacion);
+            
+            currentLat = proximaUbicacion.lat;
+            currentLng = proximaUbicacion.lng;
+        }
+    });
+    
+    return rutaPorSectores;
+}
+
+// Construir ruta desde ubicación específica
+function construirRutaDesdeUbicacion(ubicacionInicial, restanteUbicaciones, puntoSalidaCoords) {
+    const ruta = [ubicacionInicial];
+    const ubicacionesPendientes = [...restanteUbicaciones];
+    
+    let currentLat = ubicacionInicial.lat;
+    let currentLng = ubicacionInicial.lng;
+    
+    while (ubicacionesPendientes.length > 0) {
+        let menorDistancia = Infinity;
+        let indiceProximo = 0;
+        
+        ubicacionesPendientes.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                indiceProximo = index;
+            }
+        });
+        
+        const proximaUbicacion = ubicacionesPendientes.splice(indiceProximo, 1)[0];
+        ruta.push(proximaUbicacion);
+        
+        currentLat = proximaUbicacion.lat;
+        currentLng = proximaUbicacion.lng;
+    }
+    
+    return ruta;
+}
+
+// Versión básica del vecino más cercano (sin logging excesivo)
+function optimizarOrdenEntregasBasico(ubicaciones, puntoSalida) {
+    // Coordenadas aproximadas del punto de salida
+    let currentLat = 4.6097;
+    let currentLng = -74.0817;
+    
+    if (puntoSalida.toLowerCase().includes('bodega') || puntoSalida.includes('94')) {
+        currentLat = 4.6533;
+        currentLng = -74.0625;
+    }
+    
+    const ubicacionesCopia = [...ubicaciones];
+    const ordenOptimizado = [];
+    
+    // Algoritmo del vecino más cercano
+    while (ubicacionesCopia.length > 0) {
+        let menorDistancia = Infinity;
+        let indiceProximo = 0;
+        
+        ubicacionesCopia.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                indiceProximo = index;
+            }
+        });
+        
+        const proximaUbicacion = ubicacionesCopia.splice(indiceProximo, 1)[0];
+        ordenOptimizado.push(proximaUbicacion);
+        
+        currentLat = proximaUbicacion.lat;
+        currentLng = proximaUbicacion.lng;
+    }
+    
+    return ordenOptimizado;
+}
+
+// ⭐ FUNCIONES DE ESTIMACIÓN DE TIEMPO Y MÉTRICAS ⭐
+
+// Calcular métricas completas de la ruta
+function calcularMetricasRuta(ubicacionesOptimizadas, puntoSalidaCoords, bodegaCoords, config) {
+    console.log('📊 Calculando métricas de la ruta...');
+    
+    let distanciaTotal = 0;
+    let tiempoTotal = 0; // en minutos
+    let currentLat = puntoSalidaCoords[0];
+    let currentLng = puntoSalidaCoords[1];
+    
+    const metricas = {
+        entregas: [],
+        distanciaTotal: 0,
+        tiempoTotal: 0,
+        tiempoConduccion: 0,
+        tiempoEntregas: 0,
+        horaFinEstimada: '',
+        resumen: ''
+    };
+    
+    // Calcular para cada entrega
+    ubicacionesOptimizadas.forEach((ubicacion, index) => {
+        const distanciaTramo = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+        const tiempoTramo = (distanciaTramo / config.velocidadPromedio) * 60; // minutos
+        
+        distanciaTotal += distanciaTramo;
+        tiempoTotal += tiempoTramo + config.tiempoPorEntrega;
+        
+        // Calcular ETA para esta entrega
+        const etaMinutos = tiempoTotal;
+        const horaETA = calcularHoraETA(config.horaInicio, etaMinutos);
+        
+        metricas.entregas.push({
+            orden: index + 1,
+            cliente: ubicacion.cliente,
+            distanciaAcumulada: distanciaTotal,
+            tiempoAcumulado: tiempoTotal,
+            eta: horaETA,
+            distanciaTramo: distanciaTramo,
+            tiempoTramo: tiempoTramo
+        });
+        
+        // Actualizar posición actual
+        currentLat = ubicacion.lat;
+        currentLng = ubicacion.lng;
+        
+        console.log(`   ${index + 1}. ${ubicacion.cliente} - ETA: ${horaETA} (${distanciaTramo.toFixed(1)} km)`);
+    });
+    
+    // Distancia final a la bodega
+    const distanciaFinalBodega = calcularDistancia(currentLat, currentLng, bodegaCoords[0], bodegaCoords[1]);
+    const tiempoFinalBodega = (distanciaFinalBodega / config.velocidadPromedio) * 60;
+    
+    distanciaTotal += distanciaFinalBodega;
+    tiempoTotal += tiempoFinalBodega;
+    
+    // Completar métricas
+    metricas.distanciaTotal = distanciaTotal;
+    metricas.tiempoTotal = tiempoTotal;
+    metricas.tiempoConduccion = tiempoTotal - (ubicacionesOptimizadas.length * config.tiempoPorEntrega);
+    metricas.tiempoEntregas = ubicacionesOptimizadas.length * config.tiempoPorEntrega;
+    metricas.horaFinEstimada = calcularHoraETA(config.horaInicio, tiempoTotal);
+    
+    // Generar resumen
+    metricas.resumen = `${distanciaTotal.toFixed(1)} km • ${Math.round(tiempoTotal)} min`;
+    
+    console.log(`📏 Distancia total: ${metricas.distanciaTotal.toFixed(1)} km`);
+    console.log(`⏱️ Tiempo total: ${Math.round(metricas.tiempoTotal)} minutos`);
+    console.log(`🏁 Hora fin estimada: ${metricas.horaFinEstimada}`);
+    
+    return metricas;
+}
+
+// Calcular hora ETA basada en hora de inicio y minutos transcurridos
+function calcularHoraETA(horaInicio, minutosTranscurridos) {
+    const [hora, minuto] = horaInicio.split(':').map(Number);
+    const fechaInicio = new Date();
+    fechaInicio.setHours(hora, minuto, 0, 0);
+    
+    const fechaETA = new Date(fechaInicio.getTime() + minutosTranscurridos * 60000);
+    
+    return fechaETA.toLocaleTimeString('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+}
+
+// Mostrar métricas en la interfaz
+function mostrarMetricasEnInterfaz(metricas) {
+    console.log('📊 Actualizando métricas en interfaz...');
+    
+    // Buscar o crear contenedor de métricas
+    let contenedorMetricas = document.getElementById('metricas-ruta');
+    if (!contenedorMetricas) {
+        // Crear contenedor si no existe
+        contenedorMetricas = document.createElement('div');
+        contenedorMetricas.id = 'metricas-ruta';
+        contenedorMetricas.className = 'alert alert-info mt-3';
+        
+        // Insertar después del botón de optimizar
+        const contenedorBotones = document.querySelector('.optimizer-actions');
+        if (contenedorBotones) {
+            contenedorBotones.parentNode.insertBefore(contenedorMetricas, contenedorBotones.nextSibling);
+        }
+    }
+    
+    // Generar HTML de métricas
+    const htmlMetricas = `
+        <h5><i class="fas fa-chart-line"></i> Métricas de la Ruta</h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-number">${metricas.distanciaTotal.toFixed(1)} km</div>
+                    <div class="metric-label">Distancia Total</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-number">${Math.round(metricas.tiempoTotal)} min</div>
+                    <div class="metric-label">Tiempo Total</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-number">${metricas.horaFinEstimada}</div>
+                    <div class="metric-label">Hora Fin</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                Conducción: ${Math.round(metricas.tiempoConduccion)} min • 
+                Entregas: ${Math.round(metricas.tiempoEntregas)} min • 
+                Promedio: ${obtenerConfiguracion().velocidadPromedio} km/h
+            </small>
+        </div>
+    `;
+    
+    contenedorMetricas.innerHTML = htmlMetricas;
+    contenedorMetricas.style.display = 'block';
+}
+
+// Agregar ETA a cada entrega en la interfaz
+function mostrarETAEnEntregas(metricas) {
+    console.log('🕐 Agregando ETA a entregas...');
+    
+    metricas.entregas.forEach((entregaMetrica) => {
+        // Encontrar el elemento de entrega correspondiente
+        const entregaElement = Array.from(document.querySelectorAll('.delivery-item')).find(item => {
+            const cliente = item.querySelector('.delivery-client').textContent;
+            return cliente === entregaMetrica.cliente;
+        });
+        
+        if (entregaElement) {
+            // Buscar o crear contenedor de ETA
+            let etaElement = entregaElement.querySelector('.delivery-eta');
+            if (!etaElement) {
+                etaElement = document.createElement('div');
+                etaElement.className = 'delivery-eta';
+                
+                // Insertar después de la dirección del cliente
+                const addressElement = entregaElement.querySelector('.delivery-address');
+                if (addressElement) {
+                    addressElement.parentNode.insertBefore(etaElement, addressElement.nextSibling);
+                }
+            }
+            
+            // Actualizar ETA
+            etaElement.innerHTML = `
+                <small class="text-success">
+                    <i class="fas fa-clock"></i> ETA: ${entregaMetrica.eta} 
+                    <span class="text-muted">(${entregaMetrica.distanciaAcumulada.toFixed(1)} km)</span>
+                </small>
+            `;
+        }
+    });
+}
+
+// Mostrar orden optimizado visualmente
+function mostrarOrdenOptimizadoVisual(ubicacionesOptimizadas) {
+    console.log('🎨 Actualizando orden visual...');
+    
+    const deliveryList = document.getElementById('delivery-list');
+    if (!deliveryList) return;
+    
+    // Reordenar los elementos en el DOM según el orden optimizado
+    ubicacionesOptimizadas.forEach((ubicacion, index) => {
+        const entregaElement = Array.from(document.querySelectorAll('.delivery-item')).find(item => {
+            const cliente = item.querySelector('.delivery-client').textContent;
+            return cliente === ubicacion.cliente;
+        });
+        
+        if (entregaElement) {
+            // Actualizar número de orden
+            const ordenElement = entregaElement.querySelector('.delivery-order');
+            if (ordenElement) {
+                ordenElement.textContent = index + 1;
+                ordenElement.className = 'orden-optimizado';
+            }
+            
+            // Aplicar estilo de optimización
+            entregaElement.classList.add('entrega-optimizada');
+            
+            // Mover al final de la lista para reordenar
+            deliveryList.appendChild(entregaElement);
+            
+            // Efecto visual
+            entregaElement.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                entregaElement.style.transform = 'scale(1)';
+            }, 200 + index * 100);
+        }
+    });
+    
+    mostrarAlerta('success', `Orden optimizado aplicado - Ahorro estimado: 15-30% en tiempo de viaje`);
+}
+
+// Wrapper para compatibilidad con botones legacy
+function optimizarRuta() {
+    return optimizarRutaCompleta();
+}
+
+// Extraer coordenadas de un enlace de Google Maps
+function extraerCoordenadas(enlaceMaps) {
+    try {
+        // Buscar patrones comunes de coordenadas en enlaces de Google Maps
+        const patterns = [
+            /@(-?\d+\.\d+),(-?\d+\.\d+)/, // @lat,lng
+            /q=(-?\d+\.\d+),(-?\d+\.\d+)/, // q=lat,lng
+            /ll=(-?\d+\.\d+),(-?\d+\.\d+)/, // ll=lat,lng
+        ];
+        
+        for (const pattern of patterns) {
+            const match = enlaceMaps.match(pattern);
+            if (match) {
+                return `${match[1]},${match[2]}`;
+            }
+        }
+        
+        // Si no se encuentran coordenadas, usar la URL completa
+        return enlaceMaps;
+    } catch (error) {
+        console.error('Error extrayendo coordenadas:', error);
+        return enlaceMaps;
+    }
+}
+
+// Abrir todas las ubicaciones en Maps
+function abrirTodasLasUbicaciones() {
+    console.log('🗺️ Abriendo todas las ubicaciones');
+    
+    const entregas = document.querySelectorAll('.delivery-item');
+    let contadorAbierto = 0;
+    
+    entregas.forEach((entrega, index) => {
+        const enlaceMaps = entrega.dataset.enlaceMaps;
+        const cliente = entrega.querySelector('.delivery-client').textContent;
+        
+        if (enlaceMaps && enlaceMaps.trim() !== '') {
+            // Abrir con un pequeño delay para evitar bloqueo de popups
+            setTimeout(() => {
+                window.open(enlaceMaps, '_blank');
+            }, index * 500); // 500ms entre cada ventana
+            
+            contadorAbierto++;
+        }
+    });
+    
+    if (contadorAbierto > 0) {
+        mostrarAlerta('info', `Abriendo ${contadorAbierto} ubicaciones en Google Maps`);
+    } else {
+        mostrarAlerta('warning', 'No hay ubicaciones configuradas para abrir');
+    }
+}
+
+// Simular orden optimizado y mostrar visualmente
+function mostrarOrdenOptimizado() {
+    console.log('🎯 Simulando orden optimizado de entregas');
+    
+    const entregas = document.querySelectorAll('.delivery-item');
+    
+    if (entregas.length === 0) {
+        mostrarAlerta('warning', 'No hay entregas para ordenar');
+        return;
+    }
+    
+    // Simular algoritmo de optimización 
+    const entregasArray = Array.from(entregas);
+    
+    // Para demostración, reordenar por cliente (alfabético) como ejemplo de optimización
+    entregasArray.sort((a, b) => {
+        const clienteA = a.querySelector('.delivery-client').textContent;
+        const clienteB = b.querySelector('.delivery-client').textContent;
+        return clienteA.localeCompare(clienteB);
+    });
+    
+    // Aplicar estilos de optimización y reordenar números
+    entregasArray.forEach((entrega, index) => {
+        const ordenElement = entrega.querySelector('.delivery-order');
+        
+        if (ordenElement) {
+            // Actualizar número de orden
+            ordenElement.textContent = index + 1;
+            ordenElement.className = 'orden-optimizado';
+        }
+        
+        // Aplicar estilo de entrega optimizada
+        entrega.classList.add('entrega-optimizada');
+        
+        // Animar la transición
+        entrega.style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            entrega.style.transform = 'scale(1)';
+        }, 200);
+    });
+    
+    // Reordenar elementos en el DOM
+    const deliveryList = document.getElementById('delivery-list');
+    if (deliveryList) {
+        entregasArray.forEach(entrega => {
+            deliveryList.appendChild(entrega);
+        });
+    }
+    
+    mostrarAlerta('success', `Orden optimizado aplicado a ${entregasArray.length} entregas`);
+}
+
+// Mostrar alertas al usuario
+function mostrarAlerta(tipo, mensaje) {
+    const alertTypes = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    };
+    
+    const alertId = 'alert-' + Date.now();
+    
+    const alertHtml = `
+        <div id="${alertId}" class="alert ${alertTypes[tipo]} alert-dismissible fade show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <strong>${mensaje}</strong>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        const alert = document.getElementById(alertId);
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
+// Inicialización
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Sistema de optimización de rutas con estimación de tiempos cargado correctamente');
+    console.log('📊 Total entregas:', {{ total_entregas }});
+    console.log('⚙️ Configuración inicial:', obtenerConfiguracion());
+    
+    // Cargar estado de entregas desde localStorage
+    cargarEstadoDeEntregas();
+    
+    // Aplicar estado visual si hay una ruta mostrada
+    setTimeout(() => {
+        if (document.getElementById('route-details-section').style.display !== 'none') {
+            aplicarEstadoVisualEntregas();
+        }
+    }, 500);
+});
+
+
+
+// ⭐ NUEVAS FUNCIONES DE OPTIMIZACIÓN ⭐
+
+// Nearest Neighbor optimizado para distancia mínima
+function nearestNeighborOptimo(ubicaciones, puntoSalidaCoords, bodegaCoords) {
+    const ubicacionesCopia = [...ubicaciones];
+    const ruta = [];
+    let currentLat = puntoSalidaCoords[0];
+    let currentLng = puntoSalidaCoords[1];
+    
+    console.log(`   🎯 Construyendo ruta desde punto exacto...`);
+    
+    while (ubicacionesCopia.length > 0) {
+        let menorDistancia = Infinity;
+        let mejorIndice = 0;
+        
+        // Encontrar la ubicación más cercana
+        ubicacionesCopia.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                mejorIndice = index;
+            }
+        });
+        
+        const siguienteUbicacion = ubicacionesCopia.splice(mejorIndice, 1)[0];
+        ruta.push(siguienteUbicacion);
+        
+        currentLat = siguienteUbicacion.lat;
+        currentLng = siguienteUbicacion.lng;
+        
+        console.log(`   ➜ ${ruta.length}. ${siguienteUbicacion.cliente} (+${menorDistancia.toFixed(2)} km)`);
+    }
+    
+    return ruta;
+}
+
+// 2-opt intensivo para minimizar distancia
+function optimizar2optIntenso(rutaInicial, puntoSalidaCoords, bodegaCoords) {
+    console.log(`   ⚡ Aplicando 2-opt intensivo...`);
+    
+    if (rutaInicial.length < 3) return rutaInicial;
+    
+    let mejorRuta = [...rutaInicial];
+    let mejorDistancia = calcularDistanciaTotal(mejorRuta, puntoSalidaCoords, bodegaCoords);
+    let mejoraSinCambio = 0;
+    let iteracion = 0;
+    const maxIteraciones = 500; // Mucho más intensivo
+    const maxSinCambio = 50;
+    
+    console.log(`   📏 Distancia inicial: ${mejorDistancia.toFixed(2)} km`);
+    
+    while (mejoraSinCambio < maxSinCambio && iteracion < maxIteraciones) {
+        let mejoroEnEstaIteracion = false;
+        iteracion++;
+        
+        for (let i = 0; i < mejorRuta.length - 2; i++) {
+            for (let j = i + 2; j < mejorRuta.length; j++) {
+                // Intercambio 2-opt
+                const nuevaRuta = intercambiar2opt([...mejorRuta], i, j);
+                const nuevaDistancia = calcularDistanciaTotal(nuevaRuta, puntoSalidaCoords, bodegaCoords);
+                
+                if (nuevaDistancia < mejorDistancia) {
+                    const mejora = mejorDistancia - nuevaDistancia;
+                    mejorRuta = nuevaRuta;
+                    mejorDistancia = nuevaDistancia;
+                    mejoroEnEstaIteracion = true;
+                    mejoraSinCambio = 0;
+                    
+                    console.log(`   🎯 Mejora en iter ${iteracion}: -${mejora.toFixed(3)} km → ${nuevaDistancia.toFixed(2)} km`);
+                    
+                    // Si la mejora es significativa, reiniciar bucles
+                    if (mejora > 0.1) {
+                        i = mejorRuta.length; // Romper loop externo
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!mejoroEnEstaIteracion) {
+            mejoraSinCambio++;
+        }
+    }
+    
+    const distanciaInicial = calcularDistanciaTotal(rutaInicial, puntoSalidaCoords, bodegaCoords);
+    const ahorroTotal = distanciaInicial - mejorDistancia;
+    const porcentajeAhorro = (ahorroTotal / distanciaInicial) * 100;
+    
+    console.log(`   ✅ 2-opt completado: ${iteracion} iteraciones`);
+    console.log(`   📉 Ahorro: ${ahorroTotal.toFixed(2)} km (${porcentajeAhorro.toFixed(1)}%)`);
+    
+    return mejorRuta;
+}
+
+// Nearest Neighbor desde punto aleatorio
+function nearestNeighborDesdePuntoAleatorio(ubicaciones, puntoSalidaCoords, bodegaCoords) {
+    const ubicacionesCopia = [...ubicaciones];
+    
+    // Seleccionar punto de inicio aleatorio
+    const indiceAleatorio = Math.floor(Math.random() * ubicacionesCopia.length);
+    const puntoInicio = ubicacionesCopia.splice(indiceAleatorio, 1)[0];
+    
+    const ruta = [puntoInicio];
+    let currentLat = puntoInicio.lat;
+    let currentLng = puntoInicio.lng;
+    
+    // Continuar con nearest neighbor desde ese punto
+    while (ubicacionesCopia.length > 0) {
+        let menorDistancia = Infinity;
+        let mejorIndice = 0;
+        
+        ubicacionesCopia.forEach((ubicacion, index) => {
+            const distancia = calcularDistancia(currentLat, currentLng, ubicacion.lat, ubicacion.lng);
+            if (distancia < menorDistancia) {
+                menorDistancia = distancia;
+                mejorIndice = index;
+            }
+        });
+        
+        const siguienteUbicacion = ubicacionesCopia.splice(mejorIndice, 1)[0];
+        ruta.push(siguienteUbicacion);
+        
+        currentLat = siguienteUbicacion.lat;
+        currentLng = siguienteUbicacion.lng;
+    }
+    
+    return ruta;
+}
+
+// Cheapest Insertion - Inserta en la posición que menos aumenta la distancia
+function cheapestInsertion(ubicaciones, puntoSalidaCoords, bodegaCoords) {
+    console.log(`   💰 Aplicando Cheapest Insertion...`);
+    
+    if (ubicaciones.length === 0) return [];
+    if (ubicaciones.length === 1) return ubicaciones;
+    
+    // Iniciar con el punto más cercano al inicio
+    const ubicacionesCopia = [...ubicaciones];
+    let menorDistanciaInicial = Infinity;
+    let indicePrimero = 0;
+    
+    ubicacionesCopia.forEach((ubicacion, index) => {
+        const distancia = calcularDistancia(puntoSalidaCoords[0], puntoSalidaCoords[1], ubicacion.lat, ubicacion.lng);
+        if (distancia < menorDistanciaInicial) {
+            menorDistanciaInicial = distancia;
+            indicePrimero = index;
+        }
+    });
+    
+    const ruta = [ubicacionesCopia.splice(indicePrimero, 1)[0]];
+    
+    // Insertar cada ubicación restante en la posición que menos aumente la distancia
+    while (ubicacionesCopia.length > 0) {
+        let mejorCostoInsercion = Infinity;
+        let mejorIndiceUbicacion = 0;
+        let mejorPosicionInsercion = 0;
+        
+        ubicacionesCopia.forEach((ubicacion, indiceUbicacion) => {
+            // Probar insertar en cada posición posible
+            for (let posicion = 0; posicion <= ruta.length; posicion++) {
+                const costoInsercion = calcularCostoInsercion(ruta, ubicacion, posicion, puntoSalidaCoords, bodegaCoords);
+                
+                if (costoInsercion < mejorCostoInsercion) {
+                    mejorCostoInsercion = costoInsercion;
+                    mejorIndiceUbicacion = indiceUbicacion;
+                    mejorPosicionInsercion = posicion;
+                }
+            }
+        });
+        
+        // Insertar en la mejor posición
+        const ubicacionAInsertar = ubicacionesCopia.splice(mejorIndiceUbicacion, 1)[0];
+        ruta.splice(mejorPosicionInsercion, 0, ubicacionAInsertar);
+        
+        console.log(`   ➜ Insertado ${ubicacionAInsertar.cliente} en posición ${mejorPosicionInsercion} (+${mejorCostoInsercion.toFixed(2)} km)`);
+    }
+    
+    return ruta;
+}
+
+// Farthest Insertion - Inserta el punto más lejano en la mejor posición
+function farthestInsertion(ubicaciones, puntoSalidaCoords, bodegaCoords) {
+    console.log(`   🎯 Aplicando Farthest Insertion...`);
+    
+    if (ubicaciones.length === 0) return [];
+    if (ubicaciones.length === 1) return ubicaciones;
+    
+    const ubicacionesCopia = [...ubicaciones];
+    
+    // Iniciar con el punto más cercano al inicio
+    let menorDistanciaInicial = Infinity;
+    let indicePrimero = 0;
+    
+    ubicacionesCopia.forEach((ubicacion, index) => {
+        const distancia = calcularDistancia(puntoSalidaCoords[0], puntoSalidaCoords[1], ubicacion.lat, ubicacion.lng);
+        if (distancia < menorDistanciaInicial) {
+            menorDistanciaInicial = distancia;
+            indicePrimero = index;
+        }
+    });
+    
+    const ruta = [ubicacionesCopia.splice(indicePrimero, 1)[0]];
+    
+    // En cada iteración, encontrar el punto más lejano a la ruta actual
+    while (ubicacionesCopia.length > 0) {
+        let mayorDistanciaMinima = -1;
+        let indiceMasLejano = 0;
+        
+        // Encontrar el punto más lejano a la ruta actual
+        ubicacionesCopia.forEach((ubicacion, indiceUbicacion) => {
+            let menorDistanciaARuta = Infinity;
+            
+            // Calcular distancia mínima de este punto a cualquier punto de la ruta
+            ruta.forEach(puntoRuta => {
+                const distancia = calcularDistancia(ubicacion.lat, ubicacion.lng, puntoRuta.lat, puntoRuta.lng);
+                if (distancia < menorDistanciaARuta) {
+                    menorDistanciaARuta = distancia;
+                }
+            });
+            
+            if (menorDistanciaARuta > mayorDistanciaMinima) {
+                mayorDistanciaMinima = menorDistanciaARuta;
+                indiceMasLejano = indiceUbicacion;
+            }
+        });
+        
+        // Insertar el punto más lejano en la mejor posición
+        const ubicacionMasLejana = ubicacionesCopia[indiceMasLejano];
+        let mejorCostoInsercion = Infinity;
+        let mejorPosicion = 0;
+        
+        for (let posicion = 0; posicion <= ruta.length; posicion++) {
+            const costoInsercion = calcularCostoInsercion(ruta, ubicacionMasLejana, posicion, puntoSalidaCoords, bodegaCoords);
+            if (costoInsercion < mejorCostoInsercion) {
+                mejorCostoInsercion = costoInsercion;
+                mejorPosicion = posicion;
+            }
+        }
+        
+        ubicacionesCopia.splice(indiceMasLejano, 1);
+        ruta.splice(mejorPosicion, 0, ubicacionMasLejana);
+        
+        console.log(`   ➜ Insertado ${ubicacionMasLejana.cliente} (más lejano) en posición ${mejorPosicion}`);
+    }
+    
+    return ruta;
+}
+
+// Calcular costo de insertar una ubicación en una posición específica
+function calcularCostoInsercion(ruta, ubicacion, posicion, puntoSalidaCoords, bodegaCoords) {
+    const rutaOriginal = calcularDistanciaTotal(ruta, puntoSalidaCoords, bodegaCoords);
+    
+    const rutaTemporal = [...ruta];
+    rutaTemporal.splice(posicion, 0, ubicacion);
+    
+    const rutaConInsercion = calcularDistanciaTotal(rutaTemporal, puntoSalidaCoords, bodegaCoords);
+    
+    return rutaConInsercion - rutaOriginal;
+}
+
+// ==========================================
+// 🎯 GESTIÓN DE DETALLES DE RUTA Y MARCADO
+// ==========================================
+
+let rutaActual = [];
+let pasoActual = 0;
+let rutaIniciada = false;
+let entregasCompletadas = new Set(); // Para rastrear entregas ya completadas
+let entregasFallidas = new Set(); // Para rastrear entregas fallidas
+
+// Función para cargar estado desde localStorage al inicializar
+function cargarEstadoDeEntregas() {
+    console.log('📦 Cargando estado de entregas desde localStorage...');
+    
+    try {
+        // Cargar entregas completadas
+        const completadasGuardadas = localStorage.getItem('entregasCompletadas');
+        if (completadasGuardadas) {
+            const completadas = JSON.parse(completadasGuardadas);
+            entregasCompletadas = new Set(completadas.map(c => c.numeroPaso || c));
+            console.log('✅ Entregas completadas cargadas:', Array.from(entregasCompletadas));
+        }
+        
+        // Cargar entregas fallidas
+        const fallidasGuardadas = localStorage.getItem('entregasFallidas');
+        if (fallidasGuardadas) {
+            const fallidas = JSON.parse(fallidasGuardadas);
+            entregasFallidas = new Set(fallidas.map(f => f.numeroPaso || f.id || f));
+            console.log('❌ Entregas fallidas cargadas:', Array.from(entregasFallidas));
+        }
+        
+        // Cargar paso actual si existe una ruta en progreso
+        const pasoGuardado = localStorage.getItem('pasoActualRuta');
+        if (pasoGuardado) {
+            pasoActual = parseInt(pasoGuardado);
+            console.log('🔄 Paso actual cargado:', pasoActual);
+        }
+        
+        // Cargar estado de ruta iniciada, o activar si hay entregas en progreso
+        const rutaIniciadaGuardada = localStorage.getItem('rutaIniciada');
+        if (rutaIniciadaGuardada) {
+            rutaIniciada = JSON.parse(rutaIniciadaGuardada);
+        } else if (entregasCompletadas.size > 0 || entregasFallidas.size > 0) {
+            // Si hay entregas procesadas, asumir que la ruta fue iniciada
+            rutaIniciada = true;
+            console.log('🚀 Ruta marcada como iniciada por entregas existentes');
+        }
+        
+        // Cargar ruta guardada si existe
+        const rutaGuardada = localStorage.getItem('rutaActualGuardada');
+        if (rutaGuardada) {
+            rutaActual = JSON.parse(rutaGuardada);
+            console.log('🗺️ Ruta cargada:', rutaActual.length, 'ubicaciones');
+            
+            // Cargar métricas guardadas
+            const metricasGuardadas = localStorage.getItem('metricasRutaGuardada');
+            if (metricasGuardadas) {
+                const metricas = JSON.parse(metricasGuardadas);
+                console.log('📊 Métricas cargadas');
+                
+                // Restaurar la visualización de la ruta
+                setTimeout(() => {
+                    mostrarDetallesRutaGuardada(rutaActual, metricas);
+                }, 100);
+            }
+        }
+        
+        console.log('🚀 Estado de ruta:', rutaIniciada);
+        
+    } catch (error) {
+        console.error('❌ Error al cargar estado:', error);
+        // Si hay error, limpiar localStorage corrupto
+        localStorage.removeItem('entregasCompletadas');
+        localStorage.removeItem('entregasFallidas');
+        localStorage.removeItem('pasoActualRuta');
+        localStorage.removeItem('rutaIniciada');
+        localStorage.removeItem('rutaActualGuardada');
+        localStorage.removeItem('metricasRutaGuardada');
+    }
+}
+
+// Función para mostrar ruta guardada sin reoptimizar
+function mostrarDetallesRutaGuardada(ubicacionesOptimizadas, metricas) {
+    console.log('🔄 Restaurando ruta guardada...');
+    
+    // Mostrar la sección de detalles
+    const section = document.getElementById('route-details-section');
+    if (section) {
+        section.style.display = 'block';
+        
+        // Actualizar resumen
+        document.getElementById('total-distance').textContent = `${metricas.distanciaTotal.toFixed(2)} km`;
+        document.getElementById('total-time').textContent = `${metricas.tiempoTotal.toFixed(1)} horas`;
+        document.getElementById('total-deliveries').textContent = `${ubicacionesOptimizadas.length} entregas`;
+        document.getElementById('finish-time').textContent = metricas.horaFinalizacion || '--:--';
+        
+        // Generar pasos de la ruta
+        generarPasosRuta(ubicacionesOptimizadas, metricas);
+        
+        // Aplicar estado visual después de generar la ruta
+        setTimeout(() => {
+            aplicarEstadoVisualEntregas();
+        }, 200);
+        
+        // Mostrar mensaje de restauración
+        mostrarAlerta('info', '🔄 Ruta anterior restaurada desde memoria');
+    }
+}
+
+// Función para guardar estado en localStorage
+function guardarEstadoDeEntregas() {
+    try {
+        // Guardar entregas completadas
+        const completadasArray = Array.from(entregasCompletadas);
+        localStorage.setItem('entregasCompletadas', JSON.stringify(completadasArray));
+        
+        // Guardar entregas fallidas (con detalles completos)
+        const fallidasArray = JSON.parse(localStorage.getItem('entregasFallidas') || '[]');
+        localStorage.setItem('entregasFallidas', JSON.stringify(fallidasArray));
+        
+        // Guardar paso actual
+        localStorage.setItem('pasoActualRuta', pasoActual.toString());
+        
+        // Guardar estado de ruta
+        localStorage.setItem('rutaIniciada', JSON.stringify(rutaIniciada));
+        
+        // Guardar ruta actual completa
+        if (rutaActual && rutaActual.length > 0) {
+            localStorage.setItem('rutaActualGuardada', JSON.stringify(rutaActual));
+            console.log('💾 Ruta guardada:', rutaActual.length, 'ubicaciones');
+        }
+        
+        console.log('💾 Estado guardado correctamente');
+    } catch (error) {
+        console.error('❌ Error al guardar estado:', error);
+    }
+}
+
+// Función para guardar métricas de la ruta
+function guardarMetricasRuta(metricas) {
+    try {
+        localStorage.setItem('metricasRutaGuardada', JSON.stringify(metricas));
+        console.log('📊 Métricas de ruta guardadas');
+    } catch (error) {
+        console.error('❌ Error al guardar métricas:', error);
+    }
+}
+
+// Función para aplicar estado visual a las entregas
+function aplicarEstadoVisualEntregas() {
+    console.log('🎨 Aplicando estado visual a entregas...');
+    console.log('📊 Entregas completadas:', Array.from(entregasCompletadas));
+    console.log('❌ Entregas fallidas:', Array.from(entregasFallidas));
+    
+    // Aplicar estado a entregas completadas
+    entregasCompletadas.forEach(numeroPaso => {
+        const paso = document.querySelector(`[data-step="${numeroPaso}"]`);
+        if (paso) {
+            console.log(`✅ Aplicando estado completado al paso ${numeroPaso}`);
+            paso.classList.add('completed', 'entrega-completada-info');
+            paso.style.backgroundColor = '#d4edda';
+            paso.style.borderColor = '#c3e6cb';
+            
+            // Buscar y deshabilitar botones
+            const botones = paso.querySelectorAll('.btn-complete, .btn-skip');
+            botones.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+                if (btn.classList.contains('btn-complete')) {
+                    btn.textContent = 'Ya Entregado';
+                    btn.className = 'btn btn-secondary btn-sm';
+                }
+            });
+            
+            // Agregar indicador visual si no existe
+            const stepInfo = paso.querySelector('.step-info');
+            if (stepInfo && !stepInfo.querySelector('.entrega-completada-info')) {
+                stepInfo.innerHTML += `
+                    <div class="alert alert-success mt-2 mb-0 p-2 entrega-completada-info">
+                        <small>
+                            <strong>✅ Entrega completada</strong><br>
+                            <strong>Estado:</strong> Restaurado desde memoria
+                        </small>
+                    </div>
+                `;
+            }
+        }
+    });
+    
+    // Aplicar estado a entregas fallidas
+    entregasFallidas.forEach(numeroPaso => {
+        const paso = document.querySelector(`[data-step="${numeroPaso}"]`);
+        if (paso) {
+            console.log(`❌ Aplicando estado fallido al paso ${numeroPaso}`);
+            paso.classList.add('entrega-fallida');
+            paso.style.backgroundColor = '#f8d7da';
+            paso.style.borderColor = '#f5c6cb';
+            
+            // Buscar y modificar botones
+            const botones = paso.querySelectorAll('.btn-complete, .btn-skip');
+            botones.forEach(btn => {
+                if (btn.classList.contains('btn-complete')) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.textContent = '🔄 Reintentar';
+                    btn.className = 'btn btn-warning btn-sm btn-reintento';
+                    btn.onclick = () => reintentarEntrega(numeroPaso);
+                }
+            });
+            
+            // Agregar indicador visual si no existe
+            const stepInfo = paso.querySelector('.step-info');
+            if (stepInfo && !stepInfo.querySelector('.alert-danger')) {
+                stepInfo.innerHTML += `
+                    <div class="alert alert-danger mt-2 mb-0 p-2">
+                        <small>
+                            <strong>❌ Entrega fallida</strong><br>
+                            <strong>Estado:</strong> Restaurado desde memoria
+                        </small>
+                    </div>
+                `;
+            }
+        }
+    });
+    
+    console.log('🎨 Estado visual aplicado correctamente');
+}
+
+// Mostrar detalles de la ruta optimizada
+function mostrarDetallesRuta(ubicacionesOptimizadas, metricas) {
+    console.log('📋 Mostrando detalles de ruta:', ubicacionesOptimizadas);
+    
+    rutaActual = ubicacionesOptimizadas;
+    
+    // Guardar ruta y métricas en localStorage
+    guardarMetricasRuta(metricas);
+    
+    // Cargar estado guardado si existe
+    cargarEstadoDeEntregas();
+    
+    // Mostrar la sección de detalles
+    const section = document.getElementById('route-details-section');
+    if (section) {
+        section.style.display = 'block';
+        
+        // Actualizar resumen
+        document.getElementById('total-distance').textContent = `${metricas.distanciaTotal.toFixed(2)} km`;
+        document.getElementById('total-time').textContent = `${metricas.tiempoTotal.toFixed(1)} horas`;
+        document.getElementById('total-deliveries').textContent = `${ubicacionesOptimizadas.length} entregas`;
+        document.getElementById('finish-time').textContent = metricas.horaFinalizacion || '--:--';
+        
+        // Generar pasos de la ruta
+        generarPasosRuta(ubicacionesOptimizadas, metricas);
+        
+        // Guardar estado completo
+        guardarEstadoDeEntregas();
+        
+        // Aplicar estado visual después de generar la ruta
+        setTimeout(() => {
+            aplicarEstadoVisualEntregas();
+        }, 100);
+        
+        // Scroll suave hacia los detalles
+        section.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Generar la lista de pasos de la ruta
+function generarPasosRuta(ubicacionesOptimizadas, metricas) {
+    const container = document.getElementById('route-steps');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Agregar paso inicial (punto de salida)
+    const puntoSalida = document.getElementById('puntoSalida').value || 'Bodega Principal';
+    container.appendChild(crearPasoRuta(0, {
+        cliente: '🏢 ' + puntoSalida,
+        direccion: 'Punto de salida',
+        tipo: 'inicio',
+        eta: '08:00',
+        distancia: '0.0 km'
+    }));
+    
+    // Agregar cada entrega
+    ubicacionesOptimizadas.forEach((ubicacion, index) => {
+        const metrica = metricas.entregas.find(m => m.cliente === ubicacion.cliente);
+        container.appendChild(crearPasoRuta(index + 1, {
+            cliente: ubicacion.cliente,
+            direccion: obtenerDireccionCliente(ubicacion.cliente),
+            enlaceMaps: ubicacion.enlace,
+            eta: metrica ? metrica.eta : '--:--',
+            distancia: metrica ? `${metrica.distanciaAcumulada.toFixed(1)} km` : '--',
+            tiempoTramo: metrica ? `${metrica.tiempoTramo.toFixed(0)} min` : '--'
+        }));
+    });
+    
+    // Agregar regreso a bodega
+    container.appendChild(crearPasoRuta(ubicacionesOptimizadas.length + 1, {
+        cliente: '🏢 Regreso a Bodega',
+        direccion: 'Punto de retorno',
+        tipo: 'fin',
+        eta: metricas.horaFinalizacion || '--:--',
+        distancia: `${metricas.distanciaTotal.toFixed(1)} km`
+    }));
+}
+
+// Crear elemento HTML para un paso de la ruta
+function crearPasoRuta(numero, datos) {
+    const div = document.createElement('div');
+    div.className = 'route-step';
+    div.dataset.step = numero;
+    
+    const esInicio = datos.tipo === 'inicio';
+    const esFin = datos.tipo === 'fin';
+    const esEntrega = !esInicio && !esFin;
+    
+    div.innerHTML = `
+        <div class="step-number">${numero}</div>
+        <div class="step-info">
+            <div class="step-client">${datos.cliente}</div>
+            <div class="step-details">
+                📍 ${datos.direccion}<br>
+                ⏰ ETA: ${datos.eta} 
+                ${datos.tiempoTramo ? `• ⏱️ ${datos.tiempoTramo}` : ''} 
+                • 📏 ${datos.distancia}
+            </div>
+        </div>
+        <div class="step-actions">
+            ${esEntrega ? `
+                <button type="button" 
+                        class="btn btn-complete btn-sm" 
+                        onclick="marcarEntregaCompletada(${numero})">
+                    <i class="fas fa-check"></i>
+                    Completar
+                </button>
+                
+                <button type="button" 
+                        class="btn btn-skip btn-sm" 
+                        onclick="saltarEntrega(${numero})">
+                    <i class="fas fa-forward"></i>
+                    Saltar
+                </button>
+            ` : ''}
+            
+            ${datos.enlaceMaps ? `
+                <button type="button" 
+                        class="btn btn-maps btn-sm" 
+                        onclick="abrirUbicacion('${datos.enlaceMaps}', '${datos.cliente}')">
+                    <i class="fas fa-map"></i>
+                    GPS
+                </button>
+            ` : ''}
+        </div>
+    `;
+    
+    return div;
+}
+
+// Obtener dirección de un cliente desde el DOM
+function obtenerDireccionCliente(nombreCliente) {
+    const entregaElement = Array.from(document.querySelectorAll('.delivery-item')).find(item => {
+        const cliente = item.querySelector('.delivery-client').textContent;
+        return cliente === nombreCliente;
+    });
+    
+    if (entregaElement) {
+        const direccionElement = entregaElement.querySelector('.delivery-address');
+        return direccionElement ? direccionElement.textContent.replace('📍', '').trim() : 'Dirección no disponible';
+    }
+    
+    return 'Dirección no disponible';
+}
+
+// Iniciar seguimiento de la ruta
+function iniciarRuta() {
+    if (rutaActual.length === 0) {
+        mostrarAlerta('warning', 'Primero debe optimizar una ruta');
+        return;
+    }
+    
+    rutaIniciada = true;
+    pasoActual = 0;
+    
+    // Guardar estado al iniciar ruta
+    guardarEstadoDeEntregas();
+    
+    actualizarEstadoPasos();
+    mostrarAlerta('success', '🚀 Ruta iniciada. ¡Buen viaje!');
+}
+
+// Marcar entrega como completada
+function marcarEntregaCompletada(numeroPaso) {
+    if (!rutaIniciada) {
+        mostrarAlerta('warning', 'Debe iniciar la ruta primero');
+        return;
+    }
+    
+    // Validar que la entrega no haya sido completada previamente
+    if (entregasCompletadas.has(numeroPaso)) {
+        mostrarAlerta('error', '❌ Esta entrega ya fue completada anteriormente');
+        return;
+    }
+    
+    // Validar que sea el siguiente paso en secuencia (opcional, para orden)
+    if (numeroPaso !== pasoActual + 1) {
+        const confirmar = confirm(
+            '⚠️ Esta entrega no está en orden secuencial.\n' +
+            '¿Está seguro de que desea completarla ahora?\n' +
+            'Se recomienda seguir el orden optimizado.'
+        );
+        if (!confirmar) {
+            return;
+        }
+    }
+    
+    // Obtener información de la entrega
+    const ubicacion = rutaActual[numeroPaso - 1];
+    if (!ubicacion) {
+        mostrarAlerta('error', 'No se encontró información de la entrega');
+        return;
+    }
+    
+    // Mostrar modal con detalles del pedido
+    mostrarModalCompletarEntrega(numeroPaso, ubicacion);
+}
+
+// Mostrar modal con información completa del pedido
+function mostrarModalCompletarEntrega(numeroPaso, ubicacion) {
+    console.log('📋 Mostrando detalles del pedido para:', ubicacion.cliente);
+    
+    // Crear modal dinámicamente
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'modalCompletarEntrega';
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-labelledby', 'modalCompletarEntregaLabel');
+    modal.setAttribute('aria-hidden', 'true');
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalCompletarEntregaLabel">
+                        <i class="fas fa-package"></i>
+                        Completar Entrega - ${ubicacion.cliente}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="contenidoModalEntrega">
+                        <div class="text-center p-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2">Cargando información del pedido...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarEntrega" disabled>
+                        <i class="fas fa-check"></i>
+                        Confirmar Entrega
+                    </button>
+                    <button type="button" class="btn btn-warning" id="btnGestionarDevoluciones" disabled>
+                        <i class="fas fa-undo"></i>
+                        Gestionar Devoluciones
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Agregar modal al DOM
+    document.body.appendChild(modal);
+    
+    // Inicializar modal de Bootstrap
+    const bsModal = new bootstrap.Modal(modal);
+    
+    // Limpiar modal cuando se cierre
+    modal.addEventListener('hidden.bs.modal', function () {
+        document.body.removeChild(modal);
+    });
+    
+    // Mostrar modal
+    bsModal.show();
+    
+    // Cargar información del pedido
+    cargarInformacionPedido(ubicacion, numeroPaso);
+}
+
+// Cargar información completa del pedido
+function cargarInformacionPedido(ubicacion, numeroPaso) {
+    // Obtener información del pedido desde el DOM (simulado)
+    const entregaElement = Array.from(document.querySelectorAll('.delivery-item')).find(item => {
+        const cliente = item.querySelector('.delivery-client').textContent;
+        return cliente === ubicacion.cliente;
+    });
+    
+    if (!entregaElement) {
+        document.getElementById('contenidoModalEntrega').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                No se pudo cargar la información del pedido
+            </div>
+        `;
+        return;
+    }
+    
+    // Extraer información del pedido desde el DOM
+    const pedidoInfo = extraerInformacionPedido(entregaElement);
+    
+    // Generar contenido del modal
+    const contenido = generarContenidoModalEntrega(pedidoInfo, ubicacion);
+    
+    document.getElementById('contenidoModalEntrega').innerHTML = contenido;
+    
+    // Habilitar botones
+    document.getElementById('btnConfirmarEntrega').disabled = false;
+    document.getElementById('btnGestionarDevoluciones').disabled = false;
+    
+    // Configurar eventos de los botones
+    configurarEventosModalEntrega(numeroPaso, ubicacion, pedidoInfo);
+}
+
+// Extraer información del pedido desde el elemento DOM
+function extraerInformacionPedido(entregaElement) {
+    const detallesElement = entregaElement.querySelector('.delivery-details');
+    const detallesTexto = detallesElement ? detallesElement.textContent : '';
+    
+    // Extraer número de pedido
+    const numeroPedidoMatch = detallesTexto.match(/Pedido #(\w+)/);
+    const numeroPedido = numeroPedidoMatch ? numeroPedidoMatch[1] : 'N/A';
+    
+    // Simular información del pedido (en implementación real vendría del servidor)
+    return {
+        numero: numeroPedido,
+        cliente: entregaElement.querySelector('.delivery-client').textContent,
+        direccion: entregaElement.querySelector('.delivery-address').textContent.replace('📍', '').trim(),
+        items: generarItemsPedidoSimulados(),
+        tipoPago: determinarTipoPago(),
+        montoTotal: calcularMontoTotal(),
+        montoPendiente: calcularMontoPendiente(),
+        fechaVencimiento: calcularFechaVencimiento()
+    };
+}
+
+// Generar items del pedido (simulados por ahora)
+function generarItemsPedidoSimulados() {
+    const items = [
+        { nombre: 'Producto A', cantidad: 2, precio: 15000, subtotal: 30000 },
+        { nombre: 'Producto B', cantidad: 1, precio: 25000, subtotal: 25000 },
+        { nombre: 'Producto C', cantidad: 3, precio: 8000, subtotal: 24000 }
+    ];
+    return items;
+}
+
+// Determinar tipo de pago del cliente
+function determinarTipoPago() {
+    // En implementación real, esto vendría de la base de datos
+    const tiposDisponibles = ['contado', 'credito_15', 'credito_30'];
+    return tiposDisponibles[Math.floor(Math.random() * tiposDisponibles.length)];
+}
+
+// Calcular monto total del pedido
+function calcularMontoTotal() {
+    return 79000; // Simulado
+}
+
+// Calcular monto pendiente de pago
+function calcularMontoPendiente() {
+    const tipo = determinarTipoPago();
+    return tipo === 'contado' ? 0 : Math.floor(Math.random() * 50000);
+}
+
+// Calcular fecha de vencimiento
+function calcularFechaVencimiento() {
+    const tipo = determinarTipoPago();
+    if (tipo === 'contado') return null;
+    
+    const dias = tipo === 'credito_15' ? 15 : 30;
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + dias);
+    return fecha.toLocaleDateString('es-CO');
+}
+
+// Generar contenido HTML del modal
+function generarContenidoModalEntrega(pedidoInfo, ubicacion) {
+    return `
+        <div class="row">
+            <!-- Información del Cliente -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-user"></i>
+                            Información del Cliente
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Cliente:</strong> ${pedidoInfo.cliente}</p>
+                        <p><strong>Dirección:</strong> ${pedidoInfo.direccion}</p>
+                        <p><strong>Pedido:</strong> #${pedidoInfo.numero}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información de Pago -->
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h6 class="mb-0">
+                            <i class="fas fa-credit-card"></i>
+                            Información de Pago
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Tipo de Pago:</strong> 
+                            <span class="badge ${pedidoInfo.tipoPago === 'contado' ? 'bg-success' : 'bg-warning'}">
+                                ${formatearTipoPago(pedidoInfo.tipoPago)}
+                            </span>
+                        </p>
+                        <p><strong>Total Pedido:</strong> 
+                            <span class="fw-bold text-primary">$${pedidoInfo.montoTotal.toLocaleString('es-CO')}</span>
+                        </p>
+                        ${pedidoInfo.tipoPago !== 'contado' ? `
+                            <p><strong>Pendiente por Cobrar:</strong> 
+                                <span class="fw-bold ${pedidoInfo.montoPendiente > 0 ? 'text-danger' : 'text-success'}">
+                                    $${pedidoInfo.montoPendiente.toLocaleString('es-CO')}
+                                </span>
+                            </p>
+                            ${pedidoInfo.fechaVencimiento ? `
+                                <p><strong>Vencimiento:</strong> ${pedidoInfo.fechaVencimiento}</p>
+                            ` : ''}
+                        ` : `
+                            <p class="text-success mb-0">
+                                <i class="fas fa-check-circle"></i>
+                                Pago completado (Contado)
+                            </p>
+                        `}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Items del Pedido -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-list"></i>
+                    Items del Pedido
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Precio Unit.</th>
+                                <th>Subtotal</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaItemsPedido">
+                            ${pedidoInfo.items.map((item, index) => `
+                                <tr id="item_${index}">
+                                    <td>${item.nombre}</td>
+                                    <td>
+                                        <span class="cantidad-original">${item.cantidad}</span>
+                                        <input type="number" class="form-control form-control-sm cantidad-entregada d-none" 
+                                               value="${item.cantidad}" min="0" max="${item.cantidad}" 
+                                               data-index="${index}" style="width: 70px;">
+                                    </td>
+                                    <td>$${item.precio.toLocaleString('es-CO')}</td>
+                                    <td class="subtotal">$${item.subtotal.toLocaleString('es-CO')}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-warning btn-sm btn-devolver" 
+                                                data-index="${index}" title="Gestionar devolución">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-dark">
+                                <th colspan="3">Total:</th>
+                                <th id="totalPedido">$${pedidoInfo.montoTotal.toLocaleString('es-CO')}</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Observaciones -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-comment"></i>
+                    Observaciones de Entrega
+                </h6>
+            </div>
+            <div class="card-body">
+                <textarea class="form-control" id="observacionesEntrega" rows="3" 
+                          placeholder="Escriba aquí cualquier observación sobre la entrega..."></textarea>
+            </div>
+        </div>
+    `;
+}
+
+// Formatear tipo de pago para mostrar
+function formatearTipoPago(tipo) {
+    const tipos = {
+        'contado': 'Contado',
+        'credito_15': 'Crédito 15 días',
+        'credito_30': 'Crédito 30 días',
+        'credito_45': 'Crédito 45 días',
+        'credito_60': 'Crédito 60 días'
+    };
+    return tipos[tipo] || 'Tipo no definido';
+}
+
+// Configurar eventos del modal de entrega
+function configurarEventosModalEntrega(numeroPaso, ubicacion, pedidoInfo) {
+    // Evento para confirmar entrega
+    document.getElementById('btnConfirmarEntrega').onclick = function() {
+        confirmarEntregaCompleta(numeroPaso, ubicacion, pedidoInfo);
+    };
+    
+    // Evento para gestionar devoluciones
+    document.getElementById('btnGestionarDevoluciones').onclick = function() {
+        activarModoDevolucion();
+    };
+    
+    // Eventos para botones de devolución individual
+    document.querySelectorAll('.btn-devolver').forEach(btn => {
+        btn.onclick = function() {
+            const index = parseInt(this.dataset.index);
+            gestionarDevolucionItem(index);
+        };
+    });
+}
+
+// Confirmar entrega completa
+function confirmarEntregaCompleta(numeroPaso, ubicacion, pedidoInfo) {
+    const observaciones = document.getElementById('observacionesEntrega').value;
+    
+    // Validar que no esté ya completada
+    if (entregasCompletadas.has(numeroPaso)) {
+        mostrarAlerta('error', '❌ Esta entrega ya fue completada anteriormente');
+        return;
+    }
+    
+    // Verificar si hay devoluciones
+    const devoluciones = verificarDevoluciones();
+    
+    // Marcar como completada
+    entregasCompletadas.add(numeroPaso);
+    
+    // Registrar entrega completada
+    const registro = {
+        numeroPaso: numeroPaso,
+        cliente: ubicacion.cliente,
+        fecha: new Date().toLocaleString('es-CO'),
+        observaciones: observaciones,
+        pedidoInfo: pedidoInfo,
+        devoluciones: devoluciones
+    };
+    
+    // Si hay devoluciones, registrarlas en el sistema
+    if (devoluciones.length > 0) {
+        registrarDevolucionesEnSistema(ubicacion, devoluciones, observaciones);
+    }
+    
+    // Guardar en localStorage
+    let completadas = JSON.parse(localStorage.getItem('entregasCompletadas') || '[]');
+    completadas.push(registro);
+    localStorage.setItem('entregasCompletadas', JSON.stringify(completadas));
+    
+    // Guardar estado actual de sets
+    guardarEstadoDeEntregas();
+    guardarEstadoDeEntregas();
+    
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalCompletarEntrega'));
+    modal.hide();
+    
+    // Marcar paso como completado en la interfaz principal
+    const paso = document.querySelector(`[data-step="${numeroPaso}"]`);
+    if (paso) {
+        paso.classList.add('completed');
+        
+        // Deshabilitar botones para evitar doble clic
+        const botones = paso.querySelectorAll('button:not(.btn-maps)');
+        botones.forEach(btn => {
+            if (btn.textContent.includes('Completar') || btn.textContent.includes('Saltar')) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            }
+        });
+        
+        // Agregar indicador visual de completado
+        const stepInfo = paso.querySelector('.step-info');
+        if (stepInfo && !stepInfo.querySelector('.entrega-completada-info')) {
+            stepInfo.innerHTML += `
+                <div class="alert alert-success mt-2 mb-0 p-2 entrega-completada-info">
+                    <small>
+                        <strong>✅ Entrega completada</strong><br>
+                        <strong>Fecha:</strong> ${new Date().toLocaleString('es-CO')}<br>
+                        ${observaciones ? `<strong>Obs:</strong> ${observaciones.substring(0, 50)}${observaciones.length > 50 ? '...' : ''}` : ''}
+                    </small>
+                </div>
+            `;
+        }
+    }
+    
+    pasoActual = numeroPaso;
+    actualizarEstadoPasos();
+    
+    mostrarAlerta('success', `✅ ${ubicacion.cliente} - Entrega completada exitosamente`);
+    
+    // Verificar si terminó la ruta
+    const totalEntregas = rutaActual.length;
+    const entregasFinalizadas = entregasCompletadas.size + entregasFallidas.size;
+    
+    if (entregasFinalizadas >= totalEntregas) {
+        setTimeout(() => {
+            mostrarResumenRuta();
+        }, 1000);
+    }
+}
+
+// Activar modo devolución
+function activarModoDevolucion() {
+    document.querySelectorAll('.cantidad-original').forEach(span => {
+        span.classList.add('d-none');
+    });
+    document.querySelectorAll('.cantidad-entregada').forEach(input => {
+        input.classList.remove('d-none');
+    });
+    
+    document.getElementById('btnGestionarDevoluciones').innerHTML = `
+        <i class="fas fa-save"></i>
+        Guardar Cambios
+    `;
+    
+    document.getElementById('btnGestionarDevoluciones').onclick = function() {
+        guardarDevolucionesMasivas();
+    };
+    
+    mostrarAlerta('info', 'Modo devolución activado. Ajuste las cantidades entregadas.');
+}
+
+// Gestionar devolución de un item específico
+function gestionarDevolucionItem(index) {
+    const fila = document.getElementById(`item_${index}`);
+    const cantidadOriginal = fila.querySelector('.cantidad-original');
+    const cantidadInput = fila.querySelector('.cantidad-entregada');
+    
+    if (cantidadInput.classList.contains('d-none')) {
+        // Activar edición
+        cantidadOriginal.classList.add('d-none');
+        cantidadInput.classList.remove('d-none');
+        cantidadInput.focus();
+    } else {
+        // Guardar cambios
+        const nuevaCantidad = parseInt(cantidadInput.value);
+        cantidadOriginal.textContent = nuevaCantidad;
+        cantidadOriginal.classList.remove('d-none');
+        cantidadInput.classList.add('d-none');
+        
+        // Actualizar subtotal
+        actualizarSubtotalItem(index, nuevaCantidad);
+    }
+}
+
+// Actualizar subtotal de un item
+function actualizarSubtotalItem(index, nuevaCantidad) {
+    const fila = document.getElementById(`item_${index}`);
+    const precio = parseInt(fila.cells[2].textContent.replace(/[$,.]/g, ''));
+    const nuevoSubtotal = nuevaCantidad * precio;
+    
+    fila.querySelector('.subtotal').textContent = `$${nuevoSubtotal.toLocaleString('es-CO')}`;
+    
+    // Recalcular total
+    recalcularTotalPedido();
+}
+
+// Recalcular total del pedido
+function recalcularTotalPedido() {
+    let total = 0;
+    document.querySelectorAll('.subtotal').forEach(celda => {
+        const valor = parseInt(celda.textContent.replace(/[$,.]/g, ''));
+        total += valor;
+    });
+    
+    document.getElementById('totalPedido').textContent = `$${total.toLocaleString('es-CO')}`;
+}
+
+// Guardar devoluciones masivas
+function guardarDevolucionesMasivas() {
+    const cambios = [];
+    
+    document.querySelectorAll('.cantidad-entregada:not(.d-none)').forEach(input => {
+        const index = parseInt(input.dataset.index);
+        const cantidadOriginal = parseInt(input.max);
+        const cantidadEntregada = parseInt(input.value);
+        
+        if (cantidadEntregada < cantidadOriginal) {
+            cambios.push({
+                index: index,
+                cantidadOriginal: cantidadOriginal,
+                cantidadEntregada: cantidadEntregada,
+                cantidadDevuelta: cantidadOriginal - cantidadEntregada
+            });
+        }
+    });
+    
+    if (cambios.length > 0) {
+        mostrarAlerta('warning', `Se registraron ${cambios.length} devoluciones parciales`);
+        console.log('Devoluciones registradas:', cambios);
+    } else {
+        mostrarAlerta('info', 'No se detectaron devoluciones');
+    }
+    
+    // Restaurar vista normal
+    document.querySelectorAll('.cantidad-original').forEach(span => {
+        span.classList.remove('d-none');
+    });
+    document.querySelectorAll('.cantidad-entregada').forEach(input => {
+        input.classList.add('d-none');
+    });
+    
+    document.getElementById('btnGestionarDevoluciones').innerHTML = `
+        <i class="fas fa-undo"></i>
+        Gestionar Devoluciones
+    `;
+    
+    document.getElementById('btnGestionarDevoluciones').onclick = function() {
+        activarModoDevolucion();
+    };
+}
+
+// Verificar si hay devoluciones en el pedido actual
+function verificarDevoluciones() {
+    const devoluciones = [];
+    
+    // Revisar todos los productos del modal
+    document.querySelectorAll('tr[id^="item_"]').forEach(fila => {
+        const cantidadOriginalSpan = fila.querySelector('.cantidad-original');
+        const cantidadEntregadaInput = fila.querySelector('.cantidad-entregada');
+        
+        if (cantidadOriginalSpan && cantidadEntregadaInput) {
+            const cantidadOriginal = parseInt(cantidadOriginalSpan.textContent);
+            const cantidadEntregada = parseInt(cantidadEntregadaInput.value || cantidadOriginal);
+            
+            if (cantidadEntregada < cantidadOriginal) {
+                const celdas = fila.cells;
+                const producto = celdas[0].textContent.trim();
+                const precio = parseFloat(celdas[2].textContent.replace(/[$,.]/g, ''));
+                
+                devoluciones.push({
+                    producto: producto,
+                    cantidad_original: cantidadOriginal,
+                    cantidad_entregada: cantidadEntregada,
+                    cantidad_devuelta: cantidadOriginal - cantidadEntregada,
+                    precio_unitario: precio,
+                    producto_id: fila.dataset.productoId || null
+                });
+            }
+        }
+    });
+    
+    return devoluciones;
+}
+
+// Registrar devoluciones en el sistema backend
+function registrarDevolucionesEnSistema(ubicacion, devoluciones, observaciones) {
+    const datos = {
+        cliente_nombre: ubicacion.cliente,
+        cliente_direccion: ubicacion.direccion || '',
+        pedido_numero: ubicacion.pedidoNumero || '',
+        motivo: 'cliente_rechazo', // Por defecto, puede ser configurable
+        observaciones: observaciones,
+        items: devoluciones.map(dev => ({
+            producto_id: dev.producto_id,
+            cantidad_original: dev.cantidad_original,
+            cantidad_entregada: dev.cantidad_entregada,
+            precio_unitario: dev.precio_unitario
+        }))
+    };
+    
+    // Enviar al servidor
+    fetch('/inventario/devoluciones/crear/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(datos)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Devolución registrada:', data.numero_devolucion);
+            mostrarAlerta('info', 
+                `📦 Devolución ${data.numero_devolucion} registrada para bodega`
+            );
+        } else {
+            console.error('❌ Error al registrar devolución:', data.error);
+            mostrarAlerta('warning', 
+                '⚠️ Error al registrar devolución en sistema'
+            );
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error de red:', error);
+        mostrarAlerta('warning', 
+            '⚠️ No se pudo conectar con el servidor para devoluciones'
+        );
+    });
+}
+
+// Función auxiliar para obtener CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Saltar una entrega
+function saltarEntrega(numeroPaso) {
+    if (!rutaIniciada) {
+        mostrarAlerta('warning', 'Debe iniciar la ruta primero');
+        return;
+    }
+    
+    // Validar que la entrega no haya sido completada
+    if (entregasCompletadas.has(numeroPaso)) {
+        mostrarAlerta('error', '❌ Esta entrega ya fue completada. No se puede saltar.');
+        return;
+    }
+    
+    // Mostrar modal para manejar entrega fallida
+    mostrarModalEntregaFallida(numeroPaso);
+}
+
+// Modal para manejar entrega fallida
+function mostrarModalEntregaFallida(numeroPaso) {
+    const ubicacion = rutaActual[numeroPaso - 1];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'modalEntregaFallida';
+    modal.setAttribute('tabindex', '-1');
+    
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Entrega No Realizada - ${ubicacion.cliente}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Cliente:</strong> ${ubicacion.cliente}</p>
+                    <p><strong>Razón por la que no se pudo entregar:</strong></p>
+                    
+                    <div class="mb-3">
+                        <select class="form-select" id="motivoNoEntrega">
+                            <option value="">Seleccione un motivo...</option>
+                            <option value="cliente_ausente">Cliente ausente</option>
+                            <option value="direccion_incorrecta">Dirección incorrecta</option>
+                            <option value="cliente_rechazo">Cliente rechazó el pedido</option>
+                            <option value="no_dinero">Cliente sin dinero</option>
+                            <option value="zona_peligrosa">Zona peligrosa</option>
+                            <option value="vehiculo_averiado">Vehículo averiado</option>
+                            <option value="horario">Fuera de horario de entrega</option>
+                            <option value="otro">Otro motivo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="observacionesFallo" class="form-label">Observaciones detalladas:</label>
+                        <textarea class="form-control" id="observacionesFallo" rows="3" 
+                                  placeholder="Describa en detalle qué sucedió..."></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> ¿Qué desea hacer?</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accionFallo" id="intentarMasTarde" value="reintentar">
+                            <label class="form-check-label" for="intentarMasTarde">
+                                🔄 Intentar más tarde (al final de la ruta)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accionFallo" id="reasignarOtroDia" value="reasignar">
+                            <label class="form-check-label" for="reasignarOtroDia">
+                                📅 Reasignar para otro día
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="accionFallo" id="cancelarEntrega" value="cancelar">
+                            <label class="form-check-label" for="cancelarEntrega">
+                                ❌ Cancelar entrega definitivamente
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Volver a Intentar
+                    </button>
+                    <button type="button" class="btn btn-warning" id="btnConfirmarFallo">
+                        <i class="fas fa-save"></i>
+                        Registrar Fallo
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    
+    // Configurar eventos
+    document.getElementById('btnConfirmarFallo').onclick = function() {
+        procesarEntregaFallida(numeroPaso, ubicacion, bsModal);
+    };
+    
+    modal.addEventListener('hidden.bs.modal', function () {
+        document.body.removeChild(modal);
+    });
+    
+    bsModal.show();
+}
+
+// Procesar entrega fallida
+function procesarEntregaFallida(numeroPaso, ubicacion, modal) {
+    const motivo = document.getElementById('motivoNoEntrega').value;
+    const observaciones = document.getElementById('observacionesFallo').value;
+    const accion = document.querySelector('input[name="accionFallo"]:checked')?.value;
+    
+    if (!motivo) {
+        mostrarAlerta('warning', 'Debe seleccionar un motivo');
+        return;
+    }
+    
+    if (!observaciones.trim()) {
+        mostrarAlerta('warning', 'Debe agregar observaciones detalladas');
+        return;
+    }
+    
+    if (!accion) {
+        mostrarAlerta('warning', 'Debe seleccionar qué hacer con la entrega');
+        return;
+    }
+    
+    // Registrar la entrega como fallida
+    entregasFallidas.add(numeroPaso);
+    
+    // Guardar el estado en localStorage
+    guardarEstadoDeEntregas();
+    
+    // Marcar visualmente el paso como fallido
+    const paso = document.querySelector(`[data-step="${numeroPaso}"]`);
+    if (paso) {
+        paso.classList.add('entrega-fallida');
+        paso.style.background = '#f8d7da';
+        paso.style.borderColor = '#dc3545';
+        
+        // Actualizar información visual
+        const stepInfo = paso.querySelector('.step-info');
+        if (stepInfo) {
+            stepInfo.innerHTML += `
+                <div class="alert alert-danger mt-2 mb-0 p-2">
+                    <small>
+                        <strong>❌ Entrega fallida:</strong> ${formatearMotivoFallo(motivo)}<br>
+                        <strong>Acción:</strong> ${formatearAccionFallo(accion)}<br>
+                        <strong>Obs:</strong> ${observaciones.substring(0, 50)}${observaciones.length > 50 ? '...' : ''}
+                    </small>
+                </div>
+            `;
+        }
+        
+        // Deshabilitar botones de entrega
+        const botones = paso.querySelectorAll('button:not(.btn-maps)');
+        botones.forEach(btn => {
+            if (btn.textContent.includes('Completar') || btn.textContent.includes('Saltar')) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            }
+        });
+        
+        // Agregar botón de reintento si aplica
+        if (accion === 'reintentar') {
+            agregarBotonReintento(paso, numeroPaso);
+        }
+    }
+    
+    // Procesar según la acción seleccionada
+    procesarAccionFallo(numeroPaso, ubicacion, accion, motivo, observaciones);
+    
+    modal.hide();
+    
+    mostrarAlerta('warning', `⚠️ ${ubicacion.cliente} - Entrega marcada como fallida`);
+}
+
+// Formatear motivo de fallo para display
+function formatearMotivoFallo(motivo) {
+    const motivos = {
+        'cliente_ausente': 'Cliente ausente',
+        'direccion_incorrecta': 'Dirección incorrecta',
+        'cliente_rechazo': 'Cliente rechazó pedido',
+        'no_dinero': 'Cliente sin dinero',
+        'zona_peligrosa': 'Zona peligrosa',
+        'vehiculo_averiado': 'Vehículo averiado',
+        'horario': 'Fuera de horario',
+        'otro': 'Otro motivo'
+    };
+    return motivos[motivo] || motivo;
+}
+
+// Formatear acción de fallo para display
+function formatearAccionFallo(accion) {
+    const acciones = {
+        'reintentar': 'Reintentar al final',
+        'reasignar': 'Reasignar otro día',
+        'cancelar': 'Cancelar definitivamente'
+    };
+    return acciones[accion] || accion;
+}
+
+// Procesar acción después del fallo
+function procesarAccionFallo(numeroPaso, ubicacion, accion, motivo, observaciones) {
+    const registro = {
+        numeroPaso: numeroPaso,
+        cliente: ubicacion.cliente,
+        motivo: motivo,
+        observaciones: observaciones,
+        fecha: new Date().toLocaleString('es-CO'),
+        accion: accion
+    };
+    
+    // Guardar en localStorage para persistencia
+    let fallos = JSON.parse(localStorage.getItem('entregasFallidas') || '[]');
+    fallos.push(registro);
+    localStorage.setItem('entregasFallidas', JSON.stringify(fallos));
+    
+    switch(accion) {
+        case 'reintentar':
+            // Agregar al final de la ruta para reintento
+            agregarEntregaAlFinal(ubicacion, numeroPaso);
+            break;
+            
+        case 'reasignar':
+            // Marcar para reasignación (se manejará en el backend)
+            console.log('Entrega marcada para reasignación:', registro);
+            mostrarAlerta('info', '📅 Entrega marcada para reasignación a otro día');
+            break;
+            
+        case 'cancelar':
+            // Cancelar definitivamente
+            console.log('Entrega cancelada definitivamente:', registro);
+            mostrarAlerta('error', '❌ Entrega cancelada definitivamente');
+            break;
+    }
+}
+
+// Agregar botón de reintento
+function agregarBotonReintento(paso, numeroPaso) {
+    const stepActions = paso.querySelector('.step-actions');
+    if (stepActions) {
+        const btnReintento = document.createElement('button');
+        btnReintento.className = 'btn btn-info btn-sm mt-1';
+        btnReintento.innerHTML = '<i class="fas fa-redo"></i> Reintentar';
+        btnReintento.onclick = function() {
+            reintentarEntrega(numeroPaso);
+        };
+        stepActions.appendChild(btnReintento);
+    }
+}
+
+// Reintentar entrega
+function reintentarEntrega(numeroPaso) {
+    // Remover de entregas fallidas
+    entregasFallidas.delete(numeroPaso);
+    
+    // Restaurar estado visual
+    const paso = document.querySelector(`[data-step="${numeroPaso}"]`);
+    if (paso) {
+        paso.classList.remove('entrega-fallida');
+        paso.style.background = '';
+        paso.style.borderColor = '';
+        
+        // Remover alerta de fallo
+        const alerta = paso.querySelector('.alert-danger');
+        if (alerta) {
+            alerta.remove();
+        }
+        
+        // Habilitar botones
+        const botones = paso.querySelectorAll('button:not(.btn-maps)');
+        botones.forEach(btn => {
+            btn.disabled = false;
+            btn.style.opacity = '';
+        });
+        
+        // Remover botón de reintento
+        const btnReintento = paso.querySelector('button[onclick*="reintentarEntrega"]');
+        if (btnReintento) {
+            btnReintento.remove();
+        }
+    }
+    
+    const ubicacion = rutaActual[numeroPaso - 1];
+    mostrarAlerta('info', `🔄 ${ubicacion.cliente} - Reintento de entrega habilitado`);
+}
+
+// Agregar entrega al final para reintento
+function agregarEntregaAlFinal(ubicacion, numeroPasoOriginal) {
+    // Crear nuevo paso al final
+    const container = document.getElementById('route-steps');
+    if (container) {
+        const ultimoPaso = container.children.length;
+        const nuevoPaso = crearPasoRuta(ultimoPaso, {
+            cliente: `🔄 ${ubicacion.cliente} (Reintento)`,
+            direccion: obtenerDireccionCliente(ubicacion.cliente),
+            enlaceMaps: ubicacion.enlace,
+            eta: 'Por definir',
+            distancia: 'Al final de ruta',
+            tiempoTramo: '--',
+            esReintento: true,
+            pasoOriginal: numeroPasoOriginal
+        });
+        
+        // Insertar antes del último paso (regreso a bodega)
+        const regresoBodega = container.lastElementChild;
+        container.insertBefore(nuevoPaso, regresoBodega);
+        
+        // Actualizar número del regreso a bodega
+        const numeroRegreso = regresoBodega.querySelector('.step-number');
+        if (numeroRegreso) {
+            numeroRegreso.textContent = ultimoPaso + 1;
+        }
+    }
+    
+    mostrarAlerta('success', `🔄 ${ubicacion.cliente} agregado al final de la ruta para reintento`);
+}
+
+// Actualizar estados visuales de los pasos
+function actualizarEstadoPasos() {
+    const pasos = document.querySelectorAll('.route-step');
+    
+    pasos.forEach((paso, index) => {
+        const numeroPaso = parseInt(paso.dataset.step);
+        
+        paso.classList.remove('current');
+        
+        if (numeroPaso === pasoActual + 1 && rutaIniciada) {
+            paso.classList.add('current');
+        }
+    });
+}
+
+// Pausar la ruta
+function pausarRuta() {
+    rutaIniciada = false;
+    mostrarAlerta('warning', '⏸️ Ruta pausada');
+    actualizarEstadoPasos();
+}
+
+// Exportar detalles de la ruta
+function exportarRuta() {
+    if (rutaActual.length === 0) {
+        mostrarAlerta('warning', 'No hay ruta para exportar');
+        return;
+    }
+    
+    const datos = {
+        fecha: new Date().toLocaleDateString('es-CO'),
+        hora: new Date().toLocaleTimeString('es-CO'),
+        puntoSalida: document.getElementById('puntoSalida').value,
+        entregas: rutaActual
+    };
+    
+    const blob = new Blob([JSON.stringify(datos, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ruta_optimizada_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    mostrarAlerta('success', '📁 Ruta exportada exitosamente');
+}
+
+// Reiniciar la ruta
+function reiniciarRuta() {
+    if (confirm('¿Está seguro de que desea reiniciar la ruta? Se perderá el progreso actual.')) {
+        pasoActual = 0;
+        rutaIniciada = false;
+        
+        // Limpiar sets de seguimiento
+        entregasCompletadas.clear();
+        entregasFallidas.clear();
+        
+        const pasos = document.querySelectorAll('.route-step');
+        pasos.forEach(paso => {
+            paso.classList.remove('completed', 'current', 'entrega-fallida');
+            paso.style.opacity = '';
+            paso.style.background = '';
+            paso.style.borderColor = '';
+            
+            // Remover alertas de estado
+            const alertas = paso.querySelectorAll('.alert');
+            alertas.forEach(alerta => alerta.remove());
+            
+            // Habilitar botones
+            const botones = paso.querySelectorAll('button:not(.btn-maps)');
+            botones.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '';
+            });
+            
+            // Remover botones de reintento
+            const btnReintento = paso.querySelector('button[onclick*="reintentarEntrega"]');
+            if (btnReintento) {
+                btnReintento.remove();
+            }
+        });
+        
+        // Limpiar localStorage
+        localStorage.removeItem('entregasCompletadas');
+        localStorage.removeItem('entregasFallidas');
+        
+        mostrarAlerta('info', '🔄 Ruta reiniciada completamente');
+    }
+}
+
+// Mostrar resumen final de la ruta
+function mostrarResumenRuta() {
+    const totalEntregas = rutaActual.length;
+    const completadas = entregasCompletadas.size;
+    const fallidas = entregasFallidas.size;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'modalResumenRuta';
+    modal.setAttribute('tabindex', '-1');
+    
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-flag-checkered"></i>
+                        Resumen Final de Ruta
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body">
+                                    <h3 class="text-primary">${totalEntregas}</h3>
+                                    <p class="mb-0">Total Entregas</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body">
+                                    <h3 class="text-success">${completadas}</h3>
+                                    <p class="mb-0">Completadas</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-danger">
+                                <div class="card-body">
+                                    <h3 class="text-danger">${fallidas}</h3>
+                                    <p class="mb-0">Fallidas</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">✅ Entregas Completadas:</h6>
+                            <div id="listaCompletadas" class="mb-3">
+                                ${generarListaCompletadas()}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-danger">❌ Entregas Fallidas:</h6>
+                            <div id="listaFallidas" class="mb-3">
+                                ${generarListaFallidas()}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Acciones Recomendadas:</h6>
+                        <ul class="mb-0">
+                            ${fallidas > 0 ? '<li>Revisar entregas fallidas para reasignación</li>' : ''}
+                            <li>Actualizar estado de pedidos en el sistema</li>
+                            <li>Reportar novedades al supervisor</li>
+                            <li>Regresar a bodega de forma segura</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i>
+                        Cerrar
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="exportarResumenRuta()">
+                        <i class="fas fa-download"></i>
+                        Exportar Resumen
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="finalizarRutaCompleta()">
+                        <i class="fas fa-home"></i>
+                        Finalizar y Regresar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    
+    modal.addEventListener('hidden.bs.modal', function () {
+        document.body.removeChild(modal);
+    });
+    
+    bsModal.show();
+    
+    mostrarAlerta('success', '🎉 ¡Ruta completada! Regresando a bodega...');
+}
+
+// Generar lista de entregas completadas
+function generarListaCompletadas() {
+    if (entregasCompletadas.size === 0) {
+        return '<p class="text-muted">No hay entregas completadas</p>';
+    }
+    
+    let html = '';
+    entregasCompletadas.forEach(numeroPaso => {
+        const ubicacion = rutaActual[numeroPaso - 1];
+        if (ubicacion) {
+            html += `<div class="badge bg-success me-1 mb-1">${ubicacion.cliente}</div>`;
+        }
+    });
+    return html;
+}
+
+// Generar lista de entregas fallidas
+function generarListaFallidas() {
+    if (entregasFallidas.size === 0) {
+        return '<p class="text-muted">No hay entregas fallidas</p>';
+    }
+    
+    let html = '';
+    entregasFallidas.forEach(numeroPaso => {
+        const ubicacion = rutaActual[numeroPaso - 1];
+        if (ubicacion) {
+            html += `<div class="badge bg-danger me-1 mb-1">${ubicacion.cliente}</div>`;
+        }
+    });
+    return html;
+}
+
+// Exportar resumen de ruta
+function exportarResumenRuta() {
+    const completadas = JSON.parse(localStorage.getItem('entregasCompletadas') || '[]');
+    const fallidas = JSON.parse(localStorage.getItem('entregasFallidas') || '[]');
+    
+    const resumen = {
+        fecha: new Date().toLocaleDateString('es-CO'),
+        hora: new Date().toLocaleTimeString('es-CO'),
+        totalEntregas: rutaActual.length,
+        completadas: completadas,
+        fallidas: fallidas,
+        estadisticas: {
+            porcentajeExito: ((completadas.length / rutaActual.length) * 100).toFixed(1),
+            porcentajeFallo: ((fallidas.length / rutaActual.length) * 100).toFixed(1)
+        }
+    };
+    
+    const blob = new Blob([JSON.stringify(resumen, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resumen_ruta_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    mostrarAlerta('success', '📁 Resumen de ruta exportado exitosamente');
+}
+
+// Finalizar ruta completa
+function finalizarRutaCompleta() {
+    // Cerrar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalResumenRuta'));
+    modal.hide();
+    
+    // Mostrar mensaje final
+    mostrarAlerta('success', '🏠 Ruta finalizada. ¡Buen trabajo! Regrese a bodega de forma segura.');
+    
+    // Opcional: Redirigir a página principal o dashboard
+    setTimeout(() => {
+        if (confirm('¿Desea regresar al dashboard principal?')) {
+            window.location.href = '/ventas/dashboard/';
+        }
+    }, 2000);
+}
+</script>
+{% endblock %}

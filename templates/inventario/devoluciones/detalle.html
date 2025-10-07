@@ -1,0 +1,611 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Devolución {{ devolucion.numero_devolucion }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .devolucion-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .producto-item {
+        border-left: 4px solid #28a745;
+        transition: all 0.3s ease;
+    }
+    
+    .producto-item.pendiente {
+        border-left-color: #ffc107;
+    }
+    
+    .producto-item.recibido {
+        border-left-color: #28a745;
+    }
+    
+    .producto-item.rechazado {
+        border-left-color: #dc3545;
+    }
+    
+    .producto-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+        padding-left: 20px;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 8px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #007bff;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #dee2e6;
+    }
+    
+    .timeline-item.completed::before {
+        background: #28a745;
+    }
+    
+    .timeline-item.pending::before {
+        background: #ffc107;
+    }
+    
+    .timeline-item.rejected::before {
+        background: #dc3545;
+    }
+    
+    .cantidad-input {
+        width: 80px;
+    }
+    
+    .btn-recibir {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        color: white;
+    }
+    
+    .btn-recibir:hover {
+        background: linear-gradient(45deg, #218838, #1ea87c);
+        color: white;
+    }
+    
+    .estadisticas-mini {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header de la Devolución -->
+    <div class="card mb-4">
+        <div class="devolucion-header p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">
+                        <i class="fas fa-undo"></i>
+                        Devolución {{ devolucion.numero_devolucion }}
+                    </h2>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-user"></i> {{ devolucion.cliente_nombre }}
+                        <span class="mx-2">|</span>
+                        <i class="fas fa-truck"></i> {{ devolucion.repartidor.get_full_name }}
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="badge fs-6 px-3 py-2
+                        {% if devolucion.estado == 'pendiente' %}bg-warning text-dark
+                        {% elif devolucion.estado == 'parcial' %}bg-info
+                        {% elif devolucion.estado == 'completa' %}bg-success
+                        {% else %}bg-danger{% endif %}">
+                        {{ devolucion.get_estado_display }}
+                    </span>
+                    <div class="mt-2">
+                        <small class="opacity-75">
+                            <i class="fas fa-calendar"></i>
+                            {{ devolucion.fecha_creacion|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Panel Principal de Productos -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes"></i>
+                        Productos a Devolver
+                    </h5>
+                    {% if devolucion.estado == 'pendiente' or devolucion.estado == 'parcial' %}
+                    <button class="btn btn-success" onclick="recibirTodos()">
+                        <i class="fas fa-check-double"></i>
+                        Recibir Todos
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% for item in devolucion.items.all %}
+                    <div class="producto-item {{ item.estado }} p-3 mb-3 rounded">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="product-image me-3">
+                                        {% if item.producto.imagen %}
+                                        <img src="{{ item.producto.imagen.url }}" 
+                                             class="rounded" 
+                                             style="width: 50px; height: 50px; object-fit: cover;"
+                                             alt="{{ item.producto.nombre }}">
+                                        {% else %}
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                             style="width: 50px; height: 50px;">
+                                            <i class="fas fa-box text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ item.producto.nombre }}</h6>
+                                        <small class="text-muted">
+                                            SKU: {{ item.producto.sku }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2 text-center">
+                                <div class="estadisticas-mini">
+                                    <strong class="text-primary">{{ item.cantidad_devuelta }}</strong>
+                                    <br><small>Devueltos</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2 text-center">
+                                <div class="estadisticas-mini">
+                                    <strong class="text-success">{{ item.cantidad_recibida }}</strong>
+                                    <br><small>Recibidos</small>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                {% if item.estado == 'pendiente' %}
+                                <div class="d-flex gap-1">
+                                    <input type="number" 
+                                           class="form-control cantidad-input" 
+                                           id="cantidad_{{ item.id }}"
+                                           min="0" 
+                                           max="{{ item.cantidad_pendiente }}"
+                                           value="{{ item.cantidad_pendiente }}"
+                                           title="Cantidad a recibir">
+                                    <button class="btn btn-recibir btn-sm" 
+                                            onclick="recibirItem({{ item.id }})">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" 
+                                            onclick="rechazarItem({{ item.id }})">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <span class="badge 
+                                    {% if item.estado == 'recibido' %}bg-success
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ item.get_estado_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if item.observaciones %}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <div class="alert alert-info alert-sm mb-0">
+                                    <small>
+                                        <i class="fas fa-comment"></i>
+                                        {{ item.observaciones }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    <i class="fas fa-tag"></i>
+                                    Precio: ${{ item.precio_unitario|floatformat:0 }}
+                                    <span class="mx-2">|</span>
+                                    <i class="fas fa-dollar-sign"></i>
+                                    Subtotal: ${{ item.valor_total|floatformat:0 }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Lateral de Información -->
+        <div class="col-lg-4">
+            <!-- Resumen de la Devolución -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-pie"></i>
+                        Resumen
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="estadisticas-mini">
+                                <strong class="text-primary">{{ devolucion.total_items }}</strong>
+                                <br><small>Items</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="estadisticas-mini">
+                                <strong class="text-warning">{{ devolucion.items_pendientes }}</strong>
+                                <br><small>Pendientes</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="estadisticas-mini">
+                                <strong class="text-success">{{ devolucion.items_recibidos }}</strong>
+                                <br><small>Recibidos</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Valor Total:</span>
+                            <strong class="text-primary">${{ devolucion.total_valor_devuelto|floatformat:0 }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Valor Recibido:</span>
+                            <strong class="text-success">${{ devolucion.valor_recibido|floatformat:0 }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Valor Pendiente:</span>
+                            <strong class="text-warning">${{ devolucion.valor_pendiente|floatformat:0 }}</strong>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">Motivo:</small>
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ devolucion.get_motivo_display }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if devolucion.observaciones %}
+                    <div class="mb-3">
+                        <small class="text-muted">Observaciones:</small>
+                        <div class="mt-1">
+                            <p class="small mb-0">{{ devolucion.observaciones }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Historial de Cambios -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history"></i>
+                        Historial
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item completed">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Devolución Creada</strong>
+                                    <br><small class="text-muted">{{ devolucion.repartidor.get_full_name }}</small>
+                                </div>
+                                <small class="text-muted">{{ devolucion.fecha_creacion|date:"d/m H:i" }}</small>
+                            </div>
+                        </div>
+                        
+                        {% for movimiento in movimientos %}
+                        <div class="timeline-item {{ movimiento.tipo }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ movimiento.descripcion }}</strong>
+                                    <br><small class="text-muted">{{ movimiento.usuario.get_full_name }}</small>
+                                </div>
+                                <small class="text-muted">{{ movimiento.fecha|date:"d/m H:i" }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if devolucion.estado == 'pendiente' or devolucion.estado == 'parcial' %}
+                        <div class="timeline-item pending">
+                            <div>
+                                <strong>Esperando recepción</strong>
+                                <br><small class="text-muted">Pendiente en bodega</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex gap-2 justify-content-between">
+                        <div>
+                            <a href="{% url 'inventario:lista_devoluciones' %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Volver a Lista
+                            </a>
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if devolucion.estado == 'pendiente' %}
+                            <button class="btn btn-danger" onclick="rechazarDevolucion()">
+                                <i class="fas fa-times"></i>
+                                Rechazar Devolución
+                            </button>
+                            {% endif %}
+                            
+                            <a href="{% url 'inventario:imprimir_devolucion' devolucion.id %}" 
+                               target="_blank"
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-print"></i>
+                                Imprimir
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para rechazar item -->
+<div class="modal fade" id="modalRechazarItem" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rechazar Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Motivo del rechazo</label>
+                    <textarea class="form-control" id="motivoRechazoItem" rows="3" 
+                              placeholder="Explique por qué se rechaza este item..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarRechazoItem()">Rechazar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para rechazar devolución completa -->
+<div class="modal fade" id="modalRechazarDevolucion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rechazar Devolución Completa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Atención:</strong> Esta acción rechazará toda la devolución y no se podrá deshacer.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Motivo del rechazo</label>
+                    <textarea class="form-control" id="motivoRechazoDevolucion" rows="3" 
+                              placeholder="Explique por qué se rechaza esta devolución..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarRechazoDevolucion()">Rechazar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let itemSeleccionado = null;
+
+function recibirItem(itemId) {
+    const cantidad = document.getElementById(`cantidad_${itemId}`).value;
+    
+    if (!cantidad || cantidad <= 0) {
+        alert('Debe ingresar una cantidad válida');
+        return;
+    }
+    
+    fetch(`/inventario/devoluciones/item/${itemId}/recibir/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            cantidad: parseInt(cantidad)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al recibir item');
+    });
+}
+
+function rechazarItem(itemId) {
+    itemSeleccionado = itemId;
+    new bootstrap.Modal(document.getElementById('modalRechazarItem')).show();
+}
+
+function confirmarRechazoItem() {
+    const motivo = document.getElementById('motivoRechazoItem').value.trim();
+    
+    if (!motivo) {
+        alert('Debe proporcionar un motivo para el rechazo');
+        return;
+    }
+    
+    fetch(`/inventario/devoluciones/item/${itemSeleccionado}/rechazar/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            motivo: motivo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al rechazar item');
+    });
+}
+
+function recibirTodos() {
+    if (!confirm('¿Está seguro de recibir todos los items pendientes?')) {
+        return;
+    }
+    
+    fetch(`/inventario/devoluciones/{{ devolucion.id }}/recibir-todos/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al recibir todos los items');
+    });
+}
+
+function rechazarDevolucion() {
+    new bootstrap.Modal(document.getElementById('modalRechazarDevolucion')).show();
+}
+
+function confirmarRechazoDevolucion() {
+    const motivo = document.getElementById('motivoRechazoDevolucion').value.trim();
+    
+    if (!motivo) {
+        alert('Debe proporcionar un motivo para el rechazo');
+        return;
+    }
+    
+    fetch(`/inventario/devoluciones/{{ devolucion.id }}/rechazar/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            motivo_rechazo: motivo
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '{% url "inventario:lista_devoluciones" %}';
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al rechazar devolución');
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

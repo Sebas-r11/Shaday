@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle del Proveedor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-building"></i> {{ proveedor.nombre }}
+        </h1>
+        <div>
+            <a href="{% url 'compras:proveedor-list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <a href="{% url 'compras:proveedor-update' proveedor.pk %}" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Editar
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Información del Proveedor -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Proveedor</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Nombre:</strong> {{ proveedor.nombre }}</p>
+                            <p><strong>RUT/NIT:</strong> {{ proveedor.rut|default:"No especificado" }}</p>
+                            <p><strong>Teléfono:</strong> {{ proveedor.telefono|default:"No especificado" }}</p>
+                            <p><strong>Email:</strong> {{ proveedor.email|default:"No especificado" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Dirección:</strong> {{ proveedor.direccion|default:"No especificada" }}</p>
+                            <p><strong>Ciudad:</strong> {{ proveedor.ciudad|default:"No especificada" }}</p>
+                            <p><strong>País:</strong> {{ proveedor.pais|default:"No especificado" }}</p>
+                            <p><strong>Estado:</strong> 
+                                <span class="badge badge-{% if proveedor.activo %}success{% else %}danger{% endif %}">
+                                    {% if proveedor.activo %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    {% if proveedor.observaciones %}
+                    <div class="row">
+                        <div class="col-12">
+                            <p><strong>Observaciones:</strong></p>
+                            <p class="text-muted">{{ proveedor.observaciones }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Órdenes de Compra Recientes -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Órdenes de Compra Recientes</h6>
+                    <a href="{% url 'compras:orden-compra-create' %}?proveedor={{ proveedor.pk }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Orden
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if ordenes_compra %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for orden in ordenes_compra %}
+                                <tr>
+                                    <td>{{ orden.numero }}</td>
+                                    <td>{{ orden.fecha_orden|date:"d/m/Y" }}</td>
+                                    <td>${{ orden.total|floatformat:2 }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ orden.estado|lower }}">
+                                            {{ orden.get_estado_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'compras:orden-compra-detail' orden.pk %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No hay órdenes de compra registradas para este proveedor.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Productos del Proveedor -->
+            {% if productos %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Productos Suministrados</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Código</th>
+                                    <th>Precio Compra</th>
+                                    <th>Stock Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for producto in productos %}
+                                <tr>
+                                    <td>{{ producto.nombre }}</td>
+                                    <td>{{ producto.codigo }}</td>
+                                    <td>${{ producto.precio_compra|floatformat:2 }}</td>
+                                    <td>{{ producto.stock_actual }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Estadísticas -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Estadísticas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <h4 class="font-weight-bold text-primary">{{ ordenes_total }}</h4>
+                            <small class="text-muted">Órdenes de Compra</small>
+                        </div>
+                        <div class="mb-3">
+                            <h4 class="font-weight-bold text-success">${{ total_comprado|floatformat:2 }}</h4>
+                            <small class="text-muted">Total Comprado</small>
+                        </div>
+                        <div class="mb-3">
+                            <h4 class="font-weight-bold text-info">${{ promedio_orden|floatformat:2 }}</h4>
+                            <small class="text-muted">Promedio por Orden</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Contacto Rápido</h6>
+                </div>
+                <div class="card-body">
+                    {% if proveedor.telefono %}
+                    <a href="tel:{{ proveedor.telefono }}" class="btn btn-success btn-block mb-2">
+                        <i class="fas fa-phone"></i> Llamar
+                    </a>
+                    {% endif %}
+                    {% if proveedor.email %}
+                    <a href="mailto:{{ proveedor.email }}" class="btn btn-primary btn-block mb-2">
+                        <i class="fas fa-envelope"></i> Enviar Email
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'compras:orden-compra-create' %}?proveedor={{ proveedor.pk }}" class="btn btn-warning btn-block">
+                        <i class="fas fa-shopping-cart"></i> Nueva Orden
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Configurar DataTable si hay muchas órdenes
+    if ($('table tbody tr').length > 10) {
+        $('table').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "order": [[ 1, "desc" ]],
+            "pageLength": 10
+        });
+    }
+});
+</script>
+{% endblock %}

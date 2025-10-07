@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes Analytics - DistribucioneShaddai{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --cyber-blue: #00d4ff;
+        --cyber-purple: #6b46c1;
+        --cyber-green: #10b981;
+        --cyber-pink: #ec4899;
+        --cyber-orange: #f59e0b;
+        --cyber-dark: #0f0f0f;
+        --cyber-gray: #1a1a1a;
+        --cyber-light: #f0f8ff;
+        --neon-glow: 0 0 20px rgba(0, 212, 255, 0.5);
+        --subtle-glow: 0 0 10px rgba(107, 70, 193, 0.3);
+    }
+
+    body {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: 100vh;
+    }
+
+    .analytics-card {
+        background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(15, 15, 15, 0.9));
+        border: 1px solid rgba(0, 212, 255, 0.4);
+        border-radius: 20px;
+        box-shadow: var(--neon-glow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .analytics-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyber-blue), transparent);
+        animation: scan 3s linear infinite;
+    }
+
+    @keyframes scan {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    .analytics-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--neon-glow), 0 10px 40px rgba(0, 212, 255, 0.3);
+        border-color: rgba(0, 212, 255, 0.8);
+    }
+
+    .header-title {
+        background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        text-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    }
+
+    .cyber-button {
+        background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple));
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        box-shadow: var(--subtle-glow);
+    }
+
+    .cyber-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .cyber-button:hover::before {
+        left: 100%;
+    }
+
+    .cyber-button:hover {
+        box-shadow: var(--neon-glow), inset 0 0 20px rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .filter-button {
+        background: rgba(26, 26, 26, 0.8);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: var(--cyber-light);
+        padding: 8px 16px;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        margin: 0 5px 10px 0;
+        cursor: pointer;
+    }
+
+    .filter-button.active {
+        background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple));
+        box-shadow: var(--subtle-glow);
+        transform: translateY(-2px);
+    }
+
+    .filter-button:hover {
+        border-color: rgba(0, 212, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    .reporte-item {
+        background: linear-gradient(135deg, rgba(26, 26, 26, 0.9), rgba(15, 15, 15, 0.8));
+        border: 1px solid rgba(107, 70, 193, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .reporte-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--cyber-blue), var(--cyber-purple), var(--cyber-pink));
+        opacity: 0.8;
+    }
+
+    .reporte-item:hover {
+        transform: translateX(10px);
+        border-color: rgba(0, 212, 255, 0.6);
+        box-shadow: 0 5px 25px rgba(0, 212, 255, 0.2);
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-ventas {
+        background: linear-gradient(45deg, var(--cyber-green), #059669);
+        color: white;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-inventario {
+        background: linear-gradient(45deg, var(--cyber-blue), #0284c7);
+        color: white;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    .badge-prediccion {
+        background: linear-gradient(45deg, var(--cyber-purple), #7c3aed);
+        color: white;
+        box-shadow: 0 0 15px rgba(107, 70, 193, 0.3);
+    }
+
+    .badge-mrp {
+        background: linear-gradient(45deg, var(--cyber-orange), #ea580c);
+        color: white;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: rgba(240, 248, 255, 0.6);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: rgba(0, 212, 255, 0.3);
+    }
+
+    .data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .data-item {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px 15px;
+        border-radius: 10px;
+        border-left: 3px solid var(--cyber-blue);
+    }
+
+    .data-label {
+        font-size: 12px;
+        color: rgba(240, 248, 255, 0.7);
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .data-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--cyber-light);
+    }
+
+    .floating-action {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, var(--cyber-blue), var(--cyber-purple));
+        border: none;
+        box-shadow: var(--neon-glow);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .floating-action:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.8);
+    }
+
+    .floating-action i {
+        color: white;
+        font-size: 24px;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @media (max-width: 768px) {
+        .data-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .reporte-item {
+            padding: 15px;
+        }
+        
+        .floating-action {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen text-white">
+    <!-- Header -->
+    <div class="analytics-card mx-4 mb-6 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="header-title text-4xl md:text-5xl font-bold mb-4">
+                    <i class="fas fa-file-chart-line mr-4"></i>
+                    Reportes Analytics
+                </h1>
+                <p class="text-lg text-gray-300">
+                    Consulta y administra todos los reportes generados por el sistema de IA
+                </p>
+            </div>
+            <div class="hidden md:block">
+                <div class="text-right">
+                    <div class="text-3xl font-bold text-cyber-blue">{{ reportes.count }}</div>
+                    <div class="text-sm text-gray-400 uppercase tracking-wider">Reportes Total</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="flex flex-wrap items-center justify-between">
+            <div class="flex flex-wrap">
+                <a href="{% url 'analytics:reportes' %}" 
+                   class="filter-button {% if not tipo_filtro %}active{% endif %}">
+                    <i class="fas fa-list mr-2"></i>Todos
+                </a>
+                {% for tipo_code, tipo_name in tipos_reporte %}
+                <a href="{% url 'analytics:reportes' %}?tipo={{ tipo_code }}" 
+                   class="filter-button {% if tipo_filtro == tipo_code %}active{% endif %}">
+                    {% if tipo_code == 'ventas' %}
+                        <i class="fas fa-chart-line mr-2"></i>
+                    {% elif tipo_code == 'inventario' %}
+                        <i class="fas fa-boxes mr-2"></i>
+                    {% elif tipo_code == 'prediccion' %}
+                        <i class="fas fa-brain mr-2"></i>
+                    {% elif tipo_code == 'mrp' %}
+                        <i class="fas fa-cogs mr-2"></i>
+                    {% else %}
+                        <i class="fas fa-chart-bar mr-2"></i>
+                    {% endif %}
+                    {{ tipo_name }}
+                </a>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-4 md:mt-0">
+                <a href="{% url 'analytics:dashboard' %}" class="cyber-button">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Volver al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Reportes -->
+    <div class="mx-4">
+        {% if reportes %}
+            {% for reporte in reportes %}
+            <div class="reporte-item">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-2">
+                            <h3 class="text-xl font-bold text-cyber-light mr-4">
+                                {{ reporte.titulo }}
+                            </h3>
+                            <span class="badge badge-{{ reporte.tipo_reporte }}">
+                                {{ reporte.get_tipo_reporte_display }}
+                            </span>
+                        </div>
+                        
+                        {% if reporte.descripcion %}
+                        <p class="text-gray-300 mb-3">{{ reporte.descripcion }}</p>
+                        {% endif %}
+                        
+                        <div class="data-grid">
+                            <div class="data-item">
+                                <div class="data-label">Fecha Generación</div>
+                                <div class="data-value">
+                                    <i class="fas fa-calendar mr-2"></i>
+                                    {{ reporte.fecha_generacion|date:"d/m/Y H:i" }}
+                                </div>
+                            </div>
+                            
+                            {% if reporte.fecha_inicio %}
+                            <div class="data-item">
+                                <div class="data-label">Período Analizado</div>
+                                <div class="data-value">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    {{ reporte.fecha_inicio|date:"d/m/Y" }} - {{ reporte.fecha_fin|date:"d/m/Y" }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if reporte.metricas %}
+                            <div class="data-item">
+                                <div class="data-label">Métricas Analizadas</div>
+                                <div class="data-value">
+                                    <i class="fas fa-chart-pie mr-2"></i>
+                                    {{ reporte.metricas|length }} indicadores
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="data-item">
+                                <div class="data-label">Estado</div>
+                                <div class="data-value">
+                                    <i class="fas fa-check-circle mr-2 text-cyber-green"></i>
+                                    Completado
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ml-4 text-right">
+                        <a href="{% url 'analytics:detalle_reporte' reporte.id %}" 
+                           class="cyber-button">
+                            <i class="fas fa-eye mr-2"></i>
+                            Ver Detalle
+                        </a>
+                    </div>
+                </div>
+                
+                {% if reporte.resultados %}
+                <div class="mt-4 p-4 bg-black bg-opacity-30 rounded-lg border border-cyber-blue border-opacity-20">
+                    <div class="text-sm text-gray-400 mb-2">
+                        <i class="fas fa-chart-area mr-2"></i>
+                        Resumen de Resultados
+                    </div>
+                    <div class="text-cyber-light font-mono text-sm">
+                        {% if reporte.resultados.resumen %}
+                            {{ reporte.resultados.resumen|truncatewords:30 }}
+                        {% else %}
+                            Reporte con {{ reporte.resultados|length }} elementos analizados
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <!-- Paginación si es necesaria -->
+            {% if reportes.has_other_pages %}
+            <div class="analytics-card p-6 text-center mt-6">
+                <div class="flex justify-center space-x-2">
+                    {% if reportes.has_previous %}
+                        <a href="?page={{ reportes.previous_page_number }}" 
+                           class="cyber-button">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    
+                    <span class="px-4 py-2 text-cyber-light">
+                        Página {{ reportes.number }} de {{ reportes.paginator.num_pages }}
+                    </span>
+                    
+                    {% if reportes.has_next %}
+                        <a href="?page={{ reportes.next_page_number }}" 
+                           class="cyber-button">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+        {% else %}
+            <!-- Estado vacío -->
+            <div class="analytics-card p-8">
+                <div class="empty-state">
+                    <i class="fas fa-chart-line-down pulse"></i>
+                    <h3 class="text-2xl font-bold text-cyber-light mb-4">
+                        No hay reportes disponibles
+                    </h3>
+                    {% if tipo_filtro %}
+                        <p class="text-gray-400 mb-6">
+                            No se encontraron reportes del tipo "{{ tipo_filtro|capfirst }}"
+                        </p>
+                        <a href="{% url 'analytics:reportes' %}" class="cyber-button">
+                            <i class="fas fa-list mr-2"></i>
+                            Ver Todos los Reportes
+                        </a>
+                    {% else %}
+                        <p class="text-gray-400 mb-6">
+                            Aún no se han generado reportes. Utiliza el sistema de Analytics para generar análisis automáticos.
+                        </p>
+                        <a href="{% url 'analytics:estadisticas_masivas' %}" class="cyber-button">
+                            <i class="fas fa-chart-bar mr-2"></i>
+                            Generar Análisis
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Botón flotante para generar nuevo reporte -->
+<button class="floating-action" onclick="location.href='{% url 'analytics:estadisticas_masivas' %}'" 
+        title="Generar Nuevo Análisis">
+    <i class="fas fa-plus"></i>
+</button>
+{% endblock %}

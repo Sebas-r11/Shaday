@@ -1,0 +1,327 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Orden de Compra #{{ orden.numero }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+        }
+        
+        .company-info {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .document-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 10px 0;
+        }
+        
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: table-row;
+        }
+        
+        .info-cell {
+            display: table-cell;
+            width: 50%;
+            padding: 10px;
+            vertical-align: top;
+        }
+        
+        .info-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .info-title {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 11px;
+        }
+        
+        .items-table th {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .items-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals {
+            margin-top: 20px;
+            float: right;
+            width: 300px;
+        }
+        
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .totals td {
+            padding: 5px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .total-final {
+            font-weight: bold;
+            font-size: 14px;
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .signatures {
+            margin-top: 40px;
+            display: table;
+            width: 100%;
+        }
+        
+        .signature {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 60px;
+            padding-top: 5px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pendiente {
+            background-color: #ffeaa7;
+            color: #2d3436;
+        }
+        
+        .status-enviada {
+            background-color: #74b9ff;
+            color: white;
+        }
+        
+        .status-recibida {
+            background-color: #00b894;
+            color: white;
+        }
+        
+        .status-cancelada {
+            background-color: #fd79a8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-info">
+            <strong>SISTEMA REYES</strong><br>
+            Gestión Empresarial Integral<br>
+            Tel: (123) 456-7890 | Email: info@sistemareyes.com
+        </div>
+        <div class="document-title">ORDEN DE COMPRA</div>
+        <div>
+            <strong>N° {{ orden.numero }}</strong>
+            <span class="status status-{{ orden.estado|lower }}">{{ orden.get_estado_display }}</span>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-cell">
+                <div class="info-box">
+                    <div class="info-title">Datos del Proveedor</div>
+                    <strong>{{ orden.proveedor.nombre }}</strong><br>
+                    {% if orden.proveedor.rut %}RUT: {{ orden.proveedor.rut }}<br>{% endif %}
+                    {% if orden.proveedor.direccion %}{{ orden.proveedor.direccion }}<br>{% endif %}
+                    {% if orden.proveedor.ciudad %}{{ orden.proveedor.ciudad }}<br>{% endif %}
+                    {% if orden.proveedor.telefono %}Tel: {{ orden.proveedor.telefono }}<br>{% endif %}
+                    {% if orden.proveedor.email %}Email: {{ orden.proveedor.email }}{% endif %}
+                </div>
+            </div>
+            <div class="info-cell">
+                <div class="info-box">
+                    <div class="info-title">Información de la Orden</div>
+                    <strong>Fecha:</strong> {{ orden.fecha_orden|date:"d/m/Y" }}<br>
+                    <strong>Fecha Entrega:</strong> {{ orden.fecha_entrega_esperada|date:"d/m/Y"|default:"No especificada" }}<br>
+                    <strong>Solicitado por:</strong> {{ orden.solicitado_por|default:"Sistema" }}<br>
+                    <strong>Estado:</strong> {{ orden.get_estado_display }}<br>
+                    {% if orden.numero_referencia %}
+                    <strong>Ref:</strong> {{ orden.numero_referencia }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 10%">Código</th>
+                <th style="width: 40%">Producto</th>
+                <th style="width: 10%" class="text-center">Cantidad</th>
+                <th style="width: 15%" class="text-right">Precio Unit.</th>
+                <th style="width: 15%" class="text-right">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in orden.detalleordencompra_set.all %}
+            <tr>
+                <td>{{ item.producto.codigo }}</td>
+                <td>
+                    <strong>{{ item.producto.nombre }}</strong>
+                    {% if item.observaciones %}
+                    <br><small style="color: #666;">{{ item.observaciones }}</small>
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ item.cantidad|floatformat:0 }}</td>
+                <td class="text-right">${{ item.precio_unitario|floatformat:2 }}</td>
+                <td class="text-right">${{ item.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center" style="color: #666;">No hay productos en esta orden</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td>Subtotal:</td>
+                <td class="text-right">${{ orden.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% if orden.descuento > 0 %}
+            <tr>
+                <td>Descuento:</td>
+                <td class="text-right">-${{ orden.descuento|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            {% if orden.impuestos > 0 %}
+            <tr>
+                <td>Impuestos ({{ orden.porcentaje_impuesto|default:19 }}%):</td>
+                <td class="text-right">${{ orden.impuestos|floatformat:2 }}</td>
+            </tr>
+            {% endif %}
+            <tr class="total-final">
+                <td><strong>TOTAL:</strong></td>
+                <td class="text-right"><strong>${{ orden.total|floatformat:2 }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="clear: both;"></div>
+
+    {% if orden.observaciones %}
+    <div style="margin-top: 30px;">
+        <div class="info-title">Observaciones</div>
+        <div style="border: 1px solid #ddd; padding: 15px; background-color: #f8f9fa;">
+            {{ orden.observaciones|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 30px;">
+        <div class="info-title">Condiciones de Compra</div>
+        <div style="font-size: 10px; line-height: 1.6;">
+            • Los productos deben entregarse en perfecto estado y según especificaciones.<br>
+            • El proveedor debe notificar cualquier cambio en fecha de entrega con 48 horas de anticipación.<br>
+            • Esta orden de compra es válida por 30 días desde su fecha de emisión.<br>
+            • Cualquier modificación debe ser autorizada por escrito.<br>
+            {% if orden.condiciones_pago %}
+            • Condiciones de pago: {{ orden.condiciones_pago }}<br>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="signatures">
+        <div class="signature">
+            <div class="signature-line">
+                <strong>Autorizado por</strong><br>
+                Compras - Sistema Reyes
+            </div>
+        </div>
+        <div class="signature">
+            <div class="signature-line">
+                <strong>Recibido por</strong><br>
+                {{ orden.proveedor.nombre }}
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div style="text-align: center;">
+            Documento generado automáticamente el {{ "now"|date:"d/m/Y H:i" }} | 
+            Sistema Reyes - Gestión Empresarial
+        </div>
+    </div>
+</body>
+</html>

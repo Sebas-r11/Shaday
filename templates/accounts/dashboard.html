@@ -1,0 +1,601 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Dashboard - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p class="text-gray-600 mt-2">Bienvenido, {{ user.get_full_name|default:user.username }}</p>
+    </div>
+
+    {% if user|is_admin_user %}
+    <!-- Panel de Administración Principal -->
+    <div class="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg mb-8">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <i class="fas fa-crown text-orange-600 text-xl mr-3"></i>
+                <h2 class="text-xl font-semibold text-orange-800">Panel de Administración</h2>
+            </div>
+            <p class="text-orange-700 mb-4">Acceso rápido a todas las funciones administrativas del sistema</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <!-- Gestión de Categorías -->
+                <div class="bg-white rounded-lg shadow-sm border border-orange-100 p-4 hover:shadow-md transition-shadow">
+                    <div class="text-center">
+                        <i class="fas fa-folder text-purple-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium text-gray-900 mb-2">Categorías</h3>
+                        <div class="space-y-2">
+                            <a href="{% url 'inventario:categoria_list' %}" 
+                               class="block w-full bg-purple-100 hover:bg-purple-200 text-purple-700 px-3 py-1 rounded text-sm transition-colors">
+                                Ver Todas
+                            </a>
+                            <a href="{% url 'inventario:categoria_create' %}" 
+                               class="block w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                Crear Nueva
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión de Subcategorías -->
+                <div class="bg-white rounded-lg shadow-sm border border-orange-100 p-4 hover:shadow-md transition-shadow">
+                    <div class="text-center">
+                        <i class="fas fa-tags text-blue-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium text-gray-900 mb-2">Subcategorías</h3>
+                        <div class="space-y-2">
+                            <a href="{% url 'inventario:subcategoria_list' %}" 
+                               class="block w-full bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1 rounded text-sm transition-colors">
+                                Ver Todas
+                            </a>
+                            <a href="{% url 'inventario:subcategoria_create' %}" 
+                               class="block w-full bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                Crear Nueva
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión de Productos -->
+                <div class="bg-white rounded-lg shadow-sm border border-orange-100 p-4 hover:shadow-md transition-shadow">
+                    <div class="text-center">
+                        <i class="fas fa-boxes text-green-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium text-gray-900 mb-2">Productos</h3>
+                        <div class="space-y-2">
+                            <a href="{% url 'inventario:producto_list' %}" 
+                               class="block w-full bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1 rounded text-sm transition-colors">
+                                Ver Todos
+                            </a>
+                            <a href="{% url 'inventario:producto_create' %}" 
+                               class="block w-full bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                Crear Nuevo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión de Usuarios -->
+                <div class="bg-white rounded-lg shadow-sm border border-orange-100 p-4 hover:shadow-md transition-shadow">
+                    <div class="text-center">
+                        <i class="fas fa-users text-indigo-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium text-gray-900 mb-2">Usuarios</h3>
+                        <div class="space-y-2">
+                            {% if user.is_authenticated and user.is_staff %}
+                                <a href="{% url 'accounts:user_list' %}" 
+                                   class="block w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1 rounded text-sm transition-colors">
+                                    Administrar
+                                </a>
+                                <a href="{% url 'accounts:user_create' %}" 
+                                   class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    Crear Nuevo
+                                </a>
+                            {% else %}
+                                <a href="{% url 'accounts:login' %}" 
+                                   class="block w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1 rounded text-sm transition-colors">
+                                    Iniciar Sesión
+                                </a>
+                                <span class="block w-full bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm text-center">
+                                    Solo Administradores
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reportes -->
+                <div class="bg-white rounded-lg shadow-sm border border-orange-100 p-4 hover:shadow-md transition-shadow">
+                    <div class="text-center">
+                        <i class="fas fa-chart-bar text-yellow-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium text-gray-900 mb-2">Reportes</h3>
+                        <div class="space-y-2">
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'inventario:exportar_productos_excel' %}" 
+                                   class="block w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded text-sm transition-colors">
+                                    Productos Excel
+                                </a>
+                                <a href="{% url 'analytics:dashboard' %}" 
+                                   class="block w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    Analytics & AI
+                                </a>
+                            {% else %}
+                                <a href="{% url 'accounts:login' %}" 
+                                   class="block w-full bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded text-sm transition-colors">
+                                    Iniciar Sesión
+                                </a>
+                                <span class="block w-full bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm text-center">
+                                    Requiere Login
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración -->
+                <div class="bg-white rounded-lg shadow-sm border border-orange-100 p-4 hover:shadow-md transition-shadow">
+                    <div class="text-center">
+                        <i class="fas fa-cogs text-red-600 text-2xl mb-2"></i>
+                        <h3 class="font-medium text-gray-900 mb-2">Sistema</h3>
+                        <div class="space-y-2">
+                            {% if user.is_authenticated and user.is_staff %}
+                                <a href="/admin/" 
+                                   class="block w-full bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded text-sm transition-colors">
+                                    Admin Django
+                                </a>
+                                <a href="/admin/inventario/categoria/" 
+                                   class="block w-full bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    Configuración
+                                </a>
+                            {% else %}
+                                <a href="{% url 'accounts:login' %}" 
+                                   class="block w-full bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1 rounded text-sm transition-colors">
+                                    Iniciar Sesión
+                                </a>
+                                <span class="block w-full bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm text-center">
+                                    Solo Administradores
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Métricas principales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        
+        {% if is_vendedor_dashboard %}
+        <!-- Dashboard para Vendedores -->
+        <!-- Mis Ventas Hoy -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-dollar-sign text-green-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Mis Ventas Hoy
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                ${{ ventas_hoy|floatformat:0|default:"0" }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">
+                        {{ pedidos_hoy }} pedidos hoy
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mis Pedidos Total -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shopping-cart text-blue-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Mis Pedidos Total
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                {{ mis_pedidos_total }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'ventas:pedido_list' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                        Ver mis pedidos <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mis Ventas del Mes -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-chart-line text-purple-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Ventas del Mes
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                ${{ ventas_mes|floatformat:0|default:"0" }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">
+                        {{ pedidos_mes }} pedidos este mes
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% elif is_bodeguero_dashboard %}
+        <!-- Dashboard para Bodegueros -->
+        <!-- Total de productos -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-boxes text-blue-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Productos Activos
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                {{ total_productos }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'inventario:producto_list' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                        Ver todos <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos bajo stock -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Productos Bajo Stock
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                {{ productos_bajo_stock|length }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">
+                        Revisar inventario
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pedidos Asignados -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tasks text-green-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Pedidos Asignados
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                {{ pedidos_asignados }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">
+                        {{ pedidos_pendientes_alistamiento }} pendientes
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Dashboard para Administradores -->
+        <!-- Total de productos -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-boxes text-blue-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Productos Activos
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                {{ total_productos }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'inventario:producto_list' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                        Ver todos <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos bajo stock - Solo para administradores -->
+        {% if user.role == 'superadmin' or user.role == 'administrador' %}
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Productos Bajo Stock
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                {{ productos_bajo_stock|length }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="{% url 'inventario:alertas_stock' %}" class="font-medium text-yellow-600 hover:text-yellow-500">
+                        Ver alertas <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ventas Totales Hoy -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shopping-cart text-green-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Ventas Hoy (Total)
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                ${{ ventas_hoy|floatformat:0|default:"0" }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <span class="font-medium text-gray-600">
+                        {{ pedidos_hoy }} pedidos hoy
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+    </div>
+
+    <!-- Secciones adicionales por rol -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Pedidos pendientes (placeholder) -->
+        {% if user.can_prepare_orders %}
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clock text-orange-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">
+                                Pedidos Pendientes
+                            </dt>
+                            <dd class="text-lg font-medium text-gray-900">
+                                0
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+                <div class="text-sm">
+                    <a href="#" class="font-medium text-orange-600 hover:text-orange-500">
+                        Ver pedidos <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Productos bajo stock - Solo para Administradores y Bodegueros -->
+        {% if productos_bajo_stock and not is_vendedor_dashboard %}
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                    Productos Bajo Stock Mínimo
+                </h3>
+                <div class="space-y-3">
+                    {% for item in productos_bajo_stock %}
+                    <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ item.producto.codigo }} - {{ item.producto.nombre }}</p>
+                            <p class="text-sm text-gray-600">{{ item.producto.categoria.nombre }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-red-600">Stock: {{ item.stock_actual }}</p>
+                            <p class="text-sm text-gray-500">Mínimo: {{ item.stock_minimo }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Pedidos Recientes del Vendedor -->
+        {% if is_vendedor_dashboard and pedidos_recientes %}
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <i class="fas fa-shopping-bag text-blue-500 mr-2"></i>
+                    Mis Pedidos Recientes
+                </h3>
+                <div class="space-y-3">
+                    {% for pedido in pedidos_recientes %}
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div>
+                            <p class="font-medium text-gray-900">PED-{{ pedido.numero }}</p>
+                            <p class="text-sm text-gray-600">{{ pedido.cliente.nombre_display }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium text-green-600">
+                                {% if pedido.total %}${{ pedido.total|floatformat:0 }}{% else %}$0{% endif %}
+                            </p>
+                            <p class="text-sm text-gray-500">{{ pedido.fecha|date:"d/m/Y" }}</p>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                   {% if pedido.estado == 'completado' %}bg-green-100 text-green-800
+                                   {% elif pedido.estado == 'en_proceso' %}bg-yellow-100 text-yellow-800
+                                   {% elif pedido.estado == 'enviado' %}bg-blue-100 text-blue-800
+                                   {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ pedido.get_estado_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Movimientos recientes -->
+        {% if user.can_see_costs and movimientos_recientes %}
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <i class="fas fa-history text-blue-500 mr-2"></i>
+                    Movimientos Recientes
+                </h3>
+                <div class="space-y-3">
+                    {% for movimiento in movimientos_recientes %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ movimiento.producto.codigo }}</p>
+                            <p class="text-sm text-gray-600">{{ movimiento.get_tipo_movimiento_display }} - {{ movimiento.bodega.nombre }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-medium {% if movimiento.tipo_movimiento == 'entrada' %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if movimiento.tipo_movimiento == 'entrada' %}+{% else %}-{% endif %}{{ movimiento.cantidad }}
+                            </p>
+                            <p class="text-sm text-gray-500">{{ movimiento.fecha_movimiento|date:"d/m H:i" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Accesos rápidos -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                    <i class="fas fa-bolt text-purple-500 mr-2"></i>
+                    Accesos Rápidos
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    {% if user.can_adjust_inventory %}
+                    <a href="{% url 'inventario:producto_create' %}" class="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors">
+                        <i class="fas fa-plus text-blue-600 mr-3"></i>
+                        <span class="text-sm font-medium text-blue-900">Nuevo Producto</span>
+                    </a>
+                    <a href="{% url 'inventario:categoria_create' %}" class="flex items-center p-3 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors">
+                        <i class="fas fa-tags text-green-600 mr-3"></i>
+                        <span class="text-sm font-medium text-green-900">Nueva Categoría</span>
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.can_create_sales %}
+                    <a href="{% url 'ventas:pedido_create' %}" class="flex items-center p-3 bg-purple-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors">
+                        <i class="fas fa-file-invoice text-purple-600 mr-3"></i>
+                        <span class="text-sm font-medium text-purple-900">Nueva Venta</span>
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.can_access_crm %}
+                    <a href="{% url 'ventas:cliente_create' %}" class="flex items-center p-3 bg-orange-50 rounded-lg border border-orange-200 hover:bg-orange-100 transition-colors">
+                        <i class="fas fa-user-plus text-orange-600 mr-3"></i>
+                        <span class="text-sm font-medium text-orange-900">Nuevo Cliente</span>
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.can_manage_users %}
+                    <a href="{% url 'accounts:user_list' %}" class="flex items-center p-3 bg-red-50 rounded-lg border border-red-200 hover:bg-red-100 transition-colors">
+                        <i class="fas fa-users text-red-600 mr-3"></i>
+                        <span class="text-sm font-medium text-red-900">Gestión Usuarios</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

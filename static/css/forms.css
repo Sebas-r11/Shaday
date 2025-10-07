@@ -1,0 +1,251 @@
+/* Estilos globales para formularios del sistema */
+
+/* Campos de entrada básicos */
+input[type="text"], 
+input[type="number"], 
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+select, 
+textarea {
+    display: block !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #374151 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+/* Estado focus para campos */
+input[type="text"]:focus, 
+input[type="number"]:focus, 
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+select:focus, 
+textarea:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Campos deshabilitados */
+input:disabled,
+select:disabled,
+textarea:disabled {
+    background-color: #f9fafb !important;
+    color: #6b7280 !important;
+    cursor: not-allowed !important;
+}
+
+/* Textareas específicas */
+textarea {
+    resize: vertical !important;
+    min-height: 80px !important;
+}
+
+/* Selects con flecha personalizada */
+select {
+    cursor: pointer !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 8px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 16px 16px !important;
+    padding-right: 40px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
+/* Labels de formulario */
+label {
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Campos requeridos */
+label:has(+ .required)::after,
+label.required::after {
+    content: " *";
+    color: #ef4444;
+}
+
+/* Mensajes de error */
+.errorlist,
+.form-error,
+.text-red-600,
+.text-red-700 {
+    margin-top: 4px !important;
+    font-size: 12px !important;
+    color: #dc2626 !important;
+    list-style: none !important;
+    padding: 0 !important;
+}
+
+.errorlist li {
+    margin-bottom: 2px !important;
+}
+
+/* Help text */
+.helptext,
+.form-help,
+.text-gray-500 {
+    margin-top: 4px !important;
+    font-size: 12px !important;
+    color: #6b7280 !important;
+}
+
+/* Grupos de campos */
+.form-group {
+    margin-bottom: 1rem !important;
+}
+
+/* Campos inline */
+.form-inline input,
+.form-inline select {
+    display: inline-block !important;
+    width: auto !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Checkboxes y radios */
+input[type="checkbox"],
+input[type="radio"] {
+    width: auto !important;
+    margin-right: 8px !important;
+}
+
+/* Botones de formulario */
+.btn-submit,
+.btn-primary {
+    background-color: #3b82f6 !important;
+    border: 1px solid #3b82f6 !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s ease-in-out !important;
+}
+
+.btn-submit:hover,
+.btn-primary:hover {
+    background-color: #2563eb !important;
+    border-color: #2563eb !important;
+}
+
+.btn-cancel,
+.btn-secondary {
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s ease-in-out !important;
+}
+
+.btn-cancel:hover,
+.btn-secondary:hover {
+    background-color: #f9fafb !important;
+}
+
+/* Campos con iconos */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon input {
+    padding-left: 40px !important;
+}
+
+.input-with-icon .icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 16px;
+}
+
+/* Campos de búsqueda con sugerencias */
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.autocomplete-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.autocomplete-suggestion:hover,
+.autocomplete-suggestion.selected {
+    background-color: #f3f4f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important; /* Previene zoom en iOS */
+    }
+}
+
+/* Estilos específicos para formularios de Django */
+.django-form-row {
+    margin-bottom: 1rem;
+}
+
+.django-form-field {
+    width: 100%;
+}
+
+/* Corrección para campos que no tienen la clase aplicada */
+form input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+form select,
+form textarea {
+    display: block !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    border: 2px solid #d1d5db !important;
+    border-radius: 6px !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: #374151 !important;
+    background-color: #ffffff !important;
+}

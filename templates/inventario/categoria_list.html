@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Categorías - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Categorías</h1>
+            <p class="text-gray-600 mt-2">Gestión de categorías de productos</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-2">
+            <a href="{% url 'inventario:subcategoria_list' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-tags mr-2"></i>Subcategorías
+            </a>
+            {% if user|is_admin_user %}
+                <a href="{% url 'inventario:categoria_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Nueva Categoría
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lista de categorías -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        {% if categorias %}
+        <ul class="divide-y divide-gray-200">
+            {% for categoria in categorias %}
+            <li class="px-6 py-4 hover:bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">{{ categoria.nombre }}</h3>
+                        {% if categoria.descripcion %}
+                        <p class="text-sm text-gray-600 mt-1">{{ categoria.descripcion }}</p>
+                        {% endif %}
+                        <div class="flex items-center mt-2 space-x-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if categoria.activa %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if categoria.activa %}Activa{% else %}Inactiva{% endif %}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                {{ categoria.subcategorias.count }} subcategoría{{ categoria.subcategorias.count|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Subcategorías -->
+                {% if categoria.subcategorias.all %}
+                <div class="mt-4 pl-4 border-l-2 border-gray-200">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {% for subcategoria in categoria.subcategorias.all %}
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                            {{ subcategoria.nombre }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-tags text-gray-400 text-4xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay categorías</h3>
+            <p class="text-gray-500 mb-4">Comienza creando las categorías para organizar tus productos.</p>
+            {% if user|is_admin_user %}
+            <a href="{% url 'inventario:categoria_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <i class="fas fa-plus mr-2"></i>Crear Primera Categoría
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,724 @@
+{% extends 'base.html' %}
+{% load permissions %}
+{% load inventario_filters %}
+
+{% block title %}Alertas de Stock - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    <i class="fas fa-exclamation-triangle mr-3 text-red-600"></i>
+                    Alertas de Stock
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Productos con stock bajo o crítico que necesitan reabastecimiento
+                </p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'inventario:orden_compra_stock_list' %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-list mr-2"></i>
+                    Ver Órdenes de Compra
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas de alertas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-2xl text-red-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Alertas</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_alertas }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-times-circle text-2xl text-red-500"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Stock Crítico</dt>
+                            <dd class="text-lg font-medium text-red-600">{{ productos_criticos }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation text-2xl text-orange-500"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Stock Bajo</dt>
+                            <dd class="text-lg font-medium text-orange-600">{{ productos_bajo_stock }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Nivel de Alerta</label>
+                <select name="nivel" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Todos</option>
+                    <option value="critico" {% if nivel_filtro == 'critico' %}selected{% endif %}>Stock Crítico</option>
+                    <option value="bajo" {% if nivel_filtro == 'bajo' %}selected{% endif %}>Stock Bajo</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Categoría</label>
+                <select name="categoria" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if categoria_filtro == categoria.id|stringformat:"s" %}selected{% endif %}>
+                        {{ categoria.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="flex items-end space-x-2 md:col-span-2">
+                <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm">
+                    <i class="fas fa-search mr-2"></i>Filtrar
+                </button>
+                <a href="{% url 'inventario:alertas_stock' %}" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Productos con alertas -->
+    <form method="post" action="{% url 'inventario:generar_orden_compra' %}" id="form-generar-orden">
+        {% csrf_token %}
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        Productos con Alertas de Stock
+                    </h3>
+                    <button type="submit" id="btn-generar-orden" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+                        <i class="fas fa-shopping-cart mr-2"></i>
+                        Generar Órdenes de Compra
+                    </button>
+                </div>
+                
+                <!-- Resumen de selección -->
+                <div id="resumen-seleccion" class="hidden bg-blue-50 border border-blue-200 rounded-md p-3 text-sm">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-blue-700">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <span id="productos-seleccionados">0</span> productos seleccionados
+                            </span>
+                            <span class="text-blue-700" id="proveedores-info"></span>
+                        </div>
+                        <button type="button" onclick="actualizarResumen()" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-refresh mr-1"></i>Actualizar resumen
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Panel de total acumulado -->
+                {% if user|can_see_prices %}
+                <div id="panel-total" class="hidden bg-green-50 border border-green-200 rounded-md p-4 mt-3">
+                    <div class="flex justify-between items-center">
+                        <div class="space-y-1">
+                            <h4 class="text-lg font-semibold text-green-800">
+                                <i class="fas fa-calculator mr-2"></i>Total de la Orden
+                            </h4>
+                            <p class="text-sm text-green-600" id="resumen-por-proveedor"></p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-green-700" id="total-general">
+                                $0
+                            </div>
+                            <div class="text-sm text-green-600" id="detalle-totales">
+                                0 productos • 0 proveedores
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if productos %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Producto
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Stock Actual
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Stock Mínimo
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nivel de Alerta
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Proveedor Seleccionado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Precio Unitario
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Cantidad a Comprar
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total Item
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for producto in productos %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" name="productos" value="{{ producto.id }}" 
+                                       class="producto-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ producto.nombre }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ producto.codigo }} • {{ producto.categoria.nombre }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold {% if producto.stock_critico %}text-red-600{% elif producto.stock_cerca_minimo %}text-orange-600{% else %}text-green-600{% endif %}">
+                                    {{ producto.stock_total }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ producto.stock_minimo }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if producto.stock_critico %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Crítico
+                                </span>
+                                {% elif producto.stock_cerca_minimo %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    <i class="fas fa-exclamation mr-1"></i>Bajo
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Normal
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Selector de proveedor -->
+                                <select name="proveedor_{{ producto.id }}" 
+                                        class="proveedor-select block w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                        data-producto="{{ producto.id }}">
+                                    {% for pp in producto.proveedores_activos %}
+                                    <option value="{{ pp.id }}" 
+                                            data-precio="{{ pp.precio_compra }}"
+                                            data-entrega="{{ pp.tiempo_entrega_dias }}"
+                                            {% if pp.proveedor_preferido %}selected{% endif %}>
+                                        {{ pp.proveedor.nombre }} 
+                                        {% if user|can_see_prices %}
+                                            - ${{ pp.precio_compra|floatformat:0 }}
+                                        {% endif %}
+                                    </option>
+                                    {% empty %}
+                                    <option value="">Sin proveedores disponibles</option>
+                                    {% endfor %}
+                                </select>
+                                
+                                <!-- Selector de presentación dinámico por proveedor -->
+                                <div class="mt-2">
+                                    <select name="presentacion_{{ producto.id }}" 
+                                            class="presentacion-select block w-full text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                            data-producto="{{ producto.id }}">
+                                        <option value="">Seleccionar presentación...</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Información adicional del proveedor seleccionado -->
+                                {% if producto.proveedor_preferido %}
+                                <div class="mt-1 text-xs text-gray-500">
+                                    <i class="fas fa-truck mr-1"></i>{{ producto.proveedor_preferido.tiempo_entrega_dias }} días entrega
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Input para precio unitario editable -->
+                                {% if user|can_see_prices %}
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-xs text-gray-500">$</span>
+                                        <input type="number" 
+                                               name="precio_{{ producto.id }}" 
+                                               value="{% if producto.proveedor_preferido %}{{ producto.proveedor_preferido.precio_compra }}{% else %}0{% endif %}"
+                                               min="0" 
+                                               step="0.01"
+                                               class="precio-input w-24 text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                               data-producto="{{ producto.id }}"
+                                               data-original="{% if producto.proveedor_preferido %}{{ producto.proveedor_preferido.precio_compra }}{% else %}0{% endif %}">
+                                    </div>
+                                    
+                                    <!-- Precio original como referencia -->
+                                    {% if producto.proveedor_preferido %}
+                                    <div class="text-xs text-gray-500">
+                                        <i class="fas fa-tag mr-1"></i>Original: ${{ producto.proveedor_preferido.precio_compra|floatformat:0 }}
+                                        <button type="button" 
+                                                onclick="restaurarPrecioOriginal({{ producto.id }})"
+                                                class="ml-1 text-gray-400 hover:text-gray-600 text-xs">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-gray-500">Precio oculto</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Input para cantidad personalizada -->
+                                <div class="space-y-2">
+                                    <div class="flex items-center space-x-2">
+                                        <input type="number" 
+                                               name="cantidad_{{ producto.id }}" 
+                                               value="{{ producto.cantidad_sugerida_compra }}"
+                                               min="1" 
+                                               class="cantidad-input w-20 text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                               data-producto="{{ producto.id }}"
+                                               data-sugerida="{{ producto.cantidad_sugerida_compra }}">
+                                        <span class="text-xs text-gray-500">unidades</span>
+                                    </div>
+                                    
+                                    <!-- Cantidad sugerida como referencia -->
+                                    <div class="text-xs text-blue-600">
+                                        <i class="fas fa-lightbulb mr-1"></i>Sugerida: {{ producto.cantidad_sugerida_compra }}
+                                        {% if producto.stock_critico %}
+                                            <span class="text-red-600 font-medium">(CRÍTICO)</span>
+                                        {% endif %}
+                                        <button type="button" 
+                                                onclick="restaurarCantidadSugerida({{ producto.id }})"
+                                                class="ml-1 text-blue-500 hover:text-blue-700 text-xs">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    </div>
+                                    
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Total del item -->
+                                {% if user|can_see_prices %}
+                                <div class="space-y-1">
+                                    <div class="text-lg font-bold text-green-600 total-item" data-producto="{{ producto.id }}">
+                                        $<span class="total-valor">{% if producto.proveedor_preferido %}{{ producto.proveedor_preferido.precio_compra|mul:producto.cantidad_sugerida_compra|floatformat:0 }}{% else %}0{% endif %}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        <span class="cantidad-display">{{ producto.cantidad_sugerida_compra }}</span> x 
+                                        $<span class="precio-display">{% if producto.proveedor_preferido %}{{ producto.proveedor_preferido.precio_compra|floatformat:0 }}{% else %}0{% endif %}</span>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-gray-500">Total oculto</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="px-6 py-12 text-center">
+                <i class="fas fa-check-circle text-4xl text-green-400 mb-4"></i>
+                <p class="text-lg text-gray-500">¡Excelente! No hay productos con alertas de stock</p>
+                <p class="text-sm text-gray-400">Todos los productos tienen stock suficiente</p>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Anterior
+            </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Siguiente
+            </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Mostrando página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} 
+                    ({{ page_obj.paginator.count }} productos con alertas)
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('select-all');
+    const productoCheckboxes = document.querySelectorAll('.producto-checkbox');
+    const btnGenerarOrden = document.getElementById('btn-generar-orden');
+    
+    // Función para verificar si hay productos seleccionados
+    function verificarSeleccion() {
+        const seleccionados = document.querySelectorAll('.producto-checkbox:checked');
+        btnGenerarOrden.disabled = seleccionados.length === 0;
+        
+        // Actualizar resumen y totales
+        actualizarResumen();
+        actualizarTotalesGenerales();
+    }
+    
+    // Función para actualizar el resumen de selección
+    function actualizarResumen() {
+        const seleccionados = document.querySelectorAll('.producto-checkbox:checked');
+        const resumenDiv = document.getElementById('resumen-seleccion');
+        const productosSpan = document.getElementById('productos-seleccionados');
+        const proveedoresInfo = document.getElementById('proveedores-info');
+        
+        if (seleccionados.length === 0) {
+            resumenDiv.classList.add('hidden');
+            return;
+        }
+        
+        resumenDiv.classList.remove('hidden');
+        productosSpan.textContent = seleccionados.length;
+        
+        // Contar proveedores únicos
+        const proveedores = new Set();
+        let costoTotal = 0;
+        
+        seleccionados.forEach(checkbox => {
+            const productoId = checkbox.value;
+            const proveedorSelect = document.querySelector(`select[name="proveedor_${productoId}"]`);
+            const precioInput = document.querySelector(`input[name="precio_${productoId}"]`);
+            const cantidadInput = document.querySelector(`input[name="cantidad_${productoId}"]`);
+            
+            if (proveedorSelect.selectedOptions.length > 0) {
+                const selectedOption = proveedorSelect.selectedOptions[0];
+                const proveedorNombre = selectedOption.textContent.split(' - ')[0];
+                proveedores.add(proveedorNombre);
+                
+                // Calcular costo usando el precio editable
+                const precio = parseFloat(precioInput.value) || 0;
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                if (precio && cantidad) {
+                    costoTotal += precio * cantidad;
+                }
+            }
+        });
+        
+        let infoText = `${proveedores.size} proveedores diferentes`;
+        const canSeePrices = {{ user|can_see_prices|yesno:"true,false" }};
+        if (canSeePrices && costoTotal > 0) {
+            infoText += ` • Costo estimado: $${costoTotal.toLocaleString('es-CO')}`;
+        }
+        
+        proveedoresInfo.textContent = infoText;
+    }
+    
+    // Seleccionar/deseleccionar todos
+    selectAll.addEventListener('change', function() {
+        productoCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        verificarSeleccion();
+    });
+    
+    // Verificar selección en checkboxes individuales
+    productoCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', verificarSeleccion);
+    });
+    
+    // Verificar estado inicial
+    verificarSeleccion();
+    
+    // Manejar cambios en selector de proveedor
+    document.querySelectorAll('.proveedor-select').forEach(select => {
+        select.addEventListener('change', function() {
+            actualizarPrecioDeProveedor(this.dataset.producto);
+            cargarPresentacionesProveedor(this.dataset.producto);
+            actualizarTotalItem(this.dataset.producto);
+        });
+    });
+    
+    // Manejar cambios en selector de presentación
+    document.querySelectorAll('.presentacion-select').forEach(select => {
+        select.addEventListener('change', function() {
+            actualizarPrecioDePresentacion(this.dataset.producto);
+            actualizarTotalItem(this.dataset.producto);
+        });
+    });
+    
+    // Manejar cambios en precio unitario
+    document.querySelectorAll('.precio-input').forEach(input => {
+        input.addEventListener('input', function() {
+            actualizarTotalItem(this.dataset.producto);
+        });
+    });
+    
+    // Manejar cambios en cantidad
+    document.querySelectorAll('.cantidad-input').forEach(input => {
+        input.addEventListener('input', function() {
+            actualizarTotalItem(this.dataset.producto);
+        });
+    });
+    
+    // Función para actualizar precio cuando se cambia el proveedor
+    function actualizarPrecioDeProveedor(productoId) {
+        const proveedorSelect = document.querySelector(`select[name="proveedor_${productoId}"]`);
+        const precioInput = document.querySelector(`input[name="precio_${productoId}"]`);
+        
+        if (!proveedorSelect || !precioInput) return;
+        
+        const selectedOption = proveedorSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.dataset.precio) {
+            precioInput.value = parseFloat(selectedOption.dataset.precio).toFixed(2);
+        }
+    }
+    
+    // Función para actualizar el total de un item específico
+    function actualizarTotalItem(productoId) {
+        const precioInput = document.querySelector(`input[name="precio_${productoId}"]`);
+        const cantidadInput = document.querySelector(`input[name="cantidad_${productoId}"]`);
+        const totalElement = document.querySelector(`.total-item[data-producto="${productoId}"] .total-valor`);
+        const cantidadDisplay = document.querySelector(`.total-item[data-producto="${productoId}"]`).parentElement.querySelector('.cantidad-display');
+        const precioDisplay = document.querySelector(`.total-item[data-producto="${productoId}"]`).parentElement.querySelector('.precio-display');
+        
+        if (!precioInput || !cantidadInput || !totalElement) return;
+        
+        const precio = parseFloat(precioInput.value) || 0;
+        const cantidad = parseInt(cantidadInput.value) || 0;
+        const total = precio * cantidad;
+        
+        // Actualizar displays
+        totalElement.textContent = total.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+        
+        if (cantidadDisplay) cantidadDisplay.textContent = cantidad;
+        if (precioDisplay) precioDisplay.textContent = precio.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+        
+        // Actualizar totales generales
+        actualizarTotalesGenerales();
+    }
+    
+    // Función para actualizar los totales generales
+    function actualizarTotalesGenerales() {
+        const seleccionados = document.querySelectorAll('.producto-checkbox:checked');
+        const panelTotal = document.getElementById('panel-total');
+        const totalGeneral = document.getElementById('total-general');
+        const detalleTotales = document.getElementById('detalle-totales');
+        const resumenProveedor = document.getElementById('resumen-por-proveedor');
+        
+        if (seleccionados.length === 0) {
+            panelTotal.classList.add('hidden');
+            return;
+        }
+        
+        let totalAcumulado = 0;
+        const proveedoresTotales = new Map();
+        
+        seleccionados.forEach(checkbox => {
+            const productoId = checkbox.value;
+            const precioInput = document.querySelector(`input[name="precio_${productoId}"]`);
+            const cantidadInput = document.querySelector(`input[name="cantidad_${productoId}"]`);
+            const proveedorSelect = document.querySelector(`select[name="proveedor_${productoId}"]`);
+            
+            if (precioInput && cantidadInput && proveedorSelect.selectedOptions.length > 0) {
+                const precio = parseFloat(precioInput.value) || 0;
+                const cantidad = parseInt(cantidadInput.value) || 0;
+                const subtotal = precio * cantidad;
+                
+                totalAcumulado += subtotal;
+                
+                // Agrupar por proveedor
+                const proveedorNombre = proveedorSelect.selectedOptions[0].textContent.split(' - ')[0].trim();
+                if (!proveedoresTotales.has(proveedorNombre)) {
+                    proveedoresTotales.set(proveedorNombre, 0);
+                }
+                proveedoresTotales.set(proveedorNombre, proveedoresTotales.get(proveedorNombre) + subtotal);
+            }
+        });
+        
+        // Mostrar panel
+        panelTotal.classList.remove('hidden');
+        
+        // Actualizar total general
+        totalGeneral.textContent = '$' + totalAcumulado.toLocaleString('es-CO', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
+        
+        // Actualizar detalle
+        detalleTotales.textContent = `${seleccionados.length} productos • ${proveedoresTotales.size} proveedores`;
+        
+        // Crear resumen por proveedor
+        let resumenTexto = '';
+        proveedoresTotales.forEach((total, proveedor) => {
+            resumenTexto += `${proveedor}: $${total.toLocaleString('es-CO')}; `;
+        });
+        resumenProveedor.textContent = resumenTexto.slice(0, -2); // Quitar último "; "
+    }
+    
+    // Función para restaurar cantidad sugerida
+    window.restaurarCantidadSugerida = function(productoId) {
+        const cantidadInput = document.querySelector(`input[name="cantidad_${productoId}"]`);
+        if (cantidadInput) {
+            cantidadInput.value = cantidadInput.dataset.sugerida;
+            actualizarTotalItem(productoId);
+        }
+    }
+    
+    // Función para restaurar precio original
+    window.restaurarPrecioOriginal = function(productoId) {
+        const precioInput = document.querySelector(`input[name="precio_${productoId}"]`);
+        if (precioInput) {
+            precioInput.value = precioInput.dataset.original;
+            actualizarTotalItem(productoId);
+        }
+    }
+    
+    // Función para cargar presentaciones dinámicas por proveedor
+    function cargarPresentacionesProveedor(productoId) {
+        const proveedorSelect = document.querySelector(`select[name="proveedor_${productoId}"]`);
+        const presentacionSelect = document.querySelector(`select[name="presentacion_${productoId}"]`);
+        
+        if (!proveedorSelect || !presentacionSelect) return;
+        
+        const proveedorId = proveedorSelect.value;
+        
+        // Limpiar opciones existentes
+        presentacionSelect.innerHTML = '<option value="">Cargando presentaciones...</option>';
+        
+        if (!proveedorId) {
+            presentacionSelect.innerHTML = '<option value="">Seleccionar proveedor primero</option>';
+            return;
+        }
+        
+        // Hacer petición AJAX para obtener presentaciones
+        fetch(`/inventario/api/presentaciones-proveedor/${proveedorId}/${productoId}/`)
+            .then(response => response.json())
+            .then(data => {
+                presentacionSelect.innerHTML = '<option value="">Seleccionar presentación...</option>';
+                
+                if (data.presentaciones && data.presentaciones.length > 0) {
+                    data.presentaciones.forEach(pres => {
+                        const option = document.createElement('option');
+                        option.value = pres.id;
+                        option.dataset.precio = pres.precio_compra_presentacion;
+                        option.dataset.unidades = pres.unidades_por_presentacion;
+                        option.dataset.codigo = pres.codigo_proveedor;
+                        option.textContent = `${pres.nombre} (${pres.unidades_por_presentacion} unidades)`;
+                        
+                        if (pres.es_presentacion_preferida) {
+                            option.selected = true;
+                            option.textContent += ' - PREFERIDA';
+                        }
+                        
+                        const canSeePrices = {{ user|can_see_prices|yesno:"true,false" }};
+                        if (canSeePrices) {
+                            option.textContent += ` - $${parseFloat(pres.precio_compra_presentacion).toLocaleString('es-CO')}`;
+                        }
+                        
+                        presentacionSelect.appendChild(option);
+                    });
+                    
+                    // Si hay una opción seleccionada, actualizar precio
+                    if (presentacionSelect.value) {
+                        actualizarPrecioDePresentacion(productoId);
+                    }
+                } else {
+                    presentacionSelect.innerHTML = '<option value="">Sin presentaciones disponibles</option>';
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando presentaciones:', error);
+                presentacionSelect.innerHTML = '<option value="">Error cargando presentaciones</option>';
+            });
+    }
+    
+    // Función para actualizar precio según la presentación seleccionada
+    function actualizarPrecioDePresentacion(productoId) {
+        const presentacionSelect = document.querySelector(`select[name="presentacion_${productoId}"]`);
+        const precioInput = document.querySelector(`input[name="precio_${productoId}"]`);
+        
+        if (!presentacionSelect || !precioInput) return;
+        
+        const selectedOption = presentacionSelect.selectedOptions[0];
+        if (selectedOption && selectedOption.dataset.precio) {
+            precioInput.value = parseFloat(selectedOption.dataset.precio).toFixed(2);
+            
+            // Actualizar el data-original para que el botón de restaurar use el precio de la presentación
+            precioInput.dataset.original = selectedOption.dataset.precio;
+        }
+    }
+    
+    // Cargar presentaciones iniciales para productos con proveedor preseleccionado
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.proveedor-select').forEach(select => {
+            if (select.value) {
+                cargarPresentacionesProveedor(select.dataset.producto);
+            }
+        });
+    });
+    
+    // Inicializar totales al cargar
+    document.querySelectorAll('.producto-checkbox').forEach(checkbox => {
+        actualizarTotalItem(checkbox.value);
+    });
+});
+</script>
+{% endblock %}

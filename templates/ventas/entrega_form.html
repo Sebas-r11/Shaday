@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear/Editar Entrega{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-truck"></i>
+            {% if object %}Editar Entrega{% else %}Nueva Entrega{% endif %}
+        </h1>
+        <a href="{% url 'ventas:entregas-repartidor' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Datos de la Entrega</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.pedido.id_for_label }}">Pedido:</label>
+                                    {{ form.pedido }}
+                                    {% if form.pedido.errors %}
+                                        <div class="text-danger">{{ form.pedido.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.repartidor.id_for_label }}">Repartidor:</label>
+                                    {{ form.repartidor }}
+                                    {% if form.repartidor.errors %}
+                                        <div class="text-danger">{{ form.repartidor.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.fecha_programada.id_for_label }}">Fecha Programada:</label>
+                                    {{ form.fecha_programada }}
+                                    {% if form.fecha_programada.errors %}
+                                        <div class="text-danger">{{ form.fecha_programada.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.estado.id_for_label }}">Estado:</label>
+                                    {{ form.estado }}
+                                    {% if form.estado.errors %}
+                                        <div class="text-danger">{{ form.estado.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.direccion_entrega.id_for_label }}">Dirección de Entrega:</label>
+                                    {{ form.direccion_entrega }}
+                                    {% if form.direccion_entrega.errors %}
+                                        <div class="text-danger">{{ form.direccion_entrega.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.telefono_contacto.id_for_label }}">Teléfono de Contacto:</label>
+                                    {{ form.telefono_contacto }}
+                                    {% if form.telefono_contacto.errors %}
+                                        <div class="text-danger">{{ form.telefono_contacto.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.observaciones.id_for_label }}">Observaciones:</label>
+                                    {{ form.observaciones }}
+                                    {% if form.observaciones.errors %}
+                                        <div class="text-danger">{{ form.observaciones.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if object.estado == 'en_proceso' %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.latitud.id_for_label }}">Latitud (GPS):</label>
+                                    {{ form.latitud }}
+                                    {% if form.latitud.errors %}
+                                        <div class="text-danger">{{ form.latitud.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.longitud.id_for_label }}">Longitud (GPS):</label>
+                                    {{ form.longitud }}
+                                    {% if form.longitud.errors %}
+                                        <div class="text-danger">{{ form.longitud.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="button" id="obtener-ubicacion" class="btn btn-info">
+                                <i class="fas fa-map-marker-alt"></i> Obtener Ubicación Actual
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Entrega
+                            </button>
+                            <a href="{% url 'ventas:entregas-repartidor' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                            {% if object and object.estado == 'programada' %}
+                            <button type="button" class="btn btn-success" onclick="iniciarEntrega()">
+                                <i class="fas fa-play"></i> Iniciar Entrega
+                            </button>
+                            {% endif %}
+                            {% if object and object.estado == 'en_proceso' %}
+                            <button type="button" class="btn btn-warning" onclick="completarEntrega()">
+                                <i class="fas fa-check"></i> Completar Entrega
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            {% if object.pedido %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Pedido</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Cliente:</strong> {{ object.pedido.cliente.nombre }}</p>
+                    <p><strong>Total:</strong> ${{ object.pedido.total|floatformat:2 }}</p>
+                    <p><strong>Fecha Pedido:</strong> {{ object.pedido.fecha_pedido|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Estado:</strong> 
+                        <span class="badge badge-{{ object.pedido.estado|lower }}">
+                            {{ object.pedido.get_estado_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if object and object.latitud and object.longitud %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ubicación</h6>
+                </div>
+                <div class="card-body">
+                    <div id="mapa" style="height: 300px;"></div>
+                    <small class="text-muted">
+                        Lat: {{ object.latitud }}, Lng: {{ object.longitud }}
+                    </small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Configurar campos de formulario
+    $('input, select, textarea').addClass('form-control');
+    $('input[type="date"]').attr('type', 'date');
+    $('input[type="datetime-local"]').attr('type', 'datetime-local');
+    
+    // Obtener ubicación GPS
+    $('#obtener-ubicacion').click(function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                $('#id_latitud').val(position.coords.latitude);
+                $('#id_longitud').val(position.coords.longitude);
+                alert('Ubicación obtenida correctamente');
+            }, function(error) {
+                alert('Error al obtener la ubicación: ' + error.message);
+            });
+        } else {
+            alert('El navegador no soporta geolocalización');
+        }
+    });
+});
+
+function iniciarEntrega() {
+    if (confirm('¿Está seguro de que desea iniciar esta entrega?')) {
+        // Aquí iría la lógica para cambiar el estado a 'en_proceso'
+        window.location.href = "{% if object %}{% url 'ventas:entrega-detail' object.pk %}{% endif %}";
+    }
+}
+
+function completarEntrega() {
+    if (confirm('¿Está seguro de que desea marcar esta entrega como completada?')) {
+        // Aquí iría la lógica para cambiar el estado a 'entregado'
+        window.location.href = "{% if object %}{% url 'ventas:entrega-detail' object.pk %}{% endif %}";
+    }
+}
+</script>
+
+{% if object and object.latitud and object.longitud %}
+<script>
+// Inicializar mapa si hay coordenadas
+function initMap() {
+    var ubicacion = {lat: {{ object.latitud }}, lng: {{ object.longitud }}};
+    var map = new google.maps.Map(document.getElementById('mapa'), {
+        zoom: 15,
+        center: ubicacion
+    });
+    var marker = new google.maps.Marker({
+        position: ubicacion,
+        map: map,
+        title: 'Ubicación de entrega'
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

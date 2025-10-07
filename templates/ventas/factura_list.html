@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load ventas_tags %}
+
+{% block title %}Facturas - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Facturas</h1>
+    <div class="flex space-x-3">
+        <a href="{% url 'ventas:factura_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Nueva Factura
+        </a>
+        <a href="{% url 'ventas:reporte_facturas' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Reportes
+        </a>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Facturas</dt>
+                        <dd class="text-lg font-medium text-gray-900">{{ stats.total_facturas }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Emitidas</dt>
+                        <dd class="text-lg font-medium text-blue-600">{{ stats.emitidas }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Pagadas</dt>
+                        <dd class="text-lg font-medium text-green-600">{{ stats.pagadas }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Vencidas</dt>
+                        <dd class="text-lg font-medium text-red-600">{{ stats.vencidas }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Mes</dt>
+                        <dd class="text-lg font-medium text-gray-900">${{ stats.total_mes|floatformat:0 }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="bg-white shadow rounded-lg p-6 mb-6">
+    <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <select name="estado" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Todos</option>
+                <option value="borrador" {% if request.GET.estado == 'borrador' %}selected{% endif %}>Borrador</option>
+                <option value="emitida" {% if request.GET.estado == 'emitida' %}selected{% endif %}>Emitida</option>
+                <option value="pagada" {% if request.GET.estado == 'pagada' %}selected{% endif %}>Pagada</option>
+                <option value="vencida" {% if request.GET.estado == 'vencida' %}selected{% endif %}>Vencida</option>
+                <option value="anulada" {% if request.GET.estado == 'anulada' %}selected{% endif %}>Anulada</option>
+            </select>
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Cliente</label>
+            <input type="text" name="cliente" value="{{ request.GET.cliente }}" 
+                   class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   placeholder="Buscar cliente...">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha Desde</label>
+            <input type="date" name="fecha_desde" value="{{ request.GET.fecha_desde }}" 
+                   class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha Hasta</label>
+            <input type="date" name="fecha_hasta" value="{{ request.GET.fecha_hasta }}" 
+                   class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        
+        <div class="flex items-end">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de Facturas -->
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendedor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for factura in facturas %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">
+                            <a href="{% url 'ventas:factura_detail' factura.pk %}" class="text-blue-600 hover:text-blue-800">
+                                {{ factura.numero_fiscal }}
+                            </a>
+                        </div>
+                        {% if factura.pedido_origen %}
+                        <div class="text-sm text-gray-500">
+                            Desde pedido: {{ factura.pedido_origen.numero }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{ factura.cliente.nombre_completo }}</div>
+                        <div class="text-sm text-gray-500">{{ factura.cliente.numero_documento }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ factura.fecha|date:"d/m/Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {% if factura.fecha_vencimiento %}
+                            <div class="{% if factura.esta_vencida %}text-red-600{% elif factura.dias_vencimiento <= 7 %}text-yellow-600{% endif %}">
+                                {{ factura.fecha_vencimiento|date:"d/m/Y" }}
+                                {% if factura.dias_vencimiento is not None %}
+                                    <div class="text-xs">
+                                        {% if factura.dias_vencimiento < 0 %}
+                                            Vencida hace {{ factura.dias_vencimiento|neg }} días
+                                        {% elif factura.dias_vencimiento == 0 %}
+                                            Vence hoy
+                                        {% else %}
+                                            Vence en {{ factura.dias_vencimiento }} días
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="text-gray-400">Sin vencimiento</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                            {% if factura.estado == 'emitida' %}bg-blue-100 text-blue-800
+                            {% elif factura.estado == 'pagada' %}bg-green-100 text-green-800
+                            {% elif factura.estado == 'vencida' %}bg-red-100 text-red-800
+                            {% elif factura.estado == 'anulada' %}bg-gray-100 text-gray-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ factura.get_estado_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${{ factura.total|floatformat:0 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ factura.vendedor.get_full_name|default:factura.vendedor.username }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <a href="{% url 'ventas:factura_detail' factura.pk %}" 
+                           class="text-indigo-600 hover:text-indigo-900">Ver</a>
+                        <a href="{% url 'ventas:imprimir_factura' factura.pk %}" 
+                           class="text-green-600 hover:text-green-900">Imprimir</a>
+                        {% if factura.estado == 'emitida' %}
+                            <a href="{% url 'ventas:marcar_factura_pagada' factura.pk %}" 
+                               class="text-blue-600 hover:text-blue-900">Pagar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                        No hay facturas disponibles
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if is_paginated %}
+<div class="mt-6 flex justify-between items-center">
+    <div class="text-sm text-gray-700">
+        Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ paginator.count }} facturas
+    </div>
+    <div class="flex space-x-1">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">Primera</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">Anterior</a>
+        {% endif %}
+        
+        <span class="px-3 py-2 text-sm bg-blue-600 text-white rounded-md">{{ page_obj.number }}</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">Siguiente</a>
+            <a href="?page={{ paginator.num_pages }}" class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">Última</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

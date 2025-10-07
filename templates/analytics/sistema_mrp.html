@@ -1,0 +1,669 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}DistribucioneShaddai MRP - Analytics IA{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --cyber-blue: #00d4ff;
+        --cyber-purple: #6b46c1;
+        --cyber-green: #10b981;
+        --cyber-orange: #f59e0b;
+        --cyber-red: #ef4444;
+        --cyber-dark: #0f0f0f;
+        --cyber-gray: #1a1a1a;
+        --cyber-light: #f0f8ff;
+        --neon-glow: 0 0 20px rgba(0, 212, 255, 0.5);
+        --subtle-glow: 0 0 10px rgba(107, 70, 193, 0.3);
+    }
+
+    body {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: 100vh;
+    }
+
+    .cyber-card {
+        background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(15, 15, 15, 0.9));
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: var(--neon-glow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cyber-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyber-orange), transparent);
+        animation: scan 3.5s linear infinite;
+    }
+
+    @keyframes scan {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    .cyber-header {
+        background: linear-gradient(135deg, var(--cyber-orange), var(--cyber-red));
+        border-radius: 20px 20px 0 0;
+        padding: 1.5rem;
+        color: white;
+        position: relative;
+    }
+
+    .cyber-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyber-orange), transparent);
+        box-shadow: 0 0 10px var(--cyber-orange);
+    }
+
+    .cyber-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .cyber-icon {
+        font-size: 2rem;
+        color: var(--cyber-green);
+        text-shadow: 0 0 15px var(--cyber-green);
+        animation: rotate 4s linear infinite;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .cyber-body {
+        padding: 2rem;
+        color: var(--cyber-light);
+    }
+
+    .mrp-section {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .mrp-section.critical {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.1));
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    .mrp-section.warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1));
+        border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    .cyber-metric-xl {
+        font-size: 4rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--cyber-orange), var(--cyber-red));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+        line-height: 1;
+    }
+
+    .cyber-metric {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--cyber-blue);
+        text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+
+    .mrp-table {
+        background: rgba(15, 15, 15, 0.95);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: var(--subtle-glow);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .mrp-table thead th {
+        background: linear-gradient(135deg, var(--cyber-orange), var(--cyber-red));
+        color: white;
+        border: none;
+        padding: 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+    }
+
+    .mrp-table tbody td {
+        background: rgba(26, 26, 26, 0.9);
+        color: var(--cyber-light);
+        border: 1px solid rgba(245, 158, 11, 0.1);
+        padding: 15px;
+        vertical-align: middle;
+    }
+
+    .mrp-table tbody tr:hover td {
+        background: rgba(245, 158, 11, 0.1);
+        color: white;
+    }
+
+    .priority-high {
+        background: linear-gradient(135deg, var(--cyber-red), #dc2626);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        animation: pulse-red 2s infinite;
+    }
+
+    @keyframes pulse-red {
+        0%, 100% { box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+        50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); }
+    }
+
+    .priority-medium {
+        background: linear-gradient(135deg, var(--cyber-orange), #d97706);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+    }
+
+    .priority-normal {
+        background: linear-gradient(135deg, var(--cyber-green), #059669);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+    }
+
+    .eoq-calculator {
+        background: linear-gradient(135deg, rgba(107, 70, 193, 0.2), rgba(0, 212, 255, 0.2));
+        border: 2px solid rgba(107, 70, 193, 0.4);
+        border-radius: 20px;
+        padding: 2rem;
+        position: relative;
+    }
+
+    .eoq-calculator::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, var(--cyber-purple), var(--cyber-blue), var(--cyber-orange));
+        border-radius: 20px;
+        z-index: -1;
+        animation: rotate 6s linear infinite;
+    }
+
+    .cyber-input {
+        background: rgba(15, 15, 15, 0.9);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 10px;
+        color: var(--cyber-light);
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .cyber-input:focus {
+        border-color: var(--cyber-orange);
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        background: rgba(15, 15, 15, 1);
+        color: white;
+        outline: none;
+    }
+
+    .cyber-label {
+        color: var(--cyber-orange);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .cyber-btn {
+        background: linear-gradient(135deg, var(--cyber-orange), var(--cyber-red));
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+    }
+
+    .cyber-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        color: white;
+    }
+
+    .breadcrumb-cyber {
+        background: rgba(26, 26, 26, 0.8);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .breadcrumb-cyber .breadcrumb-item {
+        color: var(--cyber-light);
+    }
+
+    .breadcrumb-cyber .breadcrumb-item.active {
+        color: var(--cyber-orange);
+        text-shadow: 0 0 5px var(--cyber-orange);
+    }
+
+    .demand-chart {
+        background: rgba(15, 15, 15, 0.9);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 15px;
+        padding: 1rem;
+        height: 200px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .chart-bar {
+        background: linear-gradient(0deg, var(--cyber-orange), var(--cyber-red));
+        border-radius: 4px 4px 0 0;
+        position: absolute;
+        bottom: 0;
+        width: 20px;
+        animation: grow 1s ease-out;
+    }
+
+    @keyframes grow {
+        0% { height: 0; }
+        100% { height: var(--height); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb futurista -->
+    <nav aria-label="breadcrumb" class="breadcrumb-cyber">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'analytics:dashboard' %}" class="text-decoration-none" style="color: var(--cyber-orange);">Analytics</a></li>
+            <li class="breadcrumb-item active">DistribucioneShaddai MRP</li>
+        </ol>
+    </nav>
+
+    <!-- Header principal -->
+    <div class="cyber-card mb-4">
+        <div class="cyber-header">
+            <h1 class="cyber-title">
+                <i class="fas fa-cogs cyber-icon"></i>
+                Material Requirements Planning (MRP)
+            </h1>
+            <p class="mb-0 mt-2" style="opacity: 0.9;">
+                Planificación inteligente de requerimientos de materiales con IA
+            </p>
+        </div>
+    </div>
+
+    <!-- Métricas principales del MRP -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="mrp-section critical">
+                <div class="text-center">
+                    <div class="cyber-metric-xl">{{ productos_criticos }}</div>
+                    <h6 class="text-uppercase text-light">Stock Crítico</h6>
+                    <small class="text-muted">Requieren orden inmediata</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mrp-section warning">
+                <div class="text-center">
+                    <div class="cyber-metric-xl">{{ productos_bajo_minimo }}</div>
+                    <h6 class="text-uppercase text-light">Bajo Mínimo</h6>
+                    <small class="text-muted">Próximos a agotar</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mrp-section">
+                <div class="text-center">
+                    <div class="cyber-metric-xl">${{ valor_ordenes_sugeridas|floatformat:0 }}</div>
+                    <h6 class="text-uppercase text-light">Órdenes Sugeridas</h6>
+                    <small class="text-muted">Valor total recomendado</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mrp-section">
+                <div class="text-center">
+                    <div class="cyber-metric-xl">{{ lead_time_promedio }}</div>
+                    <h6 class="text-uppercase text-light">Lead Time Prom.</h6>
+                    <small class="text-muted">Días promedio entrega</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Calculadora EOQ -->
+        <div class="col-lg-4 mb-4">
+            <div class="cyber-card">
+                <div class="cyber-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calculator me-2"></i>
+                        Calculadora EOQ
+                    </h5>
+                </div>
+                <div class="cyber-body">
+                    <div class="eoq-calculator">
+                        <form method="post" id="eoqForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion" value="calcular_eoq">
+                            
+                            <div class="mb-3">
+                                <label class="cyber-label">Producto</label>
+                                <select name="producto_id" class="form-select cyber-input" required>
+                                    <option value="">Seleccionar producto...</option>
+                                    {% for producto in productos %}
+                                        <option value="{{ producto.id }}">{{ producto.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="cyber-label">Demanda Anual (unidades)</label>
+                                <input type="number" name="demanda_anual" class="form-control cyber-input" placeholder="Ej: 1000" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="cyber-label">Costo por Orden ($)</label>
+                                <input type="number" name="costo_orden" class="form-control cyber-input" placeholder="Ej: 50" step="0.01" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="cyber-label">Costo de Mantenimiento (%)</label>
+                                <input type="number" name="costo_mantenimiento" class="form-control cyber-input" placeholder="Ej: 15" step="0.01" required>
+                            </div>
+
+                            <button type="submit" class="cyber-btn w-100">
+                                <i class="fas fa-calculator me-2"></i>
+                                Calcular EOQ
+                            </button>
+                        </form>
+
+                        {% if resultado_eoq %}
+                        <div class="mt-4 p-3" style="background: rgba(16, 185, 129, 0.1); border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                            <h6 class="text-center mb-3" style="color: var(--cyber-green);">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Resultado EOQ
+                            </h6>
+                            <div class="text-center">
+                                <div class="cyber-metric">{{ resultado_eoq.eoq|floatformat:0 }}</div>
+                                <small class="text-muted">Cantidad Óptima de Pedido</small>
+                            </div>
+                            <div class="row mt-3 text-center">
+                                <div class="col-6">
+                                    <small class="text-muted">Costo Total Anual:</small><br>
+                                    <strong style="color: var(--cyber-green);">${{ resultado_eoq.costo_total|floatformat:0 }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Órdenes por Año:</small><br>
+                                    <strong style="color: var(--cyber-blue);">{{ resultado_eoq.ordenes_anuales|floatformat:0 }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan de requerimientos -->
+        <div class="col-lg-8">
+            <div class="cyber-card">
+                <div class="cyber-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt me-2"></i>
+                        Plan de Requerimientos MRP
+                        <span class="badge bg-light text-dark ms-2">{{ plan_mrp|length }}</span>
+                    </h5>
+                </div>
+                <div class="cyber-body">
+                    {% if plan_mrp %}
+                        <div class="table-responsive">
+                            <table class="table mrp-table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Stock Actual</th>
+                                        <th>Demanda Proyectada</th>
+                                        <th>Punto Reorden</th>
+                                        <th>Cantidad Sugerida</th>
+                                        <th>Prioridad</th>
+                                        <th>Lead Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in plan_mrp %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.producto.nombre }}</strong><br>
+                                            <small class="text-muted">{{ item.producto.codigo }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="cyber-metric" style="font-size: 1.2rem;">
+                                                {{ item.producto.stock_total }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ item.demanda_proyectada }}</strong>
+                                            <small class="text-muted d-block">próximos 30d</small>
+                                        </td>
+                                        <td>{{ item.punto_reorden }}</td>
+                                        <td>
+                                            <strong style="color: var(--cyber-orange);">{{ item.cantidad_sugerida }}</strong>
+                                            <small class="text-muted d-block">${{ item.valor_orden|floatformat:0 }}</small>
+                                        </td>
+                                        <td>
+                                            {% if item.prioridad == 'ALTA' %}
+                                                <span class="priority-high">{{ item.prioridad }}</span>
+                                            {% elif item.prioridad == 'MEDIA' %}
+                                                <span class="priority-medium">{{ item.prioridad }}</span>
+                                            {% else %}
+                                                <span class="priority-normal">{{ item.prioridad }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ item.lead_time }} días
+                                            {% if item.fecha_sugerida_orden %}
+                                                <small class="text-muted d-block">Ordenar: {{ item.fecha_sugerida_orden|date:"d/m" }}</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Resumen del plan -->
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="text-center p-3" style="background: rgba(239, 68, 68, 0.1); border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                    <div class="cyber-metric" style="color: var(--cyber-red);">{{ items_prioridad_alta }}</div>
+                                    <small class="text-muted">Prioridad Alta</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3" style="background: rgba(245, 158, 11, 0.1); border-radius: 10px; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                    <div class="cyber-metric" style="color: var(--cyber-orange);">{{ items_prioridad_media }}</div>
+                                    <small class="text-muted">Prioridad Media</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3" style="background: rgba(16, 185, 129, 0.1); border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    <div class="cyber-metric" style="color: var(--cyber-green);">{{ items_prioridad_normal }}</div>
+                                    <small class="text-muted">Prioridad Normal</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-cogs fa-4x mb-4" style="color: var(--cyber-orange); opacity: 0.5;"></i>
+                            <h4 style="color: var(--cyber-light);">DistribucioneShaddai MRP Listo</h4>
+                            <p class="text-muted mb-4">
+                                El sistema está analizando los datos de inventario para generar el plan MRP
+                            </p>
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <i class="fas fa-warehouse fa-2x mb-2" style="color: var(--cyber-green);"></i>
+                                    <h6 style="color: var(--cyber-light);">Control de Stock</h6>
+                                    <small class="text-muted">Monitoreo continuo de inventarios</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-chart-line fa-2x mb-2" style="color: var(--cyber-blue);"></i>
+                                    <h6 style="color: var(--cyber-light);">Predicción de Demanda</h6>
+                                    <small class="text-muted">Análisis predictivo avanzado</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-shopping-cart fa-2x mb-2" style="color: var(--cyber-orange);"></i>
+                                    <h6 style="color: var(--cyber-light);">Órdenes Optimizadas</h6>
+                                    <small class="text-muted">Cálculos EOQ automáticos</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de tendencias -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="cyber-card">
+                <div class="cyber-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-area me-2"></i>
+                        Análisis de Tendencias MRP
+                    </h5>
+                </div>
+                <div class="cyber-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="demand-chart">
+                                <!-- Simulación de gráfico con barras CSS -->
+                                <div style="position: relative; height: 100%; display: flex; align-items: end; justify-content: space-around;">
+                                    {% for week in range_weeks %}
+                                    <div class="chart-bar" style="--height: {{ week.height }}%; height: {{ week.height }}%; left: {{ week.position }}%;"></div>
+                                    {% endfor %}
+                                </div>
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">Proyección de demanda - Próximas 12 semanas</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h6 style="color: var(--cyber-light);">Indicadores Clave</h6>
+                                <div class="mb-3">
+                                    <div class="cyber-metric" style="font-size: 1.5rem;">98.5%</div>
+                                    <small class="text-muted">Nivel de Servicio</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="cyber-metric" style="font-size: 1.5rem;">{{ rotacion_inventario|floatformat:1 }}</div>
+                                    <small class="text-muted">Rotación Inventario</small>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="cyber-metric" style="font-size: 1.5rem;">${{ costo_mantenimiento_total|floatformat:0 }}</div>
+                                    <small class="text-muted">Costo Mantenimiento</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Animación de las métricas al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const metrics = document.querySelectorAll('.cyber-metric-xl');
+    metrics.forEach((metric, index) => {
+        const finalValue = parseInt(metric.textContent);
+        let currentValue = 0;
+        const increment = finalValue / 50;
+        
+        const counter = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                metric.textContent = finalValue;
+                clearInterval(counter);
+            } else {
+                metric.textContent = Math.floor(currentValue);
+            }
+        }, 30);
+    });
+});
+
+// Efecto hover para las secciones MRP
+document.querySelectorAll('.mrp-section').forEach(section => {
+    section.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-5px) scale(1.02)';
+        this.style.transition = 'all 0.3s ease';
+    });
+    
+    section.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
+    });
+});
+
+// Validación del formulario EOQ
+document.getElementById('eoqForm').addEventListener('submit', function(e) {
+    const demanda = document.querySelector('input[name="demanda_anual"]').value;
+    const costo = document.querySelector('input[name="costo_orden"]').value;
+    
+    if (demanda <= 0 || costo <= 0) {
+        e.preventDefault();
+        alert('Los valores deben ser mayores a cero');
+    }
+});
+</script>
+{% endblock %}

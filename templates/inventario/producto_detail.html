@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}{{ producto.nombre }} - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-4">
+                    <li>
+                        <a href="{% url 'inventario:producto_list' %}" class="text-gray-500 hover:text-gray-700">Productos</a>
+                    </li>
+                    <li>
+                        <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                    </li>
+                    <li>
+                        <span class="text-gray-900 font-medium">{{ producto.codigo }}</span>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="text-3xl font-bold text-gray-900 mt-2">{{ producto.nombre }}</h1>
+        </div>
+        {% if user|is_admin_user %}
+        <a href="{% url 'inventario:producto_update' producto.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+            <i class="fas fa-edit mr-2"></i>Editar
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Información principal -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Detalles del producto -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información del Producto</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Código</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ producto.codigo }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Nombre</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ producto.nombre }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Categoría</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ producto.categoria.nombre }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Subcategoría</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ producto.subcategoria.nombre }}</dd>
+                        </div>
+                        {% if producto.descripcion %}
+                        <div class="sm:col-span-2">
+                            <dt class="text-sm font-medium text-gray-500">Descripción</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ producto.descripcion }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            {% if user|can_see_prices %}
+            <!-- Precios -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Precios</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-6">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Costo Promedio</dt>
+                            <dd class="mt-1 text-lg font-medium text-gray-900">${{ producto.costo_promedio|floatformat:0 }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Precio Minorista</dt>
+                            <dd class="mt-1 text-lg font-medium text-green-600">${{ producto.precio_minorista|floatformat:0 }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Precio Mayorista</dt>
+                            <dd class="mt-1 text-lg font-medium text-blue-600">${{ producto.precio_mayorista|floatformat:0 }}</dd>
+                        </div>
+                    </dl>
+                    
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Margen Minorista</dt>
+                                <dd class="mt-1 text-sm font-medium text-green-600">
+                                    {% if producto.costo_promedio > 0 %}
+                                        {{ producto.margen_minorista_porcentaje|floatformat:1 }}% 
+                                        (${{ producto.utilidad_minorista|floatformat:0 }})
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Margen Mayorista</dt>
+                                <dd class="mt-1 text-sm font-medium text-blue-600">
+                                    {% if producto.costo_promedio > 0 %}
+                                        {{ producto.margen_mayorista_porcentaje|floatformat:1 }}% 
+                                        (${{ producto.utilidad_mayorista|floatformat:0 }})
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <!-- Vista de bodega - solo información operacional -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información Operacional</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-6">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Código</dt>
+                            <dd class="mt-1 text-lg font-medium text-gray-900">{{ producto.codigo }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Stock Mínimo</dt>
+                            <dd class="mt-1 text-lg font-medium text-orange-600">{{ producto.stock_minimo }} unidades</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                            <dd class="mt-1">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if producto.activo %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if producto.activo %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Proveedores -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-truck mr-2 text-blue-600"></i>
+                        Proveedores
+                    </h3>
+                    {% if user|is_admin_user %}
+                    <a href="{% url 'inventario:producto_proveedores' producto.pk %}" 
+                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                        <i class="fas fa-cog mr-1"></i>Gestionar
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="px-6 py-4">
+                    {% if producto.producto_proveedores.exists %}
+                    <div class="space-y-4">
+                        {% for pp in producto.producto_proveedores.all %}
+                        <div class="border rounded-lg p-4 {% if pp.proveedor_preferido %}bg-green-50 border-green-200{% else %}bg-gray-50{% endif %}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                                            <i class="fas fa-truck text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center">
+                                            <h4 class="font-medium text-gray-900">{{ pp.proveedor.nombre }}</h4>
+                                            {% if pp.proveedor_preferido %}
+                                            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                <i class="fas fa-star mr-1"></i>Preferido
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ pp.proveedor.codigo }} • {{ pp.proveedor.ciudad }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    {% if pp.disponible %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            ✓ Disponible
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            ✗ No Disponible
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                {% if user|can_see_prices %}
+                                <div>
+                                    <span class="font-medium text-gray-600">Precio:</span>
+                                    <p class="text-lg font-bold text-green-600">${{ pp.precio_compra|floatformat:0 }}</p>
+                                    {% if pp.tiene_descuento %}
+                                    <p class="text-xs text-green-600">
+                                        Con desc: ${{ pp.precio_con_descuento|floatformat:0 }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <span class="font-medium text-gray-600">Stock:</span>
+                                    <p class="text-lg font-bold {% if pp.stock_proveedor > 0 %}text-blue-600{% else %}text-red-600{% endif %}">
+                                        {{ pp.stock_proveedor }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-600">Entrega:</span>
+                                    <p class="text-lg font-bold text-orange-600">{{ pp.tiempo_entrega_dias }} días</p>
+                                </div>
+                                <div>
+                                    <span class="font-medium text-gray-600">Mín. Pedido:</span>
+                                    <p class="text-lg font-bold text-purple-600">{{ pp.cantidad_minima_pedido }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if pp.notas %}
+                            <div class="mt-3 p-2 bg-blue-50 rounded-md">
+                                <p class="text-sm text-gray-700">
+                                    <i class="fas fa-sticky-note mr-1 text-blue-600"></i>
+                                    {{ pp.notas }}
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Información del proveedor -->
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                    <div class="flex items-center space-x-4">
+                                        {% if pp.proveedor.contacto_principal %}
+                                        <span>
+                                            <i class="fas fa-user mr-1"></i>
+                                            {{ pp.proveedor.contacto_principal }}
+                                        </span>
+                                        {% endif %}
+                                        {% if pp.proveedor.telefono %}
+                                        <span>
+                                            <i class="fas fa-phone mr-1"></i>
+                                            {{ pp.proveedor.telefono }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-center">
+                                        {% for i in "12345" %}
+                                            <i class="fas fa-star text-xs {% if forloop.counter <= pp.proveedor.calificacion %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                                        {% endfor %}
+                                        <span class="ml-1 text-xs">({{ pp.proveedor.calificacion }}/5)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Resumen de mejores opciones -->
+                    {% if user|can_see_prices %}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">📊 Resumen de Compras</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {% if producto.mejor_precio_proveedor %}
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                                <div class="text-sm font-medium text-green-800">💰 Mejor Precio</div>
+                                <div class="text-lg font-bold text-green-600">
+                                    ${{ producto.mejor_precio_proveedor.precio_compra|floatformat:0 }}
+                                </div>
+                                <div class="text-sm text-green-700">{{ producto.mejor_precio_proveedor.proveedor.nombre }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if producto.proveedor_preferido %}
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div class="text-sm font-medium text-blue-800">⭐ Preferido</div>
+                                <div class="text-lg font-bold text-blue-600">
+                                    ${{ producto.proveedor_preferido.precio_compra|floatformat:0 }}
+                                </div>
+                                <div class="text-sm text-blue-700">{{ producto.proveedor_preferido.proveedor.nombre }}</div>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                <div class="text-sm font-medium text-purple-800">📈 Costo Promedio</div>
+                                <div class="text-lg font-bold text-purple-600">
+                                    ${{ producto.costo_promedio|floatformat:0 }}
+                                </div>
+                                <div class="text-sm text-purple-700">Calculado automáticamente</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-truck text-4xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-500">No hay proveedores configurados para este producto</p>
+                        {% if user|is_admin_user %}
+                        <a href="{% url 'inventario:producto_proveedores' producto.pk %}" 
+                           class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>
+                            Agregar Proveedores
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Stock por bodegas -->
+            {% if stocks %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Stock por Bodegas</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-4">
+                        {% for stock in stocks %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <h4 class="font-medium text-gray-900">{{ stock.bodega.nombre }}</h4>
+                                {% if stock.variante %}
+                                <p class="text-sm text-gray-600">{{ stock.variante }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="text-right">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                    {% if stock.cantidad <= producto.stock_minimo %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ stock.cantidad }} disponibles
+                                </span>
+                                {% if stock.cantidad_reservada > 0 %}
+                                <p class="text-xs text-gray-500 mt-1">{{ stock.cantidad_reservada }} reservadas</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-500">Total disponible:</span>
+                            <span class="text-lg font-medium text-gray-900">
+                                {% for stock in stocks %}{{ stock.cantidad|add:0 }}{% if not forloop.last %} + {% endif %}{% endfor %} unidades
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Información rápida -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Información Rápida</h3>
+                </div>
+                <div class="px-6 py-4 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Estado</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if producto.activo %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {% if producto.activo %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Stock Mínimo</span>
+                        <span class="text-sm font-medium text-gray-900">{{ producto.stock_minimo }} unidades</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Maneja Variantes</span>
+                        <span class="text-sm font-medium text-gray-900">
+                            {% if producto.maneja_variantes %}Sí{% else %}No{% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Creado</span>
+                        <span class="text-sm text-gray-500">{{ producto.fecha_creacion|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            {% if user|is_admin_user %}
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Acciones Rápidas</h3>
+                </div>
+                <div class="px-6 py-4 space-y-3">
+                    <button class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-md text-sm font-medium transition-colors border border-blue-200">
+                        <i class="fas fa-plus mr-2"></i>Ajustar Stock
+                    </button>
+                    <button class="w-full bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-md text-sm font-medium transition-colors border border-green-200">
+                        <i class="fas fa-truck mr-2"></i>Registrar Compra
+                    </button>
+                    <a href="{% url 'inventario:transferencia_create' %}" class="w-full bg-orange-50 hover:bg-orange-100 text-orange-700 px-4 py-2 rounded-md text-sm font-medium transition-colors border border-orange-200 block text-center">
+                        <i class="fas fa-exchange-alt mr-2"></i>Transferir
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

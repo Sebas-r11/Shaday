@@ -1,0 +1,484 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Orden de Compra {{ orden.numero }} - Compras
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">
+                <i class="fas fa-file-invoice me-2 text-primary"></i>
+                Orden de Compra: {{ orden.numero }}
+            </h1>
+            <p class="text-muted mb-0">
+                Creada el {{ orden.fecha_orden|date:"d/m/Y" }} por {{ orden.usuario_creacion.get_full_name|default:orden.usuario_creacion.username }}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'compras:orden_list' %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i> Volver
+            </a>
+            <a href="{% url 'compras:orden_update' orden.pk %}" class="btn btn-outline-warning me-2">
+                <i class="fas fa-edit me-1"></i> Editar
+            </a>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-cogs me-1"></i> Acciones
+                </button>
+                <ul class="dropdown-menu">
+                    {% if orden.estado == 'borrador' %}
+                    <li><a class="dropdown-item" href="#" onclick="cambiarEstado('enviada')">
+                        <i class="fas fa-paper-plane me-2"></i> Enviar al Proveedor
+                    </a></li>
+                    {% endif %}
+                    {% if orden.estado == 'enviada' %}
+                    <li><a class="dropdown-item" href="#" onclick="cambiarEstado('confirmada')">
+                        <i class="fas fa-check me-2"></i> Confirmar Orden
+                    </a></li>
+                    {% endif %}
+                    {% if orden.estado in 'enviada,confirmada' %}
+                    <li><a class="dropdown-item" href="{% url 'compras:recepcion_create' %}?orden={{ orden.pk }}">
+                        <i class="fas fa-truck me-2"></i> Registrar Recepción
+                    </a></li>
+                    {% endif %}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="cambiarEstado('cancelada')">
+                        <i class="fas fa-times me-2"></i> Cancelar Orden
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Información Principal -->
+        <div class="col-lg-8">
+            <!-- Información de la Orden -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2 text-info"></i>
+                        Información de la Orden
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Proveedor:</label>
+                            <div>
+                                <a href="{% url 'compras:proveedor_detail' orden.proveedor.pk %}" class="text-decoration-none">
+                                    {{ orden.proveedor.razon_social }}
+                                </a>
+                            </div>
+                            <small class="text-muted">{{ orden.proveedor.numero_documento }}</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Estado:</label>
+                            <div>
+                                <span class="badge bg-{% if orden.estado == 'borrador' %}secondary{% elif orden.estado == 'enviada' %}warning{% elif orden.estado == 'confirmada' %}info{% elif orden.estado == 'recibida_total' %}success{% elif orden.estado == 'cancelada' %}danger{% else %}primary{% endif %} fs-6">
+                                    {{ orden.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Orden:</label>
+                            <div>{{ orden.fecha_orden|date:"d/m/Y" }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha Estimada de Entrega:</label>
+                            <div>
+                                {% if orden.fecha_entrega_estimada %}
+                                    {{ orden.fecha_entrega_estimada|date:"d/m/Y" }}
+                                    {% if orden.fecha_entrega_estimada < today %}
+                                        <span class="badge bg-warning ms-2">Vencida</span>
+                                    {% elif orden.fecha_entrega_estimada == today %}
+                                        <span class="badge bg-info ms-2">Hoy</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No especificada</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if orden.fecha_entrega_real %}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha Real de Entrega:</label>
+                            <div>{{ orden.fecha_entrega_real|date:"d/m/Y" }}</div>
+                        </div>
+                        {% endif %}
+                        {% if orden.numero_referencia_proveedor %}
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Referencia del Proveedor:</label>
+                            <div>{{ orden.numero_referencia_proveedor }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if orden.observaciones %}
+                    <div class="mt-3">
+                        <label class="form-label fw-bold">Observaciones:</label>
+                        <div class="bg-light p-3 rounded">{{ orden.observaciones|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if orden.condiciones_especiales %}
+                    <div class="mt-3">
+                        <label class="form-label fw-bold">Condiciones Especiales:</label>
+                        <div class="bg-light p-3 rounded">{{ orden.condiciones_especiales|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Items de la Orden -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2 text-primary"></i>
+                        Items de la Orden
+                    </h5>
+                    {% if orden.estado == 'borrador' %}
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                        <i class="fas fa-plus me-1"></i> Agregar Item
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Descuento</th>
+                                    <th class="text-end">Subtotal</th>
+                                    <th class="text-center">Estado</th>
+                                    {% if orden.estado == 'borrador' %}
+                                    <th class="text-center">Acciones</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong>{{ item.producto.nombre }}</strong>
+                                            {% if item.variante %}
+                                                <br><small class="text-muted">{{ item.variante.nombre }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ item.producto.codigo }}</small>
+                                    </td>
+                                    <td class="text-end">{{ item.cantidad|floatformat:2 }}</td>
+                                    <td class="text-end">${{ item.precio_unitario|floatformat:0 }}</td>
+                                    <td class="text-end">{{ item.descuento_porcentaje|floatformat:1 }}%</td>
+                                    <td class="text-end"><strong>${{ item.subtotal|floatformat:0 }}</strong></td>
+                                    <td class="text-center">
+                                        {% if item.cantidad_recibida >= item.cantidad %}
+                                            <span class="badge bg-success">Completo</span>
+                                        {% elif item.cantidad_recibida > 0 %}
+                                            <span class="badge bg-warning">Parcial</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Pendiente</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if orden.estado == 'borrador' %}
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarItem('{{ item.pk }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="4" class="text-end">Subtotal:</th>
+                                    <th class="text-end">${{ orden.subtotal|floatformat:0 }}</th>
+                                    <th colspan="{% if orden.estado == 'borrador' %}2{% else %}1{% endif %}"></th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" class="text-end">IVA ({{ orden.porcentaje_iva|floatformat:1 }}%):</th>
+                                    <th class="text-end">${{ orden.iva|floatformat:0 }}</th>
+                                    <th colspan="{% if orden.estado == 'borrador' %}2{% else %}1{% endif %}"></th>
+                                </tr>
+                                <tr class="table-primary">
+                                    <th colspan="4" class="text-end">TOTAL:</th>
+                                    <th class="text-end">${{ orden.total|floatformat:0 }}</th>
+                                    <th colspan="{% if orden.estado == 'borrador' %}2{% else %}1{% endif %}"></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay items en esta orden</h5>
+                        {% if orden.estado == 'borrador' %}
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                            <i class="fas fa-plus me-1"></i> Agregar Primer Item
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recepciones -->
+            {% if recepciones %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-truck me-2 text-success"></i>
+                        Recepciones
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Usuario</th>
+                                    <th class="text-end">Items</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for recepcion in recepciones %}
+                                <tr>
+                                    <td>{{ recepcion.fecha_recepcion|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ recepcion.usuario_recepcion.get_full_name|default:recepcion.usuario_recepcion.username }}</td>
+                                    <td class="text-end">{{ recepcion.items.count }}</td>
+                                    <td class="text-center">
+                                        <a href="{% url 'compras:recepcion_detail' recepcion.pk %}" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Panel Lateral -->
+        <div class="col-lg-4">
+            <!-- Resumen Financiero -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-calculator me-2 text-success"></i>
+                        Resumen Financiero
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 mb-0 text-primary">${{ orden.subtotal|floatformat:0 }}</div>
+                                <small class="text-muted">Subtotal</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h4 mb-0 text-info">${{ orden.iva|floatformat:0 }}</div>
+                                <small class="text-muted">IVA</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <hr>
+                            <div class="text-center">
+                                <div class="h3 mb-0 text-success">${{ orden.total|floatformat:0 }}</div>
+                                <small class="text-muted">TOTAL</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información del Proveedor -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-building me-2 text-info"></i>
+                        Proveedor
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <h6 class="mb-1">{{ orden.proveedor.razon_social }}</h6>
+                    {% if orden.proveedor.nombre_comercial %}
+                    <p class="text-muted mb-2">{{ orden.proveedor.nombre_comercial }}</p>
+                    {% endif %}
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">Documento:</small><br>
+                        {{ orden.proveedor.get_tipo_documento_display }}: {{ orden.proveedor.numero_documento }}
+                    </div>
+                    
+                    {% if orden.proveedor.telefono %}
+                    <div class="mb-2">
+                        <small class="text-muted">Teléfono:</small><br>
+                        <a href="tel:{{ orden.proveedor.telefono }}" class="text-decoration-none">
+                            {{ orden.proveedor.telefono }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if orden.proveedor.email %}
+                    <div class="mb-2">
+                        <small class="text-muted">Email:</small><br>
+                        <a href="mailto:{{ orden.proveedor.email }}" class="text-decoration-none">
+                            {{ orden.proveedor.email }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">Condiciones de Pago:</small><br>
+                        {{ orden.proveedor.get_condiciones_pago_display }}
+                    </div>
+                    
+                    <a href="{% url 'compras:proveedor_detail' orden.proveedor.pk %}" class="btn btn-sm btn-outline-info w-100">
+                        <i class="fas fa-eye me-1"></i> Ver Proveedor
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cronología -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-history me-2 text-secondary"></i>
+                        Cronología
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-secondary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Orden Creada</h6>
+                                <small class="text-muted">{{ orden.fecha_orden|date:"d/m/Y" }}</small>
+                                <p class="mb-0">Por {{ orden.usuario_creacion.get_full_name|default:orden.usuario_creacion.username }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if orden.estado != 'borrador' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Enviada al Proveedor</h6>
+                                <small class="text-muted">Estado actual: {{ orden.get_estado_display }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if recepciones %}
+                        {% for recepcion in recepciones %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Recepción</h6>
+                                <small class="text-muted">{{ recepcion.fecha_recepcion|date:"d/m/Y H:i" }}</small>
+                                <p class="mb-0">{{ recepcion.items.count }} items recibidos</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos para la timeline -->
+<style>
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-content {
+    padding-left: 0.5rem;
+}
+</style>
+
+<!-- Scripts para interactividad -->
+<script>
+function cambiarEstado(nuevoEstado) {
+    if (confirm(`¿Estás seguro de cambiar el estado a "${nuevoEstado}"?`)) {
+        fetch(`{% url 'compras:cambiar_estado_orden' orden.pk %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({estado: nuevoEstado})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error de conexión');
+        });
+    }
+}
+
+function eliminarItem(itemId) {
+    if (confirm('¿Estás seguro de eliminar este item?')) {
+        // Aquí iría la lógica para eliminar item
+        console.log('Eliminar item:', itemId);
+    }
+}
+
+// Actualizar fecha de hoy para comparaciones
+document.addEventListener('DOMContentLoaded', function() {
+    // Aquí puedes agregar lógica adicional de inicialización
+});
+</script>
+
+<!-- CSRF Token para AJAX -->
+{% csrf_token %}
+{% endblock %}

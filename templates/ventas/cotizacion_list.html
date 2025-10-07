@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load permissions %}
+
+{% block title %}Cotizaciones - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {% if user|is_admin_user %}
+    <!-- Panel de Acceso Rápido para Admin -->
+    <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg mb-6">
+        <div class="p-4">
+            <div class="flex items-center mb-3">
+                <i class="fas fa-tachometer-alt text-green-600 mr-2"></i>
+                <h3 class="text-lg font-medium text-green-800">Acceso Rápido - Administrador</h3>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <a href="{% url 'inventario:categoria_list' %}" 
+                   class="bg-white hover:bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                    <i class="fas fa-folder mr-2"></i>Categorías
+                </a>
+                <a href="{% url 'inventario:subcategoria_list' %}" 
+                   class="bg-white hover:bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                    <i class="fas fa-tags mr-2"></i>Subcategorías
+                </a>
+                <a href="{% url 'inventario:producto_list' %}" 
+                   class="bg-white hover:bg-purple-50 border border-purple-200 text-purple-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                    <i class="fas fa-boxes mr-2"></i>Productos
+                </a>
+                <a href="{% url 'inventario:producto_create' %}" 
+                   class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>Nuevo Producto
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+<div class="bg-white shadow rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-900">Gestión de Cotizaciones</h2>
+            {% if user.can_create_sales %}
+                <a href="{% url 'ventas:cotizacion_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-plus mr-2"></i>Nueva Cotización
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lista de Cotizaciones -->
+    {% if cotizaciones %}
+        <!-- Vista de Tabla (Desktop) -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Número</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendedor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for cotizacion in cotizaciones %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ cotizacion.numero }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ cotizacion.cliente.nombre_completo }}</div>
+                                <div class="text-sm text-gray-500">{{ cotizacion.cliente.numero_documento }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <!-- Vendedor no disponible en modelo simplificado -->
+                                <div class="text-sm text-gray-500">Sistema</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ cotizacion.fecha_creacion|date:"d/m/Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">
+                                    <!-- Fecha vencimiento no disponible en modelo simplificado -->
+                                    <span class="text-gray-500">No definida</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                    {% if cotizacion.estado == 'borrador' %}bg-gray-100 text-gray-800
+                                    {% elif cotizacion.estado == 'enviada' %}bg-blue-100 text-blue-800
+                                    {% elif cotizacion.estado == 'aprobada' %}bg-green-100 text-green-800
+                                    {% elif cotizacion.estado == 'rechazada' %}bg-red-100 text-red-800
+                                    {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ cotizacion.estado|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ${{ cotizacion.total|floatformat:0 }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex space-x-2">
+                                    <a href="{% url 'ventas:cotizacion_detail' cotizacion.pk %}" 
+                                       class="text-blue-600 hover:text-blue-900" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if user.can_create_sales and cotizacion.estado == 'borrador' %}
+                                        <a href="#" class="text-green-600 hover:text-green-900" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
+                                    {% if user.can_create_sales %}
+                                        <a href="#" class="text-purple-600 hover:text-purple-900" title="Duplicar">
+                                            <i class="fas fa-copy"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Vista de Cards (Móvil y Tablet) -->
+        <div class="block lg:hidden">
+            <div class="space-y-4 p-4">
+                {% for cotizacion in cotizaciones %}
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+                        <!-- Header con número y estado -->
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">{{ cotizacion.numero }}</h3>
+                                <p class="text-sm text-gray-600">{{ cotizacion.fecha_creacion|date:"d/m/Y" }}</p>
+                            </div>
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                                {% if cotizacion.estado == 'borrador' %}bg-gray-100 text-gray-800
+                                {% elif cotizacion.estado == 'enviada' %}bg-blue-100 text-blue-800
+                                {% elif cotizacion.estado == 'aprobada' %}bg-green-100 text-green-800
+                                {% elif cotizacion.estado == 'rechazada' %}bg-red-100 text-red-800
+                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ cotizacion.estado|title }}
+                            </span>
+                        </div>
+
+                        <!-- Información del cliente -->
+                        <div class="border-t border-gray-100 pt-3 mb-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide">Cliente</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ cotizacion.cliente.nombre_completo }}</p>
+                                    <p class="text-xs text-gray-500">{{ cotizacion.cliente.numero_documento }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide">Vendedor</p>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        <!-- Vendedor no disponible en modelo simplificado -->
+                                        <span class="text-gray-500">Sistema</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fechas y total -->
+                        <div class="border-t border-gray-100 pt-3 mb-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide">Vencimiento</p>
+                                    <p class="text-sm font-medium text-gray-900">
+                                        <!-- Fecha vencimiento no disponible en modelo simplificado -->
+                                        <span class="text-gray-500">No definida</span>
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500 uppercase tracking-wide">Total</p>
+                                    <p class="text-lg font-bold text-gray-900">${{ cotizacion.total|floatformat:0 }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acciones -->
+                        <div class="border-t border-gray-100 pt-3">
+                            <div class="flex justify-end space-x-3">
+                                <a href="{% url 'ventas:cotizacion_detail' cotizacion.pk %}" 
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <i class="fas fa-eye mr-2"></i>Ver
+                                </a>
+                                {% if user.can_create_sales and cotizacion.estado == 'borrador' %}
+                                    <a href="#" 
+                                       class="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        <i class="fas fa-edit mr-2"></i>Editar
+                                    </a>
+                                {% endif %}
+                                {% if user.can_create_sales %}
+                                    <a href="#" 
+                                       class="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                        <i class="fas fa-copy mr-2"></i>Duplicar
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+            <div class="p-8 text-center text-gray-500">
+                <i class="fas fa-file-alt text-4xl mb-4"></i>
+                <p>No hay cotizaciones registradas.</p>
+                {% if user.can_create_sales %}
+                    <a href="{% url 'ventas:cotizacion_create' %}" class="text-blue-600 hover:text-blue-800">
+                        Crear la primera cotización
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación Responsiva -->
+    {% if is_paginated %}
+        <div class="px-4 py-4 border-t border-gray-200 bg-gray-50">
+            <!-- Información de paginación (oculta en móvil muy pequeño) -->
+            <div class="hidden sm:block text-center text-sm text-gray-700 mb-4">
+                Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ page_obj.paginator.count }} cotizaciones
+            </div>
+            
+            <!-- Controles de paginación -->
+            <div class="flex justify-center items-center space-x-2">
+                <!-- Botón Primera (solo en desktop) -->
+                {% if page_obj.has_previous %}
+                    <a href="?page=1" 
+                       class="hidden md:inline-flex px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        « Primera
+                    </a>
+                    
+                    <!-- Botón Anterior -->
+                    <a href="?page={{ page_obj.previous_page_number }}" 
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md border border-gray-300 bg-white transition-colors">
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        <span class="hidden sm:inline">Anterior</span>
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 border border-gray-200 rounded-md bg-gray-100 cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        <span class="hidden sm:inline">Anterior</span>
+                    </span>
+                {% endif %}
+                
+                <!-- Información de página actual -->
+                <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-blue-50 border border-blue-200 rounded-md">
+                    <span class="sm:hidden">{{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+                    <span class="hidden sm:inline">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </span>
+                
+                <!-- Botón Siguiente -->
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" 
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md border border-gray-300 bg-white transition-colors">
+                        <span class="hidden sm:inline">Siguiente</span>
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                    
+                    <!-- Botón Última (solo en desktop) -->
+                    <a href="?page={{ page_obj.paginator.num_pages }}" 
+                       class="hidden md:inline-flex px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                        Última »
+                    </a>
+                {% else %}
+                    <span class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-300 border border-gray-200 rounded-md bg-gray-100 cursor-not-allowed">
+                        <span class="hidden sm:inline">Siguiente</span>
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </span>
+                {% endif %}
+            </div>
+            
+            <!-- Información móvil -->
+            <div class="block sm:hidden text-center text-xs text-gray-500 mt-3">
+                {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+            </div>
+        </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}

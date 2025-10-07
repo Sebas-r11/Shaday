@@ -1,0 +1,41 @@
+# Departamentos y ciudades de Colombia
+DEPARTAMENTOS_CIUDADES = {
+    'Amazonas': ['Leticia', 'Puerto Nariño'],
+    'Antioquia': ['Medellín', 'Bello', 'Itagüí', 'Envigado', 'Apartadó', 'Turbo', 'Rionegro', 'Sabaneta'],
+    'Arauca': ['Arauca', 'Tame', 'Saravena', 'Fortul', 'Puerto Rondón', 'Cravo Norte', 'Arauquita'],
+    'Atlántico': ['Barranquilla', 'Soledad', 'Malambo', 'Sabanagrande', 'Puerto Colombia', 'Galapa', 'Baranoa'],
+    'Bolívar': ['Cartagena', 'Magangué', 'Turbaco', 'Arjona', 'El Carmen de Bolívar', 'Mompós', 'San Juan Nepomuceno'],
+    'Boyacá': ['Tunja', 'Duitama', 'Sogamoso', 'Chiquinquirá', 'Paipa', 'Villa de Leyva', 'Nobsa'],
+    'Caldas': ['Manizales', 'Villamaría', 'Chinchiná', 'La Dorada', 'Riosucio', 'Anserma', 'Palestina'],
+    'Caquetá': ['Florencia', 'San Vicente del Caguán', 'Puerto Rico', 'El Doncello', 'La Montañita', 'Belén de los Andaquíes'],
+    'Casanare': ['Yopal', 'Aguazul', 'Villanueva', 'Tauramena', 'Monterrey', 'Paz de Ariporo', 'Maní'],
+    'Cauca': ['Popayán', 'Santander de Quilichao', 'Puerto Tejada', 'Guapi', 'Patía', 'Corinto', 'Miranda'],
+    'Cesar': ['Valledupar', 'Aguachica', 'Bosconia', 'Codazzi', 'El Copey', 'Curumaní', 'La Jagua de Ibirico'],
+    'Chocó': ['Quibdó', 'Istmina', 'Condoto', 'Tadó', 'Acandí', 'Capurganá', 'Bahía Solano'],
+    'Córdoba': ['Montería', 'Cereté', 'Sahagún', 'Lorica', 'Planeta Rica', 'Montelíbano', 'Ciénaga de Oro'],
+    'Cundinamarca': ['Bogotá', 'Soacha', 'Girardot', 'Zipaquirá', 'Facatativá', 'Chía', 'Madrid', 'Mosquera', 'Fusagasugá', 'Cajicá'],
+    'Guainía': ['Inírida', 'Barranco Minas', 'San Felipe', 'Puerto Colombia', 'La Guadalupe', 'Cacahual', 'Pana Pana'],
+    'Guaviare': ['San José del Guaviare', 'Calamar', 'El Retorno', 'Miraflores'],
+    'Huila': ['Neiva', 'Pitalito', 'Garzón', 'La Plata', 'Campoalegre', 'Timaná', 'San Agustín'],
+    'La Guajira': ['Riohacha', 'Maicao', 'Uribia', 'Manaure', 'Villanueva', 'San Juan del Cesar', 'Fonseca'],
+    'Magdalena': ['Santa Marta', 'Ciénaga', 'Fundación', 'Aracataca', 'El Banco', 'Plato', 'Zona Bananera'],
+    'Meta': ['Villavicencio', 'Acacías', 'Granada', 'San Martín', 'Puerto López', 'Restrepo', 'Cumaral'],
+    'Nariño': ['Pasto', 'Tumaco', 'Ipiales', 'Túquerres', 'Barbacoas', 'La Cruz', 'Samaniego'],
+    'Norte de Santander': ['Cúcuta', 'Ocaña', 'Villa del Rosario', 'Los Patios', 'Pamplona', 'Tibú', 'El Zulia'],
+    'Putumayo': ['Mocoa', 'Puerto Asís', 'Orito', 'Valle del Guamuez', 'Puerto Caicedo', 'Villa Garzón', 'Sibundoy'],
+    'Quindío': ['Armenia', 'Calarcá', 'La Tebaida', 'Montenegro', 'Quimbaya', 'Circasia', 'Filandia'],
+    'Risaralda': ['Pereira', 'Dosquebradas', 'Santa Rosa de Cabal', 'La Virginia', 'Marsella', 'Belén de Umbría'],
+    'San Andrés y Providencia': ['San Andrés', 'Providencia'],
+    'Santander': ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta', 'Barrancabermeja', 'San Gil', 'Málaga'],
+    'Sucre': ['Sincelejo', 'Corozal', 'San Marcos', 'Sampués', 'Tolú', 'Coveñas', 'Morroa'],
+    'Tolima': ['Ibagué', 'Espinal', 'Girardot', 'Melgar', 'Honda', 'Chaparral', 'Líbano'],
+    'Valle del Cauca': ['Cali', 'Palmira', 'Buenaventura', 'Tuluá', 'Cartago', 'Buga', 'Jamundí', 'Yumbo'],
+    'Vaupés': ['Mitú', 'Carurú', 'Pacoa', 'Taraira', 'Papunahua', 'Yavaraté'],
+    'Vichada': ['Puerto Carreño', 'La Primavera', 'Santa Rosalía', 'Cumaribo']
+}
+
+TIPOS_CLIENTE_CHOICES = [
+    ('minorista', 'Minorista'),
+    ('mayorista', 'Mayorista'),
+    ('corporativo', 'Corporativo'),
+]

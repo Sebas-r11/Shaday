@@ -1,0 +1,943 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - DistribucioneShaddai{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-row {
+        background-color: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .product-row.removing {
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+    }
+    .btn-remove-product {
+        background-color: #ef4444;
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.875rem;
+    }
+    .btn-remove-product:hover {
+        background-color: #dc2626;
+    }
+    .total-summary {
+        background-color: #f0f9ff;
+        border: 2px solid #0ea5e9;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+    .search-results {
+        position: absolute;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        width: 100%;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .search-result-item {
+        padding: 0.75rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .search-result-item:hover {
+        background-color: #f9fafb;
+    }
+    .search-result-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Estilos para autocompletado de clientes */
+    .cliente-search-container {
+        position: relative;
+    }
+    
+    #cliente-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: white;
+        border: 1px solid #ced4da;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+    }
+    
+    #cliente-suggestions.show {
+        display: block !important;
+    }
+    
+    .cliente-option {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #f8f9fa;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    
+    .cliente-option:hover {
+        background-color: #e9ecef;
+    }
+    
+    .cliente-option:last-child {
+        border-bottom: none;
+    }
+    
+    .dropdown-item.text-muted {
+        padding: 0.5rem 0.75rem;
+        cursor: default;
+    }
+    
+    #cliente-seleccionado {
+        border: 1px solid #28a745;
+        background-color: #f8fff8;
+    }
+    
+    /* Estilos para precio automático */
+    .precio-display {
+        background-color: #f8f9fa !important;
+        cursor: not-allowed !important;
+        font-weight: 600;
+        color: #28a745 !important;
+    }
+    
+    .precio-display:focus {
+        background-color: #f8f9fa !important;
+        border-color: #ced4da !important;
+        box-shadow: none !important;
+    }
+    
+    .input-group .input-group-text {
+        background-color: #e9ecef;
+        color: #495057;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Encabezado -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-1">
+                                <i class="fas fa-shopping-cart text-primary me-2"></i>
+                                {{ title }}
+                            </h1>
+                            <p class="text-muted mb-0">Complete los datos del pedido y agregue los productos</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'ventas:pedido_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Volver a Pedidos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario Principal -->
+            <form method="post" id="pedidoForm">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Datos del Pedido -->
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Información del Pedido
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.cliente_search.id_for_label }}" class="form-label">
+                                            <strong>Cliente *</strong>
+                                        </label>
+                                        
+                                        <!-- Campo de búsqueda visible -->
+                                        <div class="cliente-search-container position-relative">
+                                            {{ form.cliente_search }}
+                                            <div id="cliente-suggestions">
+                                                <!-- Las sugerencias se cargarán aquí -->
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Campo oculto para el ID del cliente -->
+                                        {{ form.cliente }}
+                                        
+                                        <!-- Cliente seleccionado -->
+                                        <div id="cliente-seleccionado" class="mt-2 p-3 bg-light rounded" style="display: none;">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <strong id="cliente-nombre"></strong><br>
+                                                    <small class="text-muted" id="cliente-documento"></small>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearClienteSelection()">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if form.cliente_search.errors or form.cliente.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.cliente_search.errors|first }}{{ form.cliente.errors|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="col-md-6 mb-3">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Número de Pedido:</strong> Se generará automáticamente al guardar
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Productos del Pedido -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-success text-white">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-boxes me-2"></i>
+                                        Productos del Pedido
+                                    </h5>
+                                    <button type="button" class="btn btn-light btn-sm" onclick="agregarProducto()">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Agregar Producto
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Buscador de productos -->
+                                <div class="mb-4">
+                                    <div class="position-relative">
+                                        <input type="text" 
+                                               id="productSearch" 
+                                               class="form-control" 
+                                               placeholder="Buscar productos por código o nombre..."
+                                               autocomplete="off">
+                                        <div id="searchResults" class="search-results" style="display: none;"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contenedor de productos -->
+                                <div id="productosContainer">
+                                    <div class="text-center text-muted py-4" id="emptyMessage">
+                                        <i class="fas fa-box-open fa-3x mb-3"></i>
+                                        <p class="mb-0">No hay productos agregados</p>
+                                        <small>Use el buscador para agregar productos al pedido</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen del Pedido -->
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm mb-4 sticky-top" style="top: 20px;">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    Resumen del Pedido
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="total-summary">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal" class="fw-bold">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Descuento:</span>
+                                        <span id="descuento" class="fw-bold text-success">$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fs-5 fw-bold">TOTAL:</span>
+                                        <span id="total" class="fs-5 fw-bold text-primary">$0.00</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <p class="mb-2"><strong>Productos:</strong> <span id="cantidadProductos">0</span></p>
+                                    <p class="mb-0"><strong>Items totales:</strong> <span id="cantidadItems">0</span></p>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                        <i class="fas fa-save me-2"></i>
+                                        Crear Pedido
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        El pedido se creará en estado "Borrador"
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Template para fila de producto -->
+<template id="productRowTemplate">
+    <div class="product-row" data-product-id="">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <h6 class="mb-1 product-name"></h6>
+                <small class="text-muted product-code"></small>
+                <input type="hidden" name="productos[]" class="product-id">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Cantidad</label>
+                <input type="number" 
+                       name="cantidades[]" 
+                       class="form-control form-control-sm cantidad-input"
+                       min="0.01" 
+                       step="0.01" 
+                       value="1"
+                       onchange="actualizarTotales()">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Precio Unit.</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="text" 
+                           class="form-control form-control-sm precio-display"
+                           readonly
+                           style="background-color: #f8f9fa; cursor: not-allowed;"
+                           title="Precio automático según tipo de cliente">
+                    <input type="hidden" 
+                           name="precios[]" 
+                           class="precio-input">
+                </div>
+                <small class="text-muted">Precio automático</small>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label small">&nbsp;</label>
+                <div>
+                    <button type="button" 
+                            class="btn-remove-product"
+                            onclick="eliminarProducto(this)"
+                            title="Eliminar producto">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-1 text-end">
+                <small class="text-muted">Total:</small>
+                <div class="fw-bold product-total">$0.00</div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+// Datos de productos para búsqueda y selección
+const productosData = JSON.parse('{{ productos_json|escapejs }}');
+let productosAgregados = new Set();
+
+console.log('📊 Productos cargados:', productosData.length);
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado - Iniciando aplicación...'); // Debug
+    
+    // Inicializar autocompletado de clientes
+    try {
+        inicializarAutocompletadoClientes();
+        console.log('Autocompletado de clientes inicializado'); // Debug
+    } catch (error) {
+        console.error('Error al inicializar autocompletado:', error);
+    }
+    
+    // Inicializar búsqueda de productos
+    inicializarBuscadorProductos();
+    
+    // Actualizar totales iniciales
+    actualizarTotales();
+    
+    // Validación de formulario
+    document.getElementById('pedidoForm').addEventListener('submit', function(e) {
+        if (!validarFormulario()) {
+            e.preventDefault();
+        }
+    });
+});
+
+// ============= AUTOCOMPLETADO DE CLIENTES =============
+
+function inicializarAutocompletadoClientes() {
+    console.log('🔍 === INICIALIZANDO AUTOCOMPLETADO ==='); 
+    
+    // Debug: mostrar todos los elementos disponibles
+    console.log('📋 Elementos disponibles en el DOM:');
+    console.log('- Formulario completo:', document.getElementById('pedidoForm'));
+    console.log('- Body:', document.body);
+    
+    // Usar setTimeout para asegurar que el DOM esté completamente renderizado
+    setTimeout(function() {
+        console.log('⏰ Ejecutando setTimeout del autocompletado...');
+        
+        // Buscar todos los inputs para debug
+        const allInputs = document.querySelectorAll('input');
+        console.log('📝 Total inputs encontrados: ' + allInputs.length);
+        allInputs.forEach((input, index) => {
+            console.log('   ' + index + ': ' + (input.id || input.name || 'sin-id') + ' (' + input.type + ')');
+        });
+        
+        const clienteSearch = document.getElementById('id_cliente_search');
+        const clienteSuggestions = document.getElementById('cliente-suggestions');
+        const clienteHidden = document.getElementById('id_cliente');
+        
+        console.log('🔍 Elementos específicos:');
+        console.log('clienteSearch:', clienteSearch); 
+        console.log('clienteSuggestions:', clienteSuggestions); 
+        console.log('clienteHidden:', clienteHidden); 
+        
+        if (!clienteSearch) {
+            console.error('❌ ERROR CRÍTICO: No se encontró id_cliente_search');
+            // Intentar buscar por clase o nombre
+            const altSearch = document.querySelector('input[name="cliente_search"]');
+            console.log('🔍 Búsqueda alternativa por name:', altSearch);
+            return;
+        }
+        
+        if (!clienteSuggestions) {
+            console.error('❌ ERROR CRÍTICO: No se encontró cliente-suggestions');
+            return;
+        }
+        
+        if (!clienteHidden) {
+            console.error('❌ ERROR CRÍTICO: No se encontró id_cliente');
+            return;
+        }
+        
+        console.log('✅ TODOS los elementos encontrados correctamente'); 
+        console.log('🔗 Configurando event listeners...');
+        
+        let searchTimeout;
+
+        // Agregar evento input con debugging extensivo
+        clienteSearch.addEventListener('input', function(event) {
+            const query = this.value.trim();
+            console.log('📝 INPUT EVENT: "' + query + '" (length: ' + query.length + ')');
+            
+            // Limpiar timeout anterior
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                console.log('⚠️ Query muy corto, ocultando sugerencias');
+                ocultarSugerenciasClientes();
+                return;
+            }
+        
+        // Debounce la búsqueda
+        console.log('⏱️ Iniciando timeout de 300ms para buscar...');
+        searchTimeout = setTimeout(() => {
+            console.log('🚀 Ejecutando búsqueda después del timeout');
+            buscarClientes(query);
+        }, 300);
+    });
+    
+    // Ocultar sugerencias al hacer clic fuera
+    document.addEventListener('click', function(event) {
+        if (!clienteSearch.contains(event.target) && !clienteSuggestions.contains(event.target)) {
+            ocultarSugerenciasClientes();
+        }
+    });
+    
+    // También ocultar al presionar Escape
+    clienteSearch.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            ocultarSugerenciasClientes();
+        }
+    });
+    
+        console.log('🎉 === AUTOCOMPLETADO INICIALIZADO EXITOSAMENTE ===');
+    }, 100); // Cerrar setTimeout
+} // Cerrar función
+
+function buscarClientes(query) {
+    const baseUrl = '{% url "ventas:api_clientes" %}';
+    const url = baseUrl + '?q=' + encodeURIComponent(query);
+    
+    console.log('🔍 === INICIANDO BÚSQUEDA DE CLIENTES ===');
+    console.log('📊 Query: "' + query + '"'); 
+    console.log('🌐 URL: ' + url);
+    
+    // Mostrar indicador de carga
+    const clienteSuggestions = document.getElementById('cliente-suggestions');
+    if (clienteSuggestions) {
+        clienteSuggestions.innerHTML = '<div class="dropdown-item text-muted">🔍 Buscando...</div>';
+        clienteSuggestions.classList.add('show');
+        console.log('✅ Indicador de carga mostrado');
+    }
+    
+    fetch(url)
+        .then(response => {
+            console.log('📊 Response status: ' + response.status);
+            console.log('✅ Response ok: ' + response.ok);
+            if (!response.ok) {
+                throw new Error('HTTP error! status: ' + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📋 Datos recibidos del servidor:', data); 
+            console.log('📊 Número de clientes: ' + (data.clientes ? data.clientes.length : 0));
+            if (data.clientes && data.clientes.length > 0) {
+                console.log('👥 Primeros clientes:', data.clientes.slice(0, 2));
+            }
+            mostrarSugerenciasClientes(data.clientes || []);
+        })
+        .catch(error => {
+            console.error('❌ ERROR en fetch:', error);
+            console.error('❌ Error detallado:', error.message);
+            const clienteSuggestions = document.getElementById('cliente-suggestions');
+            if (clienteSuggestions) {
+                clienteSuggestions.innerHTML = '<div class="dropdown-item text-muted text-danger">❌ Error: ' + error.message + '</div>';
+                clienteSuggestions.classList.add('show');
+            }
+        });
+}
+
+function mostrarSugerenciasClientes(clientes) {
+    console.log('📋 === MOSTRANDO SUGERENCIAS ===');
+    console.log('📊 Clientes recibidos: ' + clientes.length);
+    
+    const clienteSuggestions = document.getElementById('cliente-suggestions');
+    console.log('🎯 Elemento suggestions:', clienteSuggestions);
+    
+    if (!clienteSuggestions) {
+        console.error('❌ ERROR CRÍTICO: No se encontró cliente-suggestions');
+        return;
+    }
+    
+    if (clientes.length === 0) {
+        console.log('⚠️ No se encontraron clientes');
+        clienteSuggestions.innerHTML = '<div class="dropdown-item text-muted">No se encontraron clientes</div>';
+        clienteSuggestions.classList.add('show');
+        return;
+    }
+    
+    console.log('🏗️ Construyendo HTML para sugerencias...');
+    const html = clientes.map((cliente, index) => {
+        console.log('   ' + (index + 1) + '. ' + cliente.nombre_completo + ' - ' + cliente.numero_documento);
+        
+        // Escape proper de caracteres para evitar problemas de JavaScript
+        const nombreEscapado = cliente.nombre_completo.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        const documentoEscapado = cliente.numero_documento.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        const tipoDocumentoEscapado = cliente.tipo_documento.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        
+        return '<div class="cliente-option" ' +
+               'onclick="seleccionarCliente(' + cliente.id + ', \'' + nombreEscapado + '\', \'' + documentoEscapado + '\', \'' + tipoDocumentoEscapado + '\')" ' +
+               'title="Seleccionar ' + cliente.nombre_completo + '">' +
+               '<div><strong>' + cliente.nombre_completo + '</strong></div>' +
+               '<small class="text-muted">' + cliente.tipo_documento + ': ' + cliente.numero_documento + '</small>' +
+               '</div>';
+    }).join('');
+    
+    console.log('📝 HTML generado (preview):', html.substring(0, 200) + '...');
+    clienteSuggestions.innerHTML = html;
+    clienteSuggestions.classList.add('show');
+    console.log('✅ Sugerencias mostradas con clase "show"');
+    console.log('Sugerencias mostradas'); // Debug
+}
+
+function seleccionarCliente(id, nombre, documento, tipoDocumento) {
+    const clienteSearch = document.getElementById('id_cliente_search');
+    const clienteHidden = document.getElementById('id_cliente');
+    const clienteSuggestions = document.getElementById('cliente-suggestions');
+    const clienteSeleccionado = document.getElementById('cliente-seleccionado');
+    const clienteNombre = document.getElementById('cliente-nombre');
+    const clienteDocumento = document.getElementById('cliente-documento');
+    
+    // Establecer valores
+    clienteHidden.value = id;
+    clienteSearch.value = nombre + ' - ' + documento;
+    
+    // Mostrar información del cliente seleccionado
+    clienteNombre.textContent = nombre;
+    clienteDocumento.textContent = tipoDocumento + ': ' + documento;
+    clienteSeleccionado.style.display = 'block';
+    
+    // Ocultar sugerencias
+    ocultarSugerenciasClientes();
+}
+
+function ocultarSugerenciasClientes() {
+    const clienteSuggestions = document.getElementById('cliente-suggestions');
+    if (clienteSuggestions) {
+        clienteSuggestions.classList.remove('show');
+    }
+}
+
+function clearClienteSelection() {
+    const clienteSearch = document.getElementById('id_cliente_search');
+    const clienteHidden = document.getElementById('id_cliente');
+    const clienteSeleccionado = document.getElementById('cliente-seleccionado');
+    
+    // Limpiar valores
+    clienteHidden.value = '';
+    clienteSearch.value = '';
+    clienteSeleccionado.style.display = 'none';
+    
+    // Ocultar sugerencias
+    ocultarSugerenciasClientes();
+    
+    // Enfocar el campo de búsqueda
+    clienteSearch.focus();
+}
+
+function inicializarBuscadorProductos() {
+    const searchInput = document.getElementById('productSearch');
+    const searchResults = document.getElementById('searchResults');
+    
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        const filteredProducts = productosData.filter(producto => 
+            !productosAgregados.has(producto.id) &&
+            (producto.codigo.toLowerCase().includes(query) ||
+             producto.nombre.toLowerCase().includes(query))
+        ).slice(0, 10);
+        
+        mostrarResultadosBusqueda(filteredProducts);
+    });
+    
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+}
+
+function mostrarResultadosBusqueda(productos) {
+    const searchResults = document.getElementById('searchResults');
+    
+    if (productos.length === 0) {
+        searchResults.innerHTML = '<div class="search-result-item text-muted">No se encontraron productos</div>';
+    } else {
+        searchResults.innerHTML = productos.map(producto => {
+            return '<div class="search-result-item" onclick="seleccionarProducto(' + producto.id + ')">' +
+                   '<div class="d-flex justify-content-between">' +
+                   '<div>' +
+                   '<div class="fw-semibold">' + producto.nombre + '</div>' +
+                   '<small class="text-muted">' + producto.codigo + ' - ' + producto.categoria + '</small>' +
+                   '</div>' +
+                   '<div class="text-end">' +
+                   '<div class="fw-bold text-success">$' + formatearNumero(producto.precio) + '</div>' +
+                   '</div>' +
+                   '</div>' +
+                   '</div>';
+        }).join('');
+    }
+    
+    searchResults.style.display = 'block';
+}
+
+function seleccionarProducto(productoId) {
+    const producto = productosData.find(p => p.id === productoId);
+    if (!producto) return;
+    
+    agregarProductoAlPedido(producto);
+    
+    // Limpiar búsqueda
+    document.getElementById('productSearch').value = '';
+    document.getElementById('searchResults').style.display = 'none';
+}
+
+function agregarProducto() {
+    // Mostrar el campo de búsqueda si no está visible
+    document.getElementById('productSearch').focus();
+}
+
+function agregarProductoAlPedido(producto) {
+    if (productosAgregados.has(producto.id)) {
+        alert('Este producto ya está agregado al pedido');
+        return;
+    }
+    
+    const template = document.getElementById('productRowTemplate');
+    const clone = template.content.cloneNode(true);
+    
+    // Configurar el producto
+    clone.querySelector('.product-row').setAttribute('data-product-id', producto.id);
+    clone.querySelector('.product-name').textContent = producto.nombre;
+    clone.querySelector('.product-code').textContent = producto.codigo + ' - ' + producto.categoria;
+    clone.querySelector('.product-id').value = producto.id;
+    
+    // Configurar precio (display y valor hidden)
+    clone.querySelector('.precio-display').value = formatearNumero(producto.precio);
+    clone.querySelector('.precio-input').value = producto.precio;
+    
+    // Agregar al contenedor
+    const container = document.getElementById('productosContainer');
+    const emptyMessage = document.getElementById('emptyMessage');
+    
+    if (emptyMessage) {
+        emptyMessage.style.display = 'none';
+    }
+    
+    container.appendChild(clone);
+    
+    // Agregar a la lista de productos
+    productosAgregados.add(producto.id);
+    
+    // Actualizar totales
+    actualizarTotales();
+}
+
+function eliminarProducto(button) {
+    const productRow = button.closest('.product-row');
+    const productoId = parseInt(productRow.getAttribute('data-product-id'));
+    
+    // Animación de eliminación
+    productRow.classList.add('removing');
+    
+    setTimeout(() => {
+        productRow.remove();
+        productosAgregados.delete(productoId);
+        
+        // Mostrar mensaje si no hay productos
+        const container = document.getElementById('productosContainer');
+        const emptyMessage = document.getElementById('emptyMessage');
+        
+        if (container.children.length === 1 && emptyMessage) {
+            emptyMessage.style.display = 'block';
+        }
+        
+        actualizarTotales();
+    }, 300);
+}
+
+function actualizarTotales() {
+    const productRows = document.querySelectorAll('.product-row:not(.removing)');
+    let subtotal = 0;
+    let cantidadProductos = productRows.length;
+    let cantidadItems = 0;
+    
+    // Calcular totales por producto
+    productRows.forEach(row => {
+        const cantidad = parseFloat(row.querySelector('.cantidad-input').value) || 0;
+        const precio = parseFloat(row.querySelector('.precio-input').value) || 0;
+        const total = cantidad * precio;
+        
+        row.querySelector('.product-total').textContent = '$' + formatearNumero(total);
+        subtotal += total;
+        cantidadItems += cantidad;
+    });
+    
+    // Calcular descuento (por ahora será 0, se puede agregar campo después)
+    const descuentoPorcentaje = 0;
+    const descuento = 0;
+    const subtotalConDescuento = subtotal;
+    
+    // El total es el subtotal con descuento (sin IVA adicional)
+    const total = subtotalConDescuento;
+    
+    // Actualizar elementos del resumen
+    document.getElementById('subtotal').textContent = '$' + formatearNumero(subtotal);
+    document.getElementById('descuento').textContent = '$' + formatearNumero(descuento);
+    document.getElementById('total').textContent = '$' + formatearNumero(total);
+    document.getElementById('cantidadProductos').textContent = cantidadProductos;
+    document.getElementById('cantidadItems').textContent = cantidadItems;
+    
+    // Habilitar/deshabilitar botón de envío
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = cantidadProductos === 0;
+}
+
+function validarFormulario() {
+    // Validar que se haya seleccionado un cliente
+    const clienteId = document.getElementById('id_cliente').value;
+    if (!clienteId) {
+        alert('Debe seleccionar un cliente válido');
+        document.getElementById('id_cliente_search').focus();
+        return false;
+    }
+    
+    const productRows = document.querySelectorAll('.product-row:not(.removing)');
+    
+    if (productRows.length === 0) {
+        alert('Debe agregar al menos un producto al pedido');
+        return false;
+    }
+    
+    // Validar que todos los productos tengan cantidad y precio válidos
+    for (let row of productRows) {
+        const cantidad = parseFloat(row.querySelector('.cantidad-input').value);
+        const precio = parseFloat(row.querySelector('.precio-input').value);
+        
+        if (!cantidad || cantidad <= 0) {
+            alert('Todos los productos deben tener una cantidad válida mayor a 0');
+            return false;
+        }
+        
+        if (!precio || precio < 0) {
+            alert('Todos los productos deben tener un precio válido');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+function formatearNumero(numero) {
+    return new Intl.NumberFormat('es-CO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(numero || 0);
+}
+
+// Función para actualizar precios según el cliente seleccionado
+function actualizarPreciosSegunCliente() {
+    const clienteId = document.getElementById('id_cliente').value;
+    
+    if (!clienteId) {
+        console.log('No hay cliente seleccionado');
+        return;
+    }
+    
+    console.log('🔄 Actualizando precios para cliente:', clienteId);
+    
+    // Actualizar precios en productos ya agregados
+    const productRows = document.querySelectorAll('.product-row:not(.removing)');
+    productRows.forEach(row => {
+        const productoInput = row.querySelector('input[name="productos[]"]');
+        const precioInput = row.querySelector('.precio-input');
+        const precioDisplay = row.querySelector('.precio-display');
+        
+        if (productoInput && precioInput && precioDisplay) {
+            const productoId = productoInput.value;
+            
+            // Buscar el producto en los datos y actualizar precio
+            fetch(`/ventas/api/productos/${productoId}/precio/?cliente_id=${clienteId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.precio) {
+                        precioInput.value = data.precio;
+                        precioDisplay.value = formatearNumero(data.precio);
+                        actualizarTotales(); // Recalcular totales
+                    }
+                })
+                .catch(error => {
+                    console.error('Error obteniendo precio:', error);
+                });
+        }
+    });
+    
+    // Obtener información del cliente vía API para conocer su tipo
+    fetch(`/ventas/api/clientes/?cliente_id=${clienteId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.cliente && data.cliente.tipo_cliente) {
+                // Actualizar datos de productos para futuras búsquedas
+                productosData.forEach(producto => {
+                    // Actualizar precio según tipo de cliente
+                    if (data.cliente.tipo_cliente === 'mayorista' || data.cliente.tipo_cliente === 'corporativo') {
+                        producto.precio = producto.precio_mayorista;
+                    } else {
+                        producto.precio = producto.precio_minorista;
+                    }
+                    producto.tipo_cliente_precio = data.cliente.tipo_cliente;
+                });
+                
+                console.log('✅ Precios actualizados para tipo de cliente:', data.cliente.tipo_cliente);
+            }
+        })
+        .catch(error => {
+            console.error('Error obteniendo información del cliente:', error);
+        });
+}
+
+// Función para hacer llamada AJAX al buscar productos con cliente seleccionado
+function buscarProductosConCliente(query) {
+    const clienteId = document.getElementById('id_cliente').value;
+    let url = `/ventas/api/productos/?q=${encodeURIComponent(query)}`;
+    
+    if (clienteId) {
+        url += `&cliente_id=${clienteId}`;
+    }
+    
+    return fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.productos) {
+                // Actualizar productosData con precios correctos
+                data.productos.forEach(apiProducto => {
+                    const localProducto = productosData.find(p => p.id === apiProducto.id);
+                    if (localProducto) {
+                        localProducto.precio = apiProducto.precio;
+                        localProducto.tipo_cliente_precio = apiProducto.tipo_cliente_precio;
+                    }
+                });
+            }
+            return data;
+        });
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Detectar cambio de cliente para actualizar precios
+    const clienteSelect = document.getElementById('id_cliente');
+    if (clienteSelect) {
+        clienteSelect.addEventListener('change', function() {
+            actualizarPreciosSegunCliente();
+        });
+    }
+    
+    // También detectar cuando se selecciona cliente desde autocompletado
+    const clienteSearchInput = document.getElementById('id_cliente_search');
+    if (clienteSearchInput) {
+        clienteSearchInput.addEventListener('change', function() {
+            // Dar tiempo para que se actualice el campo hidden
+            setTimeout(actualizarPreciosSegunCliente, 100);
+        });
+    }
+});
+
+// Quitar esta línea porque el campo descuento_porcentaje no existe
+// document.getElementById('id_descuento_porcentaje').addEventListener('input', actualizarTotales);
+</script>
+{% endblock %}

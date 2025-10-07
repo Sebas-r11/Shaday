@@ -1,0 +1,540 @@
+{% extends 'base.html' %}
+{% load permissions %}
+{% load inventario_filters %}
+
+{% block title %}Orden de Compra {{ orden.codigo }} - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="{% url 'inventario:orden_compra_stock_list' %}" class="text-blue-600 hover:text-blue-800 mr-4">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        Orden de Compra {{ orden.codigo }}
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Proveedor: {{ orden.proveedor.nombre }} • Creada: {{ orden.fecha_creacion|date:"d/m/Y H:i" }}
+                    </p>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                {% if orden.estado == 'borrador' %}
+                <button onclick="cambiarEstado('enviada')" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-paper-plane mr-2"></i>
+                    Enviar al Proveedor
+                </button>
+                <button onclick="cambiarEstado('cancelada')" 
+                        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar Orden
+                </button>
+                {% elif orden.estado == 'enviada' %}
+                <button onclick="cambiarEstado('confirmada')" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-handshake mr-2"></i>
+                    Confirmar Orden
+                </button>
+                {% elif orden.estado == 'confirmada' %}
+                <button onclick="cambiarEstado('parcial')" 
+                        class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-box-open mr-2"></i>
+                    Recepción Parcial
+                </button>
+                <button onclick="cambiarEstado('completa')" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Recepción Completa
+                </button>
+                {% elif orden.estado == 'parcial' %}
+                <button onclick="cambiarEstado('completa')" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Completar Recepción
+                </button>
+                {% endif %}
+                <a href="{% url 'inventario:orden_compra_pdf' orden.id %}" target="_blank"
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Generar PDF
+                </a>
+                <button onclick="window.print()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    <i class="fas fa-print mr-2"></i>
+                    Imprimir Página
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Información principal -->
+        <div class="lg:col-span-2">
+            <!-- Información de la orden -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                    Información de la Orden
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Código</label>
+                        <div class="mt-1 text-sm text-gray-900 font-mono bg-gray-50 px-3 py-2 rounded">
+                            {{ orden.codigo }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Estado</label>
+                        <div class="mt-1">
+                            {% if orden.estado == 'borrador' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-edit mr-2"></i>Borrador
+                            </span>
+                            {% elif orden.estado == 'enviada' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-paper-plane mr-2"></i>Enviada al Proveedor
+                            </span>
+                            {% elif orden.estado == 'confirmada' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-handshake mr-2"></i>Confirmada
+                            </span>
+                            {% elif orden.estado == 'parcial' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                                <i class="fas fa-clock mr-2"></i>Recibida Parcial
+                            </span>
+                            {% elif orden.estado == 'completa' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-2"></i>Recibida Completa
+                            </span>
+                            {% elif orden.estado == 'cancelada' %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-times-circle mr-2"></i>Cancelada
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-question mr-2"></i>{{ orden.get_estado_display }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Fecha de Creación</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            {{ orden.fecha_creacion|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    
+                    {% if orden.fecha_entrega_esperada %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Fecha de Entrega Esperada</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            {{ orden.fecha_entrega_esperada|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tipo de Orden</label>
+                        <div class="mt-1">
+                            {% if orden.generada_por_alerta %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Generada por Alerta de Stock
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-user mr-1"></i>Generada Manualmente
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Creada por</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            {% if orden.usuario_creacion %}
+                                {{ orden.usuario_creacion.get_full_name|default:orden.usuario_creacion.username }}
+                            {% else %}
+                                Sistema Automático
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if orden.observaciones %}
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+                    <div class="mt-1 text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded">
+                        {{ orden.observaciones }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Productos en la orden -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-boxes mr-2 text-green-600"></i>
+                        Productos Solicitados
+                    </h3>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Producto
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Cantidad
+                                </th>
+                                {% if user|can_see_prices %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Precio Unitario
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Subtotal
+                                </th>
+                                {% endif %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Stock Actual
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for item in orden.items.all %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ item.producto.nombre }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">
+                                                {{ item.producto.codigo }} • {{ item.producto.categoria.nombre }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold text-blue-600">
+                                        {{ item.cantidad }} unidades
+                                    </div>
+                                </td>
+                                {% if user|can_see_prices %}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ${{ item.precio_unitario|floatformat:0 }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                                    ${{ item.subtotal|floatformat:0 }}
+                                </td>
+                                {% endif %}
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold {% if item.producto.stock_critico %}text-red-600{% elif item.producto.stock_cerca_minimo %}text-orange-600{% else %}text-green-600{% endif %}">
+                                        {{ item.producto.stock_total }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        Mín: {{ item.producto.stock_minimo }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        {% if user|can_see_prices %}
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <th colspan="3" class="px-6 py-3 text-right text-sm font-medium text-gray-900">
+                                    Total General:
+                                </th>
+                                <th class="px-6 py-3 text-left text-lg font-bold text-green-600">
+                                    ${{ orden.total|floatformat:0 }}
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="lg:col-span-1">
+            <!-- Información del proveedor -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-building mr-2 text-blue-600"></i>
+                    Información del Proveedor
+                </h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                        <div class="mt-1 text-sm text-gray-900 font-medium">
+                            {{ orden.proveedor.nombre }}
+                        </div>
+                    </div>
+                    
+                    {% if orden.proveedor.contacto %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Contacto</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            {{ orden.proveedor.contacto }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if orden.proveedor.telefono %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Teléfono</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            <a href="tel:{{ orden.proveedor.telefono }}" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-phone mr-1"></i>{{ orden.proveedor.telefono }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if orden.proveedor.email %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            <a href="mailto:{{ orden.proveedor.email }}" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-envelope mr-1"></i>{{ orden.proveedor.email }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if orden.proveedor.direccion %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                        <div class="mt-1 text-sm text-gray-900">
+                            {{ orden.proveedor.direccion }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Resumen de la orden -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+                    Resumen
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Total de Productos:</span>
+                        <span class="text-sm font-medium text-gray-900">{{ orden.items.count }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-600">Total de Unidades:</span>
+                        <span class="text-sm font-medium text-gray-900">{{ orden.total_unidades }}</span>
+                    </div>
+                    
+                    {% if user|can_see_prices %}
+                    <div class="border-t pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-base font-medium text-gray-900">Total:</span>
+                            <span class="text-lg font-bold text-green-600">${{ orden.total|floatformat:0 }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Historial de estados -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-history mr-2 text-gray-600"></i>
+                    Historial
+                </h3>
+                
+                <div class="flow-root">
+                    <ul role="list" class="-mb-8">
+                        <li>
+                            <div class="relative pb-8">
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-8 ring-white">
+                                            <i class="fas fa-plus text-white text-xs"></i>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Orden creada</p>
+                                        </div>
+                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                            {{ orden.fecha_creacion|date:"d/m/Y H:i" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        
+                        {% if orden.estado != 'pendiente' %}
+                        <li>
+                            <div class="relative pb-8">
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        {% if orden.estado == 'enviada' or orden.estado == 'recibida' %}
+                                        <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                            <i class="fas fa-paper-plane text-white text-xs"></i>
+                                        </span>
+                                        {% else %}
+                                        <span class="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center ring-8 ring-white">
+                                            <i class="fas fa-times text-white text-xs"></i>
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">
+                                                {% if orden.estado == 'enviada' or orden.estado == 'recibida' %}
+                                                Orden enviada al proveedor
+                                                {% else %}
+                                                Orden cancelada
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                            {{ orden.updated_at|date:"d/m/Y H:i" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        {% if orden.estado == 'recibida' %}
+                        <li>
+                            <div class="relative">
+                                <div class="relative flex space-x-3">
+                                    <div>
+                                        <span class="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white">
+                                            <i class="fas fa-check text-white text-xs"></i>
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Orden recibida</p>
+                                        </div>
+                                        <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                                            {{ orden.updated_at|date:"d/m/Y H:i" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div id="modal-confirmar" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                <i class="fas fa-question-circle text-yellow-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4" id="modal-titulo"></h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="modal-mensaje"></p>
+            </div>
+            <div class="items-center px-4 py-3 space-x-3">
+                <button id="btn-confirmar" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                    Confirmar
+                </button>
+                <button id="btn-cancelar" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let estadoNuevo = null;
+
+function cambiarEstado(nuevoEstado) {
+    estadoNuevo = nuevoEstado;
+    
+    const modal = document.getElementById('modal-confirmar');
+    const titulo = document.getElementById('modal-titulo');
+    const mensaje = document.getElementById('modal-mensaje');
+    
+    const estados = {
+        'enviada': { titulo: 'Marcar como Enviada', mensaje: '¿Confirma que desea marcar esta orden como enviada al proveedor?' },
+        'recibida': { titulo: 'Marcar como Recibida', mensaje: '¿Confirma que ha recibido todos los productos de esta orden?' },
+        'cancelada': { titulo: 'Cancelar Orden', mensaje: '¿Está seguro que desea cancelar esta orden de compra?' }
+    };
+    
+    titulo.textContent = estados[nuevoEstado].titulo;
+    mensaje.textContent = estados[nuevoEstado].mensaje;
+    
+    modal.classList.remove('hidden');
+}
+
+document.getElementById('btn-confirmar').addEventListener('click', function() {
+    if (estadoNuevo) {
+        // Crear formulario para enviar cambio de estado
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = window.location.pathname + 'cambiar-estado/';
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                         document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        const estadoInput = document.createElement('input');
+        estadoInput.type = 'hidden';
+        estadoInput.name = 'nuevo_estado';
+        estadoInput.value = estadoNuevo;
+        form.appendChild(estadoInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+});
+
+document.getElementById('btn-cancelar').addEventListener('click', function() {
+    document.getElementById('modal-confirmar').classList.add('hidden');
+    estadoNuevo = null;
+});
+
+// Cerrar modal al hacer click fuera
+document.getElementById('modal-confirmar').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.add('hidden');
+        estadoNuevo = null;
+    }
+});
+
+// Obtener token CSRF para las solicitudes
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                  '{{ csrf_token }}';
+</script>
+{% endblock %}

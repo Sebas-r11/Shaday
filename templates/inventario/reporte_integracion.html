@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reporte Integrado Ventas-Inventario{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+<style>
+    .metric-card {
+        @apply bg-white rounded-lg shadow p-6 border-l-4;
+    }
+    .metric-card.success { @apply border-green-500; }
+    .metric-card.warning { @apply border-yellow-500; }
+    .metric-card.danger { @apply border-red-500; }
+    .metric-card.info { @apply border-blue-500; }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">📊 Reporte Integrado Ventas-Inventario</h1>
+        <p class="text-gray-600">Análisis del impacto de las ventas en el inventario y trazabilidad completa</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4">🔍 Filtros</h2>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Desde</label>
+                <input type="date" name="fecha_desde" value="{{ filtros.fecha_desde }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Hasta</label>
+                <input type="date" name="fecha_hasta" value="{{ filtros.fecha_hasta }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                <select name="producto_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todos los productos</option>
+                    {% for producto in productos %}
+                    <option value="{{ producto.id }}" {% if producto.id|stringformat:"s" == filtros.producto_id %}selected{% endif %}>
+                        {{ producto.codigo }} - {{ producto.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors">
+                    Aplicar Filtros
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPIs Principales -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="metric-card success">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Ventas Completadas</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.ventas_completadas }}</p>
+                    <p class="text-sm text-green-600">+{{ stats.crecimiento_ventas }}% vs. mes anterior</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card info">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Valor Total Vendido</p>
+                    <p class="text-3xl font-bold text-gray-900">${{ stats.valor_total|floatformat:0 }}</p>
+                    <p class="text-sm text-blue-600">Últimos 30 días</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-full">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card warning">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Productos Afectados</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.productos_vendidos }}</p>
+                    <p class="text-sm text-yellow-600">Diferentes productos</p>
+                </div>
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card danger">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Movimientos Totales</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ stats.movimientos_inventario }}</p>
+                    <p class="text-sm text-red-600">Registros de trazabilidad</p>
+                </div>
+                <div class="p-3 bg-red-100 rounded-full">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Impacto en Stock por Producto -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">📉 Impacto en Stock por Producto</h3>
+            <div class="chart-container">
+                <canvas id="stockImpactChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Movimientos por Tipo -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">🔄 Movimientos por Tipo</h3>
+            <div class="chart-container">
+                <canvas id="movimientosChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Productos Más Impactados -->
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold">🔥 Productos Más Impactados</h3>
+            <p class="text-sm text-gray-600">Productos con mayor movimiento por ventas</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Inicial</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendido</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Actual</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Impacto %</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Vendido</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for producto in productos_impactados %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ producto.codigo }}</div>
+                                    <div class="text-sm text-gray-500">{{ producto.nombre }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ producto.stock_inicial }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                -{{ producto.cantidad_vendida }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ producto.stock_actual }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if producto.impacto_porcentaje > 50 %}
+                            <span class="text-red-600 font-semibold">{{ producto.impacto_porcentaje|floatformat:1 }}%</span>
+                            {% elif producto.impacto_porcentaje > 25 %}
+                            <span class="text-yellow-600 font-semibold">{{ producto.impacto_porcentaje|floatformat:1 }}%</span>
+                            {% else %}
+                            <span class="text-green-600 font-semibold">{{ producto.impacto_porcentaje|floatformat:1 }}%</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            ${{ producto.valor_vendido|floatformat:0 }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            No hay datos disponibles para el período seleccionado
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Trazabilidad de Movimientos Recientes -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold">🔍 Trazabilidad de Movimientos Recientes</h3>
+            <p class="text-sm text-gray-600">Últimos movimientos de inventario relacionados con ventas</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for movimiento in movimientos_recientes %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ movimiento.fecha_movimiento|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ movimiento.producto.codigo }}</div>
+                            <div class="text-sm text-gray-500">{{ movimiento.producto.nombre }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if movimiento.motivo == 'venta' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                {{ movimiento.get_motivo_display }}
+                            </span>
+                            {% elif movimiento.motivo == 'reserva' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                {{ movimiento.get_motivo_display }}
+                            </span>
+                            {% elif movimiento.motivo == 'devolucion_cliente' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ movimiento.get_motivo_display }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ movimiento.get_motivo_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if movimiento.tipo_movimiento == 'salida' %}
+                            <span class="text-red-600">-{{ movimiento.cantidad }}</span>
+                            {% else %}
+                            <span class="text-green-600">+{{ movimiento.cantidad }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ movimiento.documento_referencia }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ movimiento.usuario.get_full_name|default:movimiento.usuario.username }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                            No hay movimientos recientes
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Gráfico de Impacto en Stock
+const stockCtx = document.getElementById('stockImpactChart').getContext('2d');
+const stockImpactChart = new Chart(stockCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ chart_data.productos_labels|safe }},
+        datasets: [{
+            label: 'Stock Inicial',
+            data: {{ chart_data.stock_inicial|safe }},
+            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+        }, {
+            label: 'Stock Actual',
+            data: {{ chart_data.stock_actual|safe }},
+            backgroundColor: 'rgba(239, 68, 68, 0.5)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Comparación Stock Inicial vs Actual'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Gráfico de Movimientos por Tipo
+const movCtx = document.getElementById('movimientosChart').getContext('2d');
+const movimientosChart = new Chart(movCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ chart_data.tipos_movimiento_labels|safe }},
+        datasets: [{
+            data: {{ chart_data.tipos_movimiento_datos|safe }},
+            backgroundColor: [
+                '#EF4444',  // Venta (rojo)
+                '#F59E0B',  // Reserva (amarillo)
+                '#10B981',  // Devolución (verde)
+                '#6B7280'   // Otros (gris)
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Distribución de Movimientos por Tipo'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

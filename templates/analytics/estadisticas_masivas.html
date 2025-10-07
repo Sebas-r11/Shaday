@@ -1,0 +1,747 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas Masivas - Analytics IA{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --cyber-blue: #00d4ff;
+        --cyber-purple: #6b46c1;
+        --cyber-green: #10b981;
+        --cyber-pink: #ec4899;
+        --cyber-yellow: #f59e0b;
+        --cyber-teal: #14b8a6;
+        --cyber-dark: #0f0f0f;
+        --cyber-gray: #1a1a1a;
+        --cyber-light: #f0f8ff;
+        --neon-glow: 0 0 20px rgba(0, 212, 255, 0.5);
+        --subtle-glow: 0 0 10px rgba(107, 70, 193, 0.3);
+    }
+
+    body {
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: 100vh;
+    }
+
+    .cyber-card {
+        background: linear-gradient(145deg, rgba(26, 26, 26, 0.95), rgba(15, 15, 15, 0.9));
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: var(--neon-glow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cyber-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--cyber-teal), transparent);
+        animation: scan 2.5s linear infinite;
+    }
+
+    @keyframes scan {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    .cyber-header {
+        background: linear-gradient(135deg, var(--cyber-teal), var(--cyber-blue));
+        border-radius: 20px 20px 0 0;
+        padding: 1.5rem;
+        color: white;
+        position: relative;
+    }
+
+    .cyber-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--cyber-teal), transparent);
+        box-shadow: 0 0 10px var(--cyber-teal);
+    }
+
+    .cyber-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .cyber-icon {
+        font-size: 2rem;
+        color: var(--cyber-green);
+        text-shadow: 0 0 15px var(--cyber-green);
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { 
+            transform: scale(1);
+            filter: drop-shadow(0 0 10px var(--cyber-green));
+        }
+        50% { 
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 20px var(--cyber-green));
+        }
+    }
+
+    .cyber-body {
+        padding: 2rem;
+        color: var(--cyber-light);
+    }
+
+    .stats-mega-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-mega-card {
+        background: linear-gradient(145deg, rgba(15, 15, 15, 0.95), rgba(26, 26, 26, 0.9));
+        border: 2px solid rgba(20, 184, 166, 0.4);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+    }
+
+    .stat-mega-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(20, 184, 166, 0.3);
+        border-color: var(--cyber-teal);
+    }
+
+    .stat-mega-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: conic-gradient(from 0deg, transparent, var(--cyber-teal), transparent);
+        animation: rotate 4s linear infinite;
+        opacity: 0.1;
+    }
+
+    @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .stat-mega-value {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--cyber-teal), var(--cyber-blue));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: 0 0 30px rgba(20, 184, 166, 0.5);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-mega-label {
+        color: var(--cyber-light);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-mega-icon {
+        font-size: 3rem;
+        color: var(--cyber-teal);
+        text-shadow: 0 0 20px var(--cyber-teal);
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .growth-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .growth-positive {
+        color: var(--cyber-green);
+        text-shadow: 0 0 10px var(--cyber-green);
+    }
+
+    .growth-negative {
+        color: #ef4444;
+        text-shadow: 0 0 10px #ef4444;
+    }
+
+    .data-table-mega {
+        background: rgba(15, 15, 15, 0.95);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--subtle-glow);
+        border: 2px solid rgba(20, 184, 166, 0.3);
+    }
+
+    .data-table-mega thead th {
+        background: linear-gradient(135deg, var(--cyber-teal), var(--cyber-blue));
+        color: white;
+        border: none;
+        padding: 20px 15px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .data-table-mega tbody td {
+        background: rgba(26, 26, 26, 0.9);
+        color: var(--cyber-light);
+        border: 1px solid rgba(20, 184, 166, 0.1);
+        padding: 20px 15px;
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .data-table-mega tbody tr:hover td {
+        background: rgba(20, 184, 166, 0.1);
+        color: white;
+        box-shadow: inset 0 0 20px rgba(20, 184, 166, 0.2);
+    }
+
+    .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        margin-bottom: 1rem;
+    }
+
+    .heatmap-cell {
+        aspect-ratio: 1;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .heatmap-low {
+        background: linear-gradient(135deg, #1e293b, #334155);
+        border: 1px solid #475569;
+    }
+
+    .heatmap-medium {
+        background: linear-gradient(135deg, var(--cyber-yellow), #d97706);
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .heatmap-high {
+        background: linear-gradient(135deg, var(--cyber-teal), var(--cyber-blue));
+        box-shadow: 0 0 15px rgba(20, 184, 166, 0.5);
+        animation: pulse-heat 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-heat {
+        0%, 100% { box-shadow: 0 0 15px rgba(20, 184, 166, 0.5); }
+        50% { box-shadow: 0 0 25px rgba(20, 184, 166, 0.8); }
+    }
+
+    .analytics-filter {
+        background: linear-gradient(135deg, rgba(107, 70, 193, 0.2), rgba(20, 184, 166, 0.2));
+        border: 2px solid rgba(107, 70, 193, 0.4);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .cyber-select {
+        background: rgba(15, 15, 15, 0.9);
+        border: 1px solid rgba(20, 184, 166, 0.3);
+        border-radius: 10px;
+        color: var(--cyber-light);
+        padding: 12px 16px;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .cyber-select:focus {
+        border-color: var(--cyber-teal);
+        box-shadow: 0 0 20px rgba(20, 184, 166, 0.5);
+        background: rgba(15, 15, 15, 1);
+        color: white;
+        outline: none;
+    }
+
+    .cyber-label {
+        color: var(--cyber-teal);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .realtime-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        color: var(--cyber-green);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .realtime-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--cyber-green);
+        border-radius: 50%;
+        animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    .breadcrumb-cyber {
+        background: rgba(26, 26, 26, 0.8);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .breadcrumb-cyber .breadcrumb-item {
+        color: var(--cyber-light);
+    }
+
+    .breadcrumb-cyber .breadcrumb-item.active {
+        color: var(--cyber-teal);
+        text-shadow: 0 0 5px var(--cyber-teal);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb futurista -->
+    <nav aria-label="breadcrumb" class="breadcrumb-cyber">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'analytics:dashboard' %}" class="text-decoration-none" style="color: var(--cyber-teal);">Analytics</a></li>
+            <li class="breadcrumb-item active">Estadísticas Masivas</li>
+        </ol>
+    </nav>
+
+    <!-- Header principal -->
+    <div class="cyber-card mb-4">
+        <div class="cyber-header">
+            <h1 class="cyber-title">
+                <i class="fas fa-chart-bar cyber-icon"></i>
+                DistribucioneShaddai - Estadísticas Masivas
+            </h1>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <p class="mb-0" style="opacity: 0.9;">
+                    Análisis en tiempo real con procesamiento masivo de datos empresariales
+                </p>
+                <div class="realtime-indicator">
+                    <span class="realtime-dot"></span>
+                    Tiempo Real
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros avanzados -->
+    <div class="analytics-filter">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3 mb-3">
+                <label class="cyber-label">Período de Análisis</label>
+                <select name="periodo" class="form-select cyber-select">
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30" selected>Últimos 30 días</option>
+                    <option value="90">Últimos 90 días</option>
+                    <option value="365">Último año</option>
+                    <option value="all">Histórico completo</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="cyber-label">Segmento Cliente</label>
+                <select name="segmento" class="form-select cyber-select">
+                    <option value="">Todos los segmentos</option>
+                    <option value="VIP">Clientes VIP</option>
+                    <option value="Premium">Clientes Premium</option>
+                    <option value="Regular">Clientes Regulares</option>
+                    <option value="Nuevo">Clientes Nuevos</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="cyber-label">Categoría Producto</label>
+                <select name="categoria" class="form-select cyber-select">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <button type="submit" class="btn w-100" style="background: linear-gradient(135deg, var(--cyber-teal), var(--cyber-blue)); border: none; border-radius: 10px; color: white; padding: 12px; font-weight: 600;">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Actualizar Análisis
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Métricas masivas principales -->
+    <div class="stats-mega-grid">
+        <div class="stat-mega-card">
+            <i class="fas fa-dollar-sign stat-mega-icon"></i>
+            <div class="stat-mega-value">${{ total_ventas|floatformat:0 }}</div>
+            <div class="stat-mega-label">Ventas Totales</div>
+            <div class="growth-indicator growth-positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>+{{ crecimiento_ventas|floatformat:1 }}%</span>
+            </div>
+        </div>
+
+        <div class="stat-mega-card">
+            <i class="fas fa-shopping-cart stat-mega-icon"></i>
+            <div class="stat-mega-value">{{ total_pedidos }}</div>
+            <div class="stat-mega-label">Pedidos Procesados</div>
+            <div class="growth-indicator growth-positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>+{{ crecimiento_pedidos|floatformat:1 }}%</span>
+            </div>
+        </div>
+
+        <div class="stat-mega-card">
+            <i class="fas fa-users stat-mega-icon"></i>
+            <div class="stat-mega-value">{{ clientes_activos }}</div>
+            <div class="stat-mega-label">Clientes Activos</div>
+            <div class="growth-indicator growth-positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>+{{ crecimiento_clientes|floatformat:1 }}%</span>
+            </div>
+        </div>
+
+        <div class="stat-mega-card">
+            <i class="fas fa-box stat-mega-icon"></i>
+            <div class="stat-mega-value">{{ productos_vendidos }}</div>
+            <div class="stat-mega-label">Productos Vendidos</div>
+            <div class="growth-indicator">
+                <i class="fas fa-chart-line"></i>
+                <span>{{ rotacion_promedio|floatformat:1 }}x</span>
+            </div>
+        </div>
+
+        <div class="stat-mega-card">
+            <i class="fas fa-chart-line stat-mega-icon"></i>
+            <div class="stat-mega-value">${{ ticket_promedio|floatformat:0 }}</div>
+            <div class="stat-mega-label">Ticket Promedio</div>
+            <div class="growth-indicator growth-positive">
+                <i class="fas fa-arrow-up"></i>
+                <span>+{{ crecimiento_ticket|floatformat:1 }}%</span>
+            </div>
+        </div>
+
+        <div class="stat-mega-card">
+            <i class="fas fa-sync-alt stat-mega-icon"></i>
+            <div class="stat-mega-value">{{ frecuencia_compra|floatformat:1 }}</div>
+            <div class="stat-mega-label">Días Prom. Recompra</div>
+            <div class="growth-indicator growth-negative">
+                <i class="fas fa-arrow-down"></i>
+                <span>-{{ mejora_frecuencia|floatformat:1 }}%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Heatmap de actividad -->
+        <div class="col-lg-6 mb-4">
+            <div class="cyber-card">
+                <div class="cyber-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-fire me-2"></i>
+                        Mapa de Calor - Actividad de Ventas
+                    </h5>
+                </div>
+                <div class="cyber-body">
+                    <div class="heatmap-grid">
+                        {% for day in heatmap_data %}
+                        <div class="heatmap-cell heatmap-{{ day.intensity }}" title="{{ day.date|date:'d/m' }}: {{ day.sales }} ventas">
+                            {{ day.sales }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <span class="badge" style="background: #334155;">Bajo</span>
+                            <span class="badge mx-2" style="background: var(--cyber-yellow);">Medio</span>
+                            <span class="badge" style="background: var(--cyber-teal);">Alto</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top productos por rentabilidad -->
+        <div class="col-lg-6 mb-4">
+            <div class="cyber-card">
+                <div class="cyber-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crown me-2"></i>
+                        Top Productos por Rentabilidad
+                    </h5>
+                </div>
+                <div class="cyber-body">
+                    {% if top_productos %}
+                        <div class="table-responsive">
+                            <table class="table data-table-mega">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Ventas</th>
+                                        <th>Margen</th>
+                                        <th>ROI</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for producto in top_productos %}
+                                    <tr>
+                                        <td class="text-start">
+                                            <strong>{{ producto.nombre|truncatechars:20 }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="stat-mega-value" style="font-size: 1.2rem;">${{ producto.ventas_totales|floatformat:0 }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="growth-positive">{{ producto.margen|floatformat:1 }}%</span>
+                                        </td>
+                                        <td>
+                                            <span class="stat-mega-value" style="font-size: 1rem;">{{ producto.roi|floatformat:1 }}x</span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-pie fa-3x mb-3" style="color: var(--cyber-teal); opacity: 0.5;"></i>
+                            <p class="text-muted">Procesando datos de rentabilidad...</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análisis por segmentos de clientes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="cyber-card">
+                <div class="cyber-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users-cog me-2"></i>
+                        Análisis Masivo por Segmentos de Clientes
+                        <span class="badge bg-light text-dark ms-2">{{ segmentos_analisis|length }} segmentos</span>
+                    </h5>
+                </div>
+                <div class="cyber-body">
+                    {% if segmentos_analisis %}
+                        <div class="table-responsive">
+                            <table class="table data-table-mega">
+                                <thead>
+                                    <tr>
+                                        <th>Segmento</th>
+                                        <th>Clientes</th>
+                                        <th>Ventas Totales</th>
+                                        <th>Ticket Promedio</th>
+                                        <th>Frecuencia</th>
+                                        <th>LTV</th>
+                                        <th>Participación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for segmento in segmentos_analisis %}
+                                    <tr>
+                                        <td class="text-start">
+                                            <strong style="color: var(--cyber-teal);">{{ segmento.nombre }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="stat-mega-value" style="font-size: 1.2rem;">{{ segmento.cantidad_clientes }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="stat-mega-value" style="font-size: 1.1rem;">${{ segmento.ventas_totales|floatformat:0 }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="growth-positive">${{ segmento.ticket_promedio|floatformat:0 }}</span>
+                                        </td>
+                                        <td>
+                                            {{ segmento.frecuencia_promedio|floatformat:1 }} días
+                                        </td>
+                                        <td>
+                                            <strong style="color: var(--cyber-green);">${{ segmento.ltv|floatformat:0 }}</strong>
+                                        </td>
+                                        <td>
+                                            <div style="width: 100px; background: rgba(15, 15, 15, 0.8); border-radius: 10px; height: 8px; position: relative;">
+                                                <div style="background: linear-gradient(90deg, var(--cyber-teal), var(--cyber-blue)); border-radius: 10px; height: 100%; width: {{ segmento.participacion }}%;"></div>
+                                            </div>
+                                            <small class="text-muted">{{ segmento.participacion|floatformat:1 }}%</small>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Resumen ejecutivo -->
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="text-center p-3" style="background: rgba(20, 184, 166, 0.1); border-radius: 15px; border: 1px solid rgba(20, 184, 166, 0.3);">
+                                    <div class="stat-mega-value" style="font-size: 2rem; color: var(--cyber-teal);">{{ total_eventos_procesados }}</div>
+                                    <small class="text-muted">Eventos Procesados</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3" style="background: rgba(107, 70, 193, 0.1); border-radius: 15px; border: 1px solid rgba(107, 70, 193, 0.3);">
+                                    <div class="stat-mega-value" style="font-size: 2rem; color: var(--cyber-purple);">{{ patrones_detectados }}</div>
+                                    <small class="text-muted">Patrones Detectados</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center p-3" style="background: rgba(16, 185, 129, 0.1); border-radius: 15px; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                    <div class="stat-mega-value" style="font-size: 2rem; color: var(--cyber-green);">{{ precision_promedio|floatformat:1 }}%</div>
+                                    <small class="text-muted">Precisión IA</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-database fa-4x mb-4" style="color: var(--cyber-teal); opacity: 0.5;"></i>
+                            <h4 style="color: var(--cyber-light);">Motor de Análisis Masivo Activo</h4>
+                            <p class="text-muted mb-4">
+                                El sistema está procesando millones de registros para generar estadísticas en tiempo real
+                            </p>
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <i class="fas fa-chart-line fa-2x mb-2" style="color: var(--cyber-green);"></i>
+                                    <h6 style="color: var(--cyber-light);">Análisis Predictivo</h6>
+                                    <small class="text-muted">Machine learning aplicado a grandes volúmenes</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-database fa-2x mb-2" style="color: var(--cyber-blue);"></i>
+                                    <h6 style="color: var(--cyber-light);">Big Data Processing</h6>
+                                    <small class="text-muted">Procesamiento masivo distribuido</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <i class="fas fa-eye fa-2x mb-2" style="color: var(--cyber-teal);"></i>
+                                    <h6 style="color: var(--cyber-light);">Insights en Tiempo Real</h6>
+                                    <small class="text-muted">Visualización instantánea de patrones</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh para datos en tiempo real
+let refreshInterval = setInterval(function() {
+    // Actualizar el indicador de tiempo real
+    const indicator = document.querySelector('.realtime-dot');
+    if (indicator) {
+        indicator.style.animation = 'none';
+        setTimeout(() => {
+            indicator.style.animation = 'pulse-dot 1.5s ease-in-out infinite';
+        }, 10);
+    }
+}, 2000);
+
+// Animación de contadores al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    const counters = document.querySelectorAll('.stat-mega-value');
+    counters.forEach(counter => {
+        const text = counter.textContent;
+        const match = text.match(/[\d,]+/);
+        if (match) {
+            const finalValue = parseInt(match[0].replace(/,/g, ''));
+            let currentValue = 0;
+            const increment = finalValue / 60;
+            const prefix = text.replace(match[0], '');
+            
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= finalValue) {
+                    counter.textContent = prefix + finalValue.toLocaleString();
+                    clearInterval(timer);
+                } else {
+                    counter.textContent = prefix + Math.floor(currentValue).toLocaleString();
+                }
+            }, 50);
+        }
+    });
+});
+
+// Efectos hover mejorados para las mega cards
+document.querySelectorAll('.stat-mega-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        const icon = this.querySelector('.stat-mega-icon');
+        if (icon) {
+            icon.style.transform = 'scale(1.2) rotateY(360deg)';
+            icon.style.transition = 'transform 0.6s ease';
+        }
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        const icon = this.querySelector('.stat-mega-icon');
+        if (icon) {
+            icon.style.transform = 'scale(1) rotateY(0deg)';
+        }
+    });
+});
+
+// Animación de las celdas del heatmap
+document.querySelectorAll('.heatmap-cell').forEach((cell, index) => {
+    cell.style.animationDelay = `${index * 20}ms`;
+    cell.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.3)';
+        this.style.zIndex = '10';
+        this.style.transition = 'transform 0.2s ease';
+    });
+    
+    cell.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+        this.style.zIndex = '1';
+    });
+});
+</script>
+{% endblock %}

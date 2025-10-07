@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Optimizador de Rutas{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/optimizer.css' %}">
+<style>
+    .optimizer-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .optimizer-header {
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .delivery-item {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .delivery-item:hover {
+        background: #e2e8f0;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .delivery-order {
+        background: #3b82f6;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .delivery-client {
+        font-weight: bold;
+        color: #1f2937;
+        font-size: 1rem;
+    }
+    
+    .delivery-address, .delivery-phone {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin: 0.25rem 0;
+    }
+    
+    .delivery-actions {
+        margin-top: 0.75rem;
+    }
+    
+    .btn-maps {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        transition: background 0.2s ease;
+    }
+    
+    .btn-maps:hover {
+        background: #059669;
+        color: white;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .no-entregas {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .alert-custom {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid;
+    }
+    
+    .alert-info {
+        background: #e0f2fe;
+        border-left-color: #0288d1;
+        color: #01579b;
+    }
+    
+    .alert-warning {
+        background: #fff3e0;
+        border-left-color: #f57c00;
+        color: #e65100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="optimizer-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-1">
+                            <i class="fas fa-route text-primary"></i>
+                            Optimizador de Rutas
+                        </h3>
+                        <p class="text-muted mb-0">Gestión eficiente de entregas con Google Maps</p>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">{{ total_entregas }}</div>
+                        <div>Entregas Programadas</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="row">
+        <!-- Lista de Entregas -->
+        <div class="col-12">
+            <div class="optimizer-card">
+                <div class="optimizer-header">
+                    <h5><i class="fas fa-list mr-2"></i>Lista de Entregas</h5>
+                    {% if total_entregas > 0 %}
+                    <small class="text-muted">
+                        Haz clic en "Abrir Maps" para navegar a cada ubicación
+                    </small>
+                    {% endif %}
+                </div>
+                
+                <div class="delivery-list" id="delivery-list">
+                    {% if entregas %}
+                        {% for entrega in entregas %}
+                        <div class="delivery-item" 
+                             data-entrega-id="{{ entrega.id }}"
+                             data-enlace-maps="{{ entrega.pedido.cliente.enlace_maps|default:'' }}">
+                            <div class="d-flex align-items-center">
+                                <div class="delivery-order">{{ forloop.counter }}</div>
+                                <div class="delivery-details flex-grow-1">
+                                    <div class="delivery-client">{{ entrega.pedido.cliente.nombre_completo }}</div>
+                                    <div class="delivery-address">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>{{ entrega.direccion_entrega }}
+                                    </div>
+                                    <div class="delivery-phone">
+                                        <i class="fas fa-phone mr-1"></i>{{ entrega.telefono_contacto }}
+                                    </div>
+                                    <div class="delivery-actions">
+                                        {% if entrega.pedido.cliente.enlace_maps %}
+                                        <button class="btn btn-maps" 
+                                                onclick="abrirEnMaps('{{ entrega.pedido.cliente.enlace_maps }}', '{{ entrega.pedido.cliente.nombre_completo|escapejs }}')">
+                                            <i class="fas fa-external-link-alt mr-1"></i>Abrir Maps
+                                        </button>
+                                        {% else %}
+                                        <small class="text-warning">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>Sin ubicación configurada
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-entregas">
+                            <i class="fas fa-truck fa-3x mb-3 text-muted"></i>
+                            <h5>No hay entregas programadas</h5>
+                            <p class="text-muted">Las entregas aparecerán aquí cuando estén asignadas a este repartidor.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Container -->
+<div id="alert-container" style="position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Optimizador de Rutas cargado');
+    console.log('📊 Total entregas:', {{ total_entregas }});
+});
+
+// Abrir ubicación en Google Maps
+function abrirEnMaps(urlMaps, cliente) {
+    console.log(`🗺️ Abriendo Google Maps para: ${cliente}`);
+    console.log(`🔗 URL: ${urlMaps}`);
+    
+    if (urlMaps && urlMaps.trim() !== '') {
+        window.open(urlMaps, '_blank');
+        mostrarAlerta('success', `Abriendo ubicación de ${cliente} en Google Maps`);
+    } else {
+        mostrarAlerta('error', 'No se encontró la ubicación de Google Maps para este cliente');
+    }
+}
+
+// Mostrar alertas
+function mostrarAlerta(tipo, mensaje) {
+    const container = document.getElementById('alert-container');
+    const alertId = 'alert-' + Date.now();
+    
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[tipo] || 'alert-info';
+    
+    const icon = {
+        'success': 'fas fa-check-circle',
+        'error': 'fas fa-exclamation-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'info': 'fas fa-info-circle'
+    }[tipo] || 'fas fa-info-circle';
+    
+    const alertHtml = `
+        <div id="${alertId}" class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="${icon} mr-2"></i>
+            ${mensaje}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        const alert = document.getElementById(alertId);
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

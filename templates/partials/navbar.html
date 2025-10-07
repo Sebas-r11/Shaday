@@ -1,0 +1,201 @@
+<!-- Navbar dinámico por roles -->
+{% if user.is_authenticated %}
+<nav class="bg-blue-800 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold">DistribucioneShaddai</h1>
+                </div>
+                
+                <!-- Menu Principal Dinámico -->
+                <div class="hidden md:ml-6 md:flex md:space-x-4">
+                    {% for module in user_navigation %}
+                        {% if module.subitems %}
+                            <!-- Módulo con dropdown -->
+                            <div class="relative dropdown-container">
+                                <div class="dropdown-trigger flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer">
+                                    <i class="{{ module.icon }} mr-2"></i>
+                                    <span>{{ module.name }}</span>
+                                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                                </div>
+                                <div class="dropdown-menu absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-50" style="display: none; opacity: 0; visibility: hidden;">
+                                    <div class="py-1">
+                                        {% for item in module.subitems %}
+                                        <a href="{% url item.url %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" title="{{ item.description|default:'' }}">
+                                            <i class="{{ item.icon }} mr-2"></i>{{ item.name }}
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Módulo simple -->
+                            <a href="{% url module.url %}" 
+                               class="px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors {% if module.active_namespace and module.active_namespace in request.resolver_match.namespace %}bg-blue-900{% endif %}"
+                               title="{{ module.description|default:'' }}">
+                                <i class="{{ module.icon }} mr-2"></i>{{ module.name }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- User Menu -->
+            <div class="flex items-center space-x-4">
+                <!-- User Dropdown -->
+                <div class="relative dropdown-container">
+                    <div class="dropdown-trigger flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors cursor-pointer">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-circle mr-2 text-lg"></i>
+                            <div class="flex flex-col text-left">
+                                <span class="text-sm text-white">{{ user.get_full_name|default:user.username }}</span>
+                                <span class="text-xs text-blue-200">{{ user_role_name }}</span>
+                            </div>
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="dropdown-menu absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 transition-all duration-200 z-50" style="display: none; opacity: 0; visibility: hidden;">
+                        <div class="py-1">
+                            <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                                <div class="font-medium">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="text-xs text-gray-500">{{ user.email }}</div>
+                            </div>
+                            <a href="{% url 'accounts:user_detail' user.pk %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Mi Perfil
+                            </a>
+                            <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                                {% csrf_token %}
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50" 
+                                        onclick="return confirm('¿Está seguro que desea cerrar sesión?')">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+            <button type="button" class="mobile-menu-button inline-flex items-center justify-center p-2 rounded-md text-blue-200 hover:text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+                <span class="sr-only">Abrir menú principal</span>
+                <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <div class="mobile-menu hidden md:hidden">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {% for module in user_navigation %}
+                {% if not module.subitems %}
+                    <a href="{% url module.url %}" class="block px-3 py-2 rounded-md text-base font-medium hover:bg-blue-700 transition-colors">
+                        <i class="{{ module.icon }} mr-2"></i>{{ module.name }}
+                    </a>
+                {% else %}
+                    <div class="px-3 py-2 text-base font-medium text-blue-200">
+                        <i class="{{ module.icon }} mr-2"></i>{{ module.name }}
+                    </div>
+                    {% for item in module.subitems %}
+                        <a href="{% url item.url %}" class="block pl-6 pr-3 py-1 text-sm hover:bg-blue-700 transition-colors">
+                            <i class="{{ item.icon }} mr-2"></i>{{ item.name }}
+                        </a>
+                    {% endfor %}
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Logout button for mobile -->
+            <div class="border-t border-blue-600 pt-3 mt-3">
+                <div class="px-3 py-2 text-sm text-blue-200">
+                    {{ user.get_full_name|default:user.username }} ({{ user_role_name }})
+                </div>
+                <form method="post" action="{% url 'accounts:logout' %}" class="px-3">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full text-left py-2 rounded-md text-base font-medium hover:bg-blue-700 transition-colors text-red-300">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- JavaScript para mobile menu y dropdowns -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile menu functionality
+    const mobileMenuButton = document.querySelector('.mobile-menu-button');
+    const mobileMenu = document.querySelector('.mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener('click', function() {
+            mobileMenu.classList.toggle('hidden');
+        });
+    }
+    
+    // Dropdown functionality
+    const dropdowns = document.querySelectorAll('.dropdown-container');
+    
+    dropdowns.forEach((dropdown) => {
+        const trigger = dropdown.querySelector('.dropdown-trigger');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        
+        if (trigger && menu) {
+            // Mostrar dropdown en hover
+            dropdown.addEventListener('mouseenter', function() {
+                menu.style.display = 'block';
+                menu.style.opacity = '1';
+                menu.style.visibility = 'visible';
+            });
+            
+            // Ocultar dropdown al salir
+            dropdown.addEventListener('mouseleave', function() {
+                menu.style.opacity = '0';
+                menu.style.visibility = 'hidden';
+                setTimeout(() => {
+                    if (menu.style.visibility === 'hidden') {
+                        menu.style.display = 'none';
+                    }
+                }, 200);
+            });
+            
+            // Toggle dropdown con click
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const isVisible = menu.style.visibility === 'visible';
+                
+                if (isVisible) {
+                    menu.style.opacity = '0';
+                    menu.style.visibility = 'hidden';
+                    menu.style.display = 'none';
+                } else {
+                    menu.style.display = 'block';
+                    menu.style.opacity = '1';
+                    menu.style.visibility = 'visible';
+                }
+            });
+        }
+    });
+    
+    // Cerrar dropdowns al hacer click fuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown-container')) {
+            dropdowns.forEach(dropdown => {
+                const menu = dropdown.querySelector('.dropdown-menu');
+                if (menu) {
+                    menu.style.opacity = '0';
+                    menu.style.visibility = 'hidden';
+                    menu.style.display = 'none';
+                }
+            });
+        }
+    });
+});
+</script>
+{% endif %}

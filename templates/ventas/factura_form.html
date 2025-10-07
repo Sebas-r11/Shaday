@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Factura{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-invoice-dollar"></i>
+            {% if object %}Editar Factura{% else %}Nueva Factura{% endif %}
+        </h1>
+        <a href="{% url 'ventas:factura-list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Datos de la Factura</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.pedido.id_for_label }}">Pedido:</label>
+                                    {{ form.pedido }}
+                                    {% if form.pedido.errors %}
+                                        <div class="text-danger">{{ form.pedido.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.numero.id_for_label }}">Número:</label>
+                                    {{ form.numero }}
+                                    {% if form.numero.errors %}
+                                        <div class="text-danger">{{ form.numero.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.fecha_factura.id_for_label }}">Fecha Factura:</label>
+                                    {{ form.fecha_factura }}
+                                    {% if form.fecha_factura.errors %}
+                                        <div class="text-danger">{{ form.fecha_factura.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.metodo_pago.id_for_label }}">Método de Pago:</label>
+                                    {{ form.metodo_pago }}
+                                    {% if form.metodo_pago.errors %}
+                                        <div class="text-danger">{{ form.metodo_pago.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.observaciones.id_for_label }}">Observaciones:</label>
+                                    {{ form.observaciones }}
+                                    {% if form.observaciones.errors %}
+                                        <div class="text-danger">{{ form.observaciones.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Factura
+                            </button>
+                            <a href="{% url 'ventas:factura-list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            {% if object.pedido %}
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Información del Pedido</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Cliente:</strong> {{ object.pedido.cliente }}</p>
+                    <p><strong>Total:</strong> ${{ object.pedido.total|floatformat:2 }}</p>
+                    <p><strong>Estado:</strong> 
+                        <span class="badge badge-{{ object.pedido.estado|lower }}">
+                            {{ object.pedido.get_estado_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Configurar campos de formulario
+    $('input, select, textarea').addClass('form-control');
+    $('input[type="date"]').attr('type', 'date');
+    
+    // Validaciones adicionales
+    $('form').on('submit', function(e) {
+        var isValid = true;
+        
+        // Validar campos requeridos
+        $(this).find('[required]').each(function() {
+            if (!$(this).val()) {
+                isValid = false;
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor complete todos los campos requeridos');
+        }
+    });
+});
+</script>
+{% endblock %}

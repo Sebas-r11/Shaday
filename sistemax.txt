@@ -1,0 +1,215 @@
+# Sistema de Gestión Empresarial - Resumen Técnico Completo 
+## 1. Arquitectura y Tecnología 
+### 1.1. Stack Tecnológico - **Backend**: Django (Python) con arquitectura MVT - **Base de Datos**: PostgreSQL con índices optimizados - **Frontend**: Templates Django + HTML5 + CSS3 + JavaScript vanilla - **Responsive Design**: Tailwind CSS para todas las interfaces - **Servidor**: Nginx + Gunicorn para producción - **Tiempo Real**: Django Channels + WebSockets para sincronización - **Caché**: Redis para consultas frecuentes y sesiones 
+### 1.2. Especificaciones Técnicas - **Compatibilidad**: Navegadores modernos (Chrome 90+, Firefox 88+, Safari 
+14+) - **Dispositivos**: Desktop, tablet, móvil (responsive completo) - **Conectividad**: Requiere conexión a internet permanente - **Soporte Regional**: Colombia (horario COT, configuración es-CO) - **Seguridad**: Encriptación AES-256, protección XSS/SQL injection 
+## 2. Modelo de Usuarios y Roles 
+### 2.1. Jerarquía de Roles 
+``` 
+SuperAdmin → Administrador → [Vendedor, Bodega, Repartidor] 
+``` 
+### 2.2. Permisos Detallados 
+**SuperAdmin:** - Crear/eliminar administradores - Restauración completa de backups - Configuración global del sistema - Acceso irrestricto a todos los módulos 
+**Administrador:** - Gestión completa de usuarios (vendedores, bodega, repartidores) - Ejecución de backups diarios automáticos - Registro de entradas de compra y ajustes de inventario - Configuración de parámetros del sistema - Acceso completo a reportes, dashboard y CRM - Gestión de interacciones con clientes 
+**Vendedor:** - Crear/modificar cotizaciones y convertir a facturas - Aplicar descuentos manuales (hasta límites configurados) - Acceso a listas de precios mayorista y minorista - Consultar clientes y productos - Gestión completa del CRM (interacciones, seguimientos) - **Restricciones**: No ve utilidades, costos ni puede ajustar inventario 
+**Bodega:** - Marcar pedidos como "Preparado" - Imprimir documentos de validación de entrada - Consultar niveles de stock por bodega 
+- **Restricciones**: No registra compras ni ve costos 
+**Repartidor:** - Ver lista de pedidos asignados - Seleccionar pedidos para reparto diario - Actualizar estados mediante flujo predefinido - Capturar firma digital de entrega - Acceso limitado a información de clientes (solo dirección/contacto) 
+## 3. Módulo de Inventario (Core) 
+### 3.1. Gestión de Productos - **Código de Producto**: Generación automática de 6 dígitos o ingreso manual 
+hasta 20 caracteres - **Variantes Soportadas**: Solo tallas y colores - **Código de Variante**: Autogeneración (PROD001-XL-ROJO) - **Categorización**: Estructura jerárquica Categoría → Subcategoría - **Estados**: Activo/Inactivo con fechas de modificación 
+### 3.2. Control de Stock - **Método de Costeo**: Promedio Ponderado automático - **Actualizaciones Automáticas**: - Ventas → Disminuye stock - Compras → Aumenta stock + actualiza costo promedio - Devoluciones → Reversa movimientos originales - **Ajustes Manuales**: Requieren documento con usuario, timestamp, motivo 
+obligatorio y observaciones opcionales - **Alertas**: Notificaciones automáticas por stock bajo del mínimo configurado 
+### 3.3. Arquitectura Multi-Bodega - Preparado para múltiples bodegas y sucursales - Cada sucursal puede elegir qué bodegas contemplar para su stock - Control granular de inventario por ubicación física 
+## 4. Módulo de Precios y Descuentos 
+### 4.1. Sistema de Precios - **Listas de Precios**: Mayorista y Minorista por producto/variante - **Cálculo Base**: Precio Sugerido = Costo Promedio × (1 + Margen Aplicable) - **Descuentos Manuales**: Aplicables por vendedores hasta límites 
+configurados - **Utilidad Bruta**: Precio Venta - Costo Promedio (visible solo para 
+administradores) 
+### 4.2. Gestión de Márgenes - Configuración por categoría y subcategoría - Actualización automática de precios sugeridos - Historial de cambios de precios con auditoría completa 
+## 5. Módulo de Compras y Proveedores 
+### 5.1. Flujo de Compras 
+1. **Creación Orden**: Proveedor, productos, cantidades, precios, fecha 
+esperada 
+2. **Recepción Física**: Validación contra orden, impresión de documentos 
+3. **Registro Sistema**: Actualización de stock y costo promedio 
+4. **Digitalización**: Factura del proveedor con respaldo digital 
+### 5.2. Devoluciones a Proveedores - **Motivos**: Defectuoso, equivocado, dañado en transporte, no conforme - **Lógica de Reversión**: Anula matemáticamente la entrada original - **Impacto**: Revierte tanto stock como cálculo de costo promedio - **Documentación**: Completa trazabilidad con observaciones 
+### 5.3. Análisis de Proveedores - Rendimiento de entregas y cumplimiento de fechas - Análisis de precios históricos y tendencias - Sistema de calificación y evaluación continua 
+## 6. Módulo de Ventas y Facturación 
+### 6.1. Flujo de Estados 
+``` 
+Cotización → Pedido → Factura → Despacho 
+``` 
+**Estados Detallados:** - **Borrador**: Cotización en elaboración - **Pendiente**: Esperando confirmación/pago - **Preparación**: En proceso de alistamiento - **Preparado**: Listo para despacho (marcado por bodega) - **En Camino**: En ruta de reparto - **Entregado**: Completado con firma digital - **Cancelado**: Pedido anulado 
+### 6.2. Facturación Electrónica DIAN 
+- **Integración Directa**: Webservices oficiales DIAN - **Documentos**: Factura electrónica, Nota crédito (solo anulación) - **Características**: CUFDE automático, numeración por tipo, QR de validación - **Cumplimiento**: Resolución 187 de 2021 completa - **Devoluciones**: Solo anulación total de facturas mediante nota crédito 
+## 7. Módulo CRM Básico 
+### 7.1. Gestión de Clientes - **Información Base**: Documento, nombre, contactos, dirección completa - **Segmentación**: Minorista, Mayorista, Corporativo - **Comercial**: Vendedor asignado, límite de crédito, días de crédito - **Métricas Automáticas**: Total compras, última compra, frecuencia calculada 
+### 7.2. Interacciones y Seguimiento - **Tipos de Interacción**: Llamada, WhatsApp, email, visita, cotización, reclamo - **Usuarios Autorizados**: Vendedores y Administradores - **Seguimientos**: Sistema de tareas pendientes con fechas - **Historial Completo**: Trazabilidad total de comunicaciones 
+### 7.3. Dashboard CRM - **Por Vendedor**: Clientes asignados, activos, valor promedio, frecuencia 
+contacto - **Alertas**: Clientes sin compras +60 días, límites de crédito, seguimientos 
+pendientes - **Automatización**: Recordatorios de cumpleaños y fechas importantes 
+## 8. Módulo de Despachos y Entregas 
+### 8.1. Flujo de Reparto 
+1. **Asignación**: Administrador asigna pedidos a repartidor 
+2. **Selección**: Repartidor elige pedidos para jornada diaria 
+3. **Alistamiento**: Bodega confirma preparación 
+4. **Ruta**: Sistema actualiza estados automáticamente 
+5. **Entrega**: Confirmación con firma digital obligatoria 
+### 8.2. Captura de Entregas - **Firma Digital**: Canvas HTML5 para dispositivos táctiles - **Alternativas**: Upload de imagen o foto del comprobante - **Validación**: Nombre receptor, documento, observaciones - **Geolocalización**: Integración directa Maps/Waze sin API 
+## 9. Integraciones Externas 
+### 9.1. WhatsApp Business - **Implementación**: API no oficial (WebJS/Venom) - **Características**: Pool de números, sesiones persistentes, plantillas - **Notificaciones**: Confirmación pedido, estados, entrega, recordatorios pago - **Confiabilidad**: Reintentos automáticos y logs completos 
+### 9.2. Notificaciones Inteligentes - **Canales**: Email, WhatsApp, dashboard, alertas del sistema - **Tipos**: Stock bajo, pedidos nuevos, pagos pendientes, backups fallidos - **Personalización**: Configuración por rol y preferencias de usuario 
+## 10. Dashboard y Reportes 
+### 10.1. Métricas en Tiempo Real - **Ventas**: Hoy, semana, mes con comparativos - **Utilidad Bruta**: Ventas menos costo de mercancía vendida - **Operacional**: Pedidos pendientes, stock bajo, categorías top - **Rendimiento**: Velocidad de rotación, productos lentos 
+### 10.2. Reportes Predefinidos - **Ventas**: Por período, vendedor, categoría, producto, cliente - **Inventario**: Rotación, productos críticos, movimientos detallados - **CRM**: Clientes activos, valor lifetime, frecuencia de compra - **Proveedores**: Rendimiento, calidad, análisis de costos - **Utilidades**: Márgenes detallados por segmento 
+## 11. Seguridad y Auditoría 
+### 11.1. Sistema de Auditoría - **Logs Completos**: Todas las acciones con usuario, timestamp, IP - **Trazabilidad**: Cambios antes/después en formato JSON - **Modelos Auditados**: Productos, precios, inventario, ventas, clientes - **Retención**: Logs permanentes para cumplimiento normativo 
+### 11.2. Medidas de Seguridad - **Autenticación**: Two-factor para administradores - **Validación**: Frontend y backend para prevenir manipulación - **Encriptación**: Datos sensibles con AES-256 - **Protección**: Anti XSS, SQL injection, CSRF tokens 
+## 12. Backup y Mantenimiento 
+### 12.1. Backup Automático - **Frecuencia**: Diario a las 02:00 AM automático - **Contenido**: Base de datos completa + documentos digitales - **Retención**: 30 días rotativos con compresión - **Restauración**: Exclusivamente por SuperAdmin con auditoría 
+### 12.2. Configuración del Sistema - **Parámetros**: Series de documentos, impuestos, términos y condiciones - **Formatos**: Personalización de impresión y documentos - **Umbrales**: Alertas de stock, límites de descuento, días de crédito - **Regional**: Configuración específica para Colombia 
+## 14. Requisitos Técnicos 
+### 14.1. Hardware - **Producción**: 4GB RAM, 2 CPU, 100GB SSD - **Desarrollo**: 8GB RAM, 4 CPU, 500GB SSD - **Backup**: 200GB adicionales con redundancia - **Escalabilidad**: Preparado para crecimiento horizontal 
+### 14.2. Rendimiento - **Caché Redis**: Consultas frecuentes y sesiones - **Índices DB**: Optimizados para búsquedas críticas - **Compresión**: Imágenes y documentos automática - **CDN**: Para recursos estáticos en producción 
+## 15. Consideraciones de Negocio 
+### 15.1. Beneficios Clave - **Control Total**: Inventario, ventas, clientes en tiempo real - **Cumplimiento**: DIAN automático sin intervención manual - **Eficiencia**: Automatización de procesos repetitivos - **Escalabilidad**: Crecimiento sin cambios estructurales mayores 
+### 15.2. ROI Esperado - **Reducción Errores**: 80% menos errores manuales de inventario - **Tiempo de Facturación**: 70% más rápido vs. proceso manual - **Visibilidad**: 100% trazabilidad en tiempo real - **Cumplimiento**: 0% riesgo de sanciones DIAN 
+## 16. Funcionamiento Operativo del Sistema 
+### 16.1. Flujo de Trabajo Diario 
+#### Apertura del Sistema 
+1. **Login Seguro**: Autenticación por rol con registro de sesión 
+2. **Dashboard Personalizado**: Métricas relevantes según el rol del usuario 
+3. **Notificaciones Activas**: Alertas pendientes, tareas del día, recordatorios 
+#### Administrador - Rutina Matinal 
+1. **Revisión Dashboard**: Ventas del día anterior, stock crítico, pedidos 
+pendientes 
+2. **Verificación Backup**: Confirmación automática del backup nocturno 
+3. **Gestión de Alertas**: Productos bajo mínimo, seguimientos CRM vencidos 
+4. **Asignación de Rutas**: Distribución de pedidos preparados a repartidores 
+5. **Revisión de Compras**: Órdenes pendientes, recepciones esperadas 
+### 16.2. Proceso Completo de Venta (Flujo Principal) 
+#### Etapa 1: Gestión Comercial 
+**Vendedor inicia proceso:** 
+1. **Búsqueda de Cliente**: Por documento, nombre o teléfono en CRM 
+2. **Creación/Actualización**: Si es nuevo, registro completo; si existe, 
+actualización de datos 
+3. **Registro de Interacción**: Tipo de contacto (presencial, llamada, WhatsApp) 
+4. **Selección de Productos**: Búsqueda por código, nombre o categoría 
+5. **Aplicación de Precios**: Automática según tipo de cliente 
+(mayorista/minorista) 
+6. **Descuentos Manuales**: Aplicación dentro de límites autorizados 
+7. **Generación de Cotización**: Documento con vigencia configurable 
+#### Etapa 2: Confirmación y Pedido 
+**Cliente acepta cotización:** 
+1. **Conversión a Pedido**: Un clic convierte cotización en pedido activo 
+2. **Verificación de Stock**: Sistema valida disponibilidad en tiempo real 
+3. **Reserva Temporal**: Stock queda reservado por tiempo configurable 
+4. **Confirmación de Datos**: Validación de dirección de entrega y contacto 
+5. **Estado "Pendiente"**: Esperando confirmación de pago o procesamiento 
+#### Etapa 3: Procesamiento y Facturación 
+**Administrador/Vendedor procesa:** 
+1. **Conversión a Factura**: Genera documento fiscal electrónico 
+2. **Integración DIAN**: Envío automático y obtención de CUFDE 
+3. **Numeración Automática**: Según serie configurada y consecutivo 
+4. **Generación de QR**: Para validación del cliente 
+5. **Notificación WhatsApp**: Envío automático de confirmación 
+6. **Actualización de Stock**: Descuento automático del inventario 
+7. **Estado "Facturado"**: Pedido listo para preparación 
+#### Etapa 4: Preparación en Bodega 
+**Personal de Bodega ejecuta:** 
+1. **Lista de Pedidos**: Visualización de facturas por procesar 
+2. **Impresión de Picking**: Documento con productos y ubicaciones 
+3. **Recolección Física**: Alistamiento de productos según lista 
+4. **Verificación**: Confirmación de cantidades y estado de productos 
+5. **Empaque**: Preparación para despacho con etiquetas 
+6. **Marcado "Preparado"**: Estado actualizado en el sistema 
+7. **Notificación Automática**: Alert al repartidor asignado 
+#### Etapa 5: Despacho y Entrega 
+**Repartidor ejecuta proceso:** 
+1. **Selección de Ruta**: Visualización de pedidos asignados 
+2. **Planificación**: Organización de entregas por zona geográfica 
+3. **Confirmación de Salida**: Estado "En Camino" automático 
+4. **Navegación**: Enlaces directos a Google Maps/Waze por pedido 
+5. **Proceso de Entrega**: Confirmación con firma digital obligatoria 
+6. **Registro de Novedad**: Si hay inconvenientes o cambios 
+7. **Estado "Entregado"**: Finalización del ciclo con timestamp 
+8. **Notificación Final**: WhatsApp automático de entrega exitosa 
+### 16.3. Gestión de Inventario (Flujo Continuo) 
+#### Compras y Reposición 
+**Proceso de Abastecimiento:** 
+1. **Detección de Necesidad**: Alertas automáticas por stock mínimo 
+2. **Creación Orden de Compra**: Selección de proveedor y productos 
+3. **Envío a Proveedor**: Comunicación automática de la orden 
+4. **Recepción Física**: Validación en bodega contra orden 
+5. **Registro en Sistema**: Actualización de stock y costo promedio 
+6. **Actualización de Precios**: Recálculo automático según nuevos costos 
+#### Control de Calidad 
+**Verificación Continua:** 
+1. **Auditorías Aleatorias**: Conteos físicos vs. sistema 
+2. **Ajustes Documentados**: Registro de diferencias con motivos 
+3. **Análisis de Variaciones**: Identificación de patrones de pérdida 
+4. **Medidas Correctivas**: Implementación de mejoras en procesos 
+### 16.4. Interacciones CRM (Flujo Comercial) 
+#### Gestión Proactiva de Clientes 
+**Vendedores ejecutan rutina:** 
+1. **Revisión de Alertas**: Clientes sin compras, seguimientos pendientes 
+2. **Planificación de Contactos**: Agenda diaria de llamadas/visitas 
+3. **Registro de Interacciones**: Documentación completa de cada contacto 
+4. **Seguimientos Programados**: Creación de tareas futuras 
+5. **Actualización de Perfiles**: Modificación de datos según nuevas necesidades 
+#### Automatización de Marketing 
+**Sistema ejecuta automáticamente:** 
+1. **Recordatorios de Cumpleaños**: Notificaciones para contacto personal 
+2. **Alertas de Inactividad**: Identificación de clientes en riesgo 
+3. **Análisis de Patrones**: Detección de oportunidades de venta 
+4. **Reportes de Rendimiento**: Métricas por vendedor y cliente 
+### 16.5. Procesos de Soporte y Mantenimiento 
+#### Operación Nocturna Automática 
+**Sistema ejecuta sin intervención:** 
+1. **Backup Completo**: Respaldo de base de datos y documentos (02:00 AM) 
+2. **Limpieza de Logs**: Rotación de archivos según retención configurada 
+3. **Actualización de Métricas**: Cálculo de estadísticas para dashboard 
+4. **Procesamiento de Reportes**: Generación de informes programados 
+5. **Verificación de Integridad**: Validación de consistencia de datos 
+#### Mantenimiento Preventivo Semanal 
+**Administrador ejecuta rutina:** 
+1. **Revisión de Performance**: Análisis de tiempos de respuesta 
+2. **Verificación de Integraciones**: Estado de conexiones DIAN y WhatsApp 
+3. **Análisis de Logs**: Identificación de errores o patrones anómalos 
+4. **Optimización de Base de Datos**: Reindexación y limpieza 
+5. **Actualización de Configuraciones**: Ajustes según necesidades del negocio 
+### 16.6. Gestión de Excepciones y Casos Especiales 
+#### Manejo de Devoluciones 
+**Proceso estructurado:** 
+1. **Recepción de Solicitud**: Cliente solicita devolución 
+2. **Evaluación**: Administrador revisa motivos y condiciones 
+3. **Aprobación**: Si procede, se autoriza la devolución 
+4. **Generación Nota Crédito**: Documento fiscal automático a DIAN 
+5. **Reversión de Movimientos**: Stock y costos vuelven a estado anterior 
+6. **Comunicación**: Notificación automática al cliente 
+#### Gestión de Crisis 
+**Protocolos de emergencia:** 
+1. **Pérdida de Conectividad**: Modo oAline limitado para operaciones críticas 
+2. **Falla de Sistema**: Procedimientos de respaldo manual documentados 
+3. **Problemas con DIAN**: Cola de reenvío automático de documentos 
+4. **Incidentes de Seguridad**: Protocolos de bloqueo y notificación 
+### 16.7. Ciclo de Mejora Continua 
+#### Análisis de Rendimiento 
+**Evaluación mensual:** 
+1. **Métricas de Productividad**: Tiempo por proceso, errores por usuario 
+2. **Análisis de Bottlenecks**: Identificación de cuellos de botella 
+3. **Feedback de Usuarios**: Recolección de sugerencias de mejora 
+4. **Implementación de Cambios**: Actualizaciones basadas en análisis 
+5. **Capacitación Continua**: Entrenamiento en nuevas funcionalidades 
+#### Expansión del Sistema 
+**Preparación para crecimiento:** 
+1. **Evaluación de Carga**: Monitoreo de uso y recursos 
+2. **Planificación de Escalamiento**: Preparación para mayor volumen 
+3. **Nuevas Integraciones**: Evaluación de necesidades adicionales 
+4. **Optimización Continua**: Mejoras de rendimiento y usabilidad 
+### 16.8. Integración Total del Ecosistema 
+El sistema funciona como un organismo integrado donde: 
+**Flujo de Información Continuo:** - Cada acción genera datos que alimentan otras áreas - Métricas en tiempo real influyen en decisiones inmediatas - Historial completo permite análisis predictivo - Automatización reduce intervención manual al mínimo 
+**Sincronización Completa:** - Stock actualizado instantáneamente en todas las operaciones - Precios y costos recalculados automáticamente - Estados de pedidos visibles para todos los actores relevantes - Notificaciones coordinadas entre todos los canales 
+**Operación Autónoma:** - Sistema funciona 24/7 con mínima supervisión - Procesos críticos automatizados con respaldos - Alertas proactivas previenen problemas antes de que ocurran - Escalabilidad automática según demanda del negocio

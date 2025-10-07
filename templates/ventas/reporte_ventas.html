@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reporte de Ventas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-line"></i> Reporte de Ventas
+        </h1>
+        <div>
+            <a href="{% url 'ventas:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros de Búsqueda</h6>
+        </div>
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Fecha Desde:</label>
+                            <input type="date" name="fecha_desde" class="form-control" value="{{ request.GET.fecha_desde }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Fecha Hasta:</label>
+                            <input type="date" name="fecha_hasta" class="form-control" value="{{ request.GET.fecha_hasta }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Cliente:</label>
+                            <select name="cliente" class="form-control">
+                                <option value="">Todos los clientes</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}" {% if request.GET.cliente == cliente.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ cliente.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary form-control">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Ventas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ${{ total_ventas|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Número de Facturas
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_facturas }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-invoice fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Promedio por Factura
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ${{ promedio_factura|floatformat:2 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Clientes Únicos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ clientes_unicos }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detalle de Ventas -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Detalle de Ventas</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Vendedor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for factura in facturas %}
+                        <tr>
+                            <td>{{ factura.numero }}</td>
+                            <td>{{ factura.fecha_factura|date:"d/m/Y" }}</td>
+                            <td>{{ factura.pedido.cliente.nombre }}</td>
+                            <td>${{ factura.total|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge badge-success">
+                                    {{ factura.get_estado_display }}
+                                </span>
+                            </td>
+                            <td>{{ factura.pedido.vendedor|default:"Sin asignar" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                No se encontraron facturas para los filtros seleccionados
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventas por Producto -->
+    {% if productos_vendidos %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Productos Más Vendidos</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad Vendida</th>
+                            <th>Total Ventas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos_vendidos %}
+                        <tr>
+                            <td>{{ producto.nombre }}</td>
+                            <td>{{ producto.cantidad_vendida }}</td>
+                            <td>${{ producto.total_ventas|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[ 1, "desc" ]],
+        "pageLength": 25
+    });
+});
+</script>
+{% endblock %}

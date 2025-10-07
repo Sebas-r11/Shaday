@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-users-cog"></i> Gestión de Usuarios
+        </h1>
+        <div>
+            <a href="{% url 'accounts:user-create' %}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Nuevo Usuario
+            </a>
+        </div>
+    </div>
+
+    <!-- Estadísticas de Usuarios -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Usuarios
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_usuarios }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Usuarios Activos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ usuarios_activos }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Administradores
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ administradores }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-shield fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Últimos Accesos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ accesos_recientes }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de Búsqueda -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros de Búsqueda</h6>
+        </div>
+        <div class="card-body">
+            <form method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Buscar Usuario:</label>
+                            <input type="text" name="q" class="form-control" value="{{ request.GET.q }}" placeholder="Nombre o email">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Rol:</label>
+                            <select name="rol" class="form-control">
+                                <option value="">Todos los roles</option>
+                                <option value="admin" {% if request.GET.rol == 'admin' %}selected{% endif %}>Administradores</option>
+                                <option value="vendedor" {% if request.GET.rol == 'vendedor' %}selected{% endif %}>Vendedores</option>
+                                <option value="bodeguero" {% if request.GET.rol == 'bodeguero' %}selected{% endif %}>Bodegueros</option>
+                                <option value="repartidor" {% if request.GET.rol == 'repartidor' %}selected{% endif %}>Repartidores</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>Estado:</label>
+                            <select name="activo" class="form-control">
+                                <option value="">Todos los estados</option>
+                                <option value="1" {% if request.GET.activo == '1' %}selected{% endif %}>Activos</option>
+                                <option value="0" {% if request.GET.activo == '0' %}selected{% endif %}>Inactivos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary form-control">
+                                <i class="fas fa-search"></i> Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Usuarios -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Lista de Usuarios</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Último Acceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="mr-3">
+                                        {% if usuario.profile.avatar %}
+                                        <img src="{{ usuario.profile.avatar.url }}" alt="Avatar" class="rounded-circle" width="40" height="40">
+                                        {% else %}
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            {{ usuario.first_name|first|default:usuario.username|first|upper }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="font-weight-bold">{{ usuario.get_full_name|default:usuario.username }}</div>
+                                        <small class="text-muted">{{ usuario.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ usuario.email }}</td>
+                            <td>
+                                {% for group in usuario.groups.all %}
+                                <span class="badge badge-secondary">{{ group.name }}</span>
+                                {% empty %}
+                                <span class="text-muted">Sin rol</span>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                <span class="badge badge-{% if usuario.is_active %}success{% else %}danger{% endif %}">
+                                    {% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if usuario.last_login %}
+                                {{ usuario.last_login|date:"d/m/Y H:i" }}
+                                {% else %}
+                                <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'accounts:user-detail' usuario.pk %}" class="btn btn-sm btn-info" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'accounts:user-update' usuario.pk %}" class="btn btn-sm btn-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if usuario.is_active %}
+                                    <button class="btn btn-sm btn-warning" onclick="toggleUserStatus({{ usuario.pk }}, false)" title="Desactivar">
+                                        <i class="fas fa-user-slash"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success" onclick="toggleUserStatus({{ usuario.pk }}, true)" title="Activar">
+                                        <i class="fas fa-user-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-secondary" onclick="resetPassword({{ usuario.pk }})" title="Resetear contraseña">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                No se encontraron usuarios
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividad Reciente -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Últimos Accesos</h6>
+                </div>
+                <div class="card-body">
+                    {% for acceso in ultimos_accesos %}
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="mr-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 12px;">
+                                {{ acceso.user.first_name|first|default:acceso.user.username|first|upper }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="font-weight-bold">{{ acceso.user.get_full_name|default:acceso.user.username }}</div>
+                            <small class="text-muted">{{ acceso.last_login|timesince }} ago</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No hay accesos recientes</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Distribución por Roles</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="rolesChart" width="100" height="50"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    // Configurar DataTable
+    $('#dataTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        },
+        "order": [[ 4, "desc" ]],
+        "pageLength": 25
+    });
+
+    // Gráfico de roles
+    var ctx = document.getElementById('rolesChart').getContext('2d');
+    var rolesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ roles_labels|safe }},
+            datasets: [{
+                data: {{ roles_data|safe }},
+                backgroundColor: [
+                    '#4e73df',
+                    '#1cc88a',
+                    '#36b9cc',
+                    '#f6c23e',
+                    '#e74a3b'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+});
+
+function toggleUserStatus(userId, activate) {
+    var action = activate ? 'activar' : 'desactivar';
+    if (confirm('¿Está seguro de que desea ' + action + ' este usuario?')) {
+        // Aquí iría la llamada AJAX para cambiar el estado
+        fetch('/accounts/toggle-user-status/' + userId + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({'active': activate})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error al cambiar el estado del usuario');
+            }
+        });
+    }
+}
+
+function resetPassword(userId) {
+    if (confirm('¿Está seguro de que desea resetear la contraseña de este usuario?')) {
+        // Aquí iría la llamada AJAX para resetear la contraseña
+        fetch('/accounts/reset-password/' + userId + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Contraseña reseteada. Nueva contraseña: ' + data.new_password);
+            } else {
+                alert('Error al resetear la contraseña');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

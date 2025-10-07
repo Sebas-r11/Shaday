@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar Bodega{% else %}Nueva Bodega{% endif %} - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'inventario:bodega_list' %}" class="text-gray-500 hover:text-gray-700">Bodegas</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">
+                        {% if object %}Editar: {{ object.nombre }}{% else %}Nueva Bodega{% endif %}
+                    </span>
+                </li>
+            </ol>
+        </nav>
+        
+        <div class="mt-4">
+            <h1 class="text-3xl font-bold text-gray-900">
+                {% if object %}
+                    <i class="fas fa-edit text-blue-600 mr-3"></i>Editar Bodega
+                {% else %}
+                    <i class="fas fa-plus text-green-600 mr-3"></i>Nueva Bodega
+                {% endif %}
+            </h1>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white shadow rounded-lg">
+        <form method="post" class="p-6">
+            {% csrf_token %}
+            
+            <div class="space-y-6">
+                <!-- Información básica -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Información Básica</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Nombre de la Bodega *
+                            </label>
+                            <div class="mt-1">
+                                {{ form.nombre }}
+                            </div>
+                            {% if form.nombre.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.nombre.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Teléfono
+                            </label>
+                            <div class="mt-1">
+                                {{ form.telefono }}
+                            </div>
+                            {% if form.telefono.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.telefono.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información de contacto -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Ubicación</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="{{ form.direccion.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Dirección *
+                            </label>
+                            <div class="mt-1">
+                                {{ form.direccion }}
+                            </div>
+                            {% if form.direccion.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.direccion.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.link_ubicacion.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                Link de Ubicación para Rutas
+                            </label>
+                            <div class="mt-1">
+                                {{ form.link_ubicacion }}
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">{{ form.link_ubicacion.help_text }}</p>
+                            {% if form.link_ubicacion.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.link_ubicacion.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Herramientas de ubicación -->
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                        Herramientas de Ubicación
+                    </h3>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle text-blue-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="text-sm font-medium text-blue-800">
+                                    ¿Cómo obtener el link de ubicación?
+                                </h4>
+                                <div class="mt-2 text-sm text-blue-700">
+                                    <p class="mb-2"><strong>Para obtener link de ubicación:</strong></p>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li><strong>Google Maps:</strong> Busca la dirección → "Compartir" → "Copiar enlace"</li>
+                                        <li><strong>Waze:</strong> Busca la ubicación → "Enviar" → "Copiar enlace"</li>
+                                        <li><strong>Apple Maps:</strong> Busca la ubicación → "Compartir" → "Copiar"</li>
+                                        <li><strong>Otros:</strong> Cualquier URL de servicio de mapas</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Configuración</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.activa.id_for_label }}" class="flex items-center">
+                                {{ form.activa }}
+                                <span class="ml-2 text-sm font-medium text-gray-700">Bodega activa</span>
+                            </label>
+                            <p class="mt-1 text-sm text-gray-500">Solo las bodegas activas aparecerán en los formularios</p>
+                            {% if form.activa.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.activa.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="{{ form.es_principal.id_for_label }}" class="flex items-center">
+                                {{ form.es_principal }}
+                                <span class="ml-2 text-sm font-medium text-gray-700">Bodega principal</span>
+                            </label>
+                            <p class="mt-1 text-sm text-gray-500">Marcar como bodega principal del sistema</p>
+                            {% if form.es_principal.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.es_principal.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+                <a href="{% url 'inventario:bodega_list' %}" 
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                    {% if object %}
+                        <i class="fas fa-save mr-2"></i>Guardar Cambios
+                    {% else %}
+                        <i class="fas fa-plus mr-2"></i>Crear Bodega
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

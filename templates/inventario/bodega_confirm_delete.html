@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Eliminar Bodega - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-4">
+                <li>
+                    <a href="{% url 'inventario:bodega_list' %}" class="text-gray-500 hover:text-gray-700">Bodegas</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <a href="{% url 'inventario:bodega_detail' object.pk %}" class="text-gray-500 hover:text-gray-700">{{ object.nombre }}</a>
+                </li>
+                <li>
+                    <i class="fas fa-chevron-right text-gray-400 text-sm"></i>
+                </li>
+                <li>
+                    <span class="text-gray-900 font-medium">Eliminar</span>
+                </li>
+            </ol>
+        </nav>
+        <h1 class="text-3xl font-bold text-gray-900 mt-2">
+            <i class="fas fa-trash-alt text-red-600 mr-3"></i>
+            Eliminar Bodega
+        </h1>
+    </div>
+
+    <!-- Advertencia -->
+    <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-red-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">
+                    ¡Atención! Esta acción no se puede deshacer
+                </h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <p>Estás a punto de eliminar la bodega <strong>{{ object.nombre }}</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de la bodega -->
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Información de la Bodega</h2>
+        
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Nombre</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ object.nombre }}</dd>
+            </div>
+            
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Estado</dt>
+                <dd class="mt-1">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                        {% if object.activa %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if object.activa %}
+                            <i class="fas fa-check-circle mr-1"></i>Activa
+                        {% else %}
+                            <i class="fas fa-times-circle mr-1"></i>Inactiva
+                        {% endif %}
+                    </span>
+                </dd>
+            </div>
+            
+            {% if object.direccion %}
+            <div class="sm:col-span-2">
+                <dt class="text-sm font-medium text-gray-500">Dirección</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ object.direccion }}</dd>
+            </div>
+            {% endif %}
+            
+            {% if object.telefono %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Teléfono</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ object.telefono }}</dd>
+            </div>
+            {% endif %}
+            
+            {% if object.es_principal %}
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Tipo</dt>
+                <dd class="mt-1">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <i class="fas fa-star mr-1"></i>Bodega Principal
+                    </span>
+                </dd>
+            </div>
+            {% endif %}
+        </dl>
+    </div>
+
+    <!-- Verificaciones y Análisis -->
+    <div class="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-chart-bar text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Análisis de Datos de la Bodega</h3>
+                <div class="mt-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center p-3 bg-white rounded border">
+                            <div class="text-lg font-semibold {% if stock_actual > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                {{ stock_actual|default:0 }}
+                            </div>
+                            <div class="text-xs text-gray-600">Productos con Stock</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded border">
+                            <div class="text-lg font-semibold {% if stock_historico > 0 %}text-orange-600{% else %}text-green-600{% endif %}">
+                                {{ stock_historico|default:0 }}
+                            </div>
+                            <div class="text-xs text-gray-600">Registros de Inventario</div>
+                        </div>
+                        <div class="text-center p-3 bg-white rounded border">
+                            <div class="text-lg font-semibold {% if total_movimientos > 0 %}text-orange-600{% else %}text-green-600{% endif %}">
+                                {{ total_movimientos|default:0 }}
+                            </div>
+                            <div class="text-xs text-gray-600">Movimientos Históricos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultado de Validación -->
+    <div class="{% if stock_actual > 0 %}bg-red-50 border-red-200{% elif stock_historico > 0 or total_movimientos > 0 %}bg-yellow-50 border-yellow-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-md p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                {% if stock_actual > 0 %}
+                    <i class="fas fa-times-circle text-red-400"></i>
+                {% elif stock_historico > 0 or total_movimientos > 0 %}
+                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                {% else %}
+                    <i class="fas fa-check-circle text-green-400"></i>
+                {% endif %}
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium {% if stock_actual > 0 %}text-red-800{% elif stock_historico > 0 or total_movimientos > 0 %}text-yellow-800{% else %}text-green-800{% endif %}">
+                    {% if stock_actual > 0 %}
+                        ❌ No Se Puede Eliminar
+                    {% elif stock_historico > 0 or total_movimientos > 0 %}
+                        ⚠️ Se Marcará Como Inactiva
+                    {% else %}
+                        ✅ Se Puede Eliminar Completamente
+                    {% endif %}
+                </h3>
+                <div class="mt-2 text-sm {% if stock_actual > 0 %}text-red-700{% elif stock_historico > 0 or total_movimientos > 0 %}text-yellow-700{% else %}text-green-700{% endif %}">
+                    {% if stock_actual > 0 %}
+                        <p>La bodega tiene productos con stock actual y no puede ser eliminada. Transfiere o ajusta el inventario primero.</p>
+                    {% elif stock_historico > 0 or total_movimientos > 0 %}
+                        <p>La bodega tiene historial de inventario. Para preservar la integridad de los datos, se marcará como inactiva en lugar de eliminarla.</p>
+                    {% else %}
+                        <p>La bodega está completamente vacía y puede ser eliminada de forma segura.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if ultimos_movimientos %}
+    <!-- Últimos movimientos -->
+    <div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
+        <h3 class="text-sm font-medium text-gray-800 mb-3">
+            <i class="fas fa-history mr-2"></i>Últimos Movimientos
+        </h3>
+        <div class="max-h-32 overflow-y-auto">
+            {% for movimiento in ultimos_movimientos %}
+            <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                <div class="text-sm">
+                    <span class="font-medium">{{ movimiento.producto.nombre }}</span>
+                    <span class="text-gray-600">- {{ movimiento.tipo_movimiento }}</span>
+                    {% if movimiento.cantidad %}
+                        <span class="text-gray-500">({{ movimiento.cantidad }})</span>
+                    {% endif %}
+                </div>
+                <div class="text-xs text-gray-500">
+                    {{ movimiento.fecha_movimiento|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Validaciones Automáticas - Información General -->
+    <div class="bg-gray-50 border border-gray-200 rounded-md p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-gray-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-gray-800">Validaciones Automáticas</h3>
+                <div class="mt-2 text-sm text-gray-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li><strong>Stock Actual:</strong> Si la bodega tiene productos con cantidad > 0, no se puede eliminar</li>
+                        <li><strong>Historial:</strong> Si tiene registros de inventario o movimientos, se marca como inactiva</li>
+                        <li><strong>Eliminación:</strong> Solo se elimina si no tiene datos relacionados</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario de confirmación -->
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Confirmación -->
+        <div>
+            <label class="flex items-center">
+                <input type="checkbox" id="confirmar" name="confirmar" required
+                       {% if stock_actual > 0 %}disabled{% endif %}
+                       class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded {% if stock_actual > 0 %}opacity-50 cursor-not-allowed{% endif %}">
+                <span class="ml-2 text-sm text-gray-900 {% if stock_actual > 0 %}opacity-50{% endif %}">
+                    {% if stock_actual > 0 %}
+                        No se puede proceder - La bodega tiene stock actual
+                    {% else %}
+                        Confirmo que deseo proceder con la bodega <strong>{{ object.nombre }}</strong>
+                    {% endif %}
+                </span>
+            </label>
+        </div>
+        
+        <!-- Botones -->
+        <div class="flex justify-end space-x-4">
+            <a href="{% url 'inventario:bodega_detail' object.pk %}" 
+               class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Cancelar
+            </a>
+            <button type="submit" id="btn-eliminar" 
+                    {% if stock_actual > 0 %}disabled{% endif %}
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                           {% if stock_actual > 0 %}bg-gray-400 cursor-not-allowed{% else %}bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500{% endif %} 
+                           {% if stock_actual > 0 %}opacity-50 cursor-not-allowed{% else %}disabled:opacity-50 disabled:cursor-not-allowed{% endif %}">
+                <i class="fas fa-{% if stock_actual > 0 %}ban{% else %}trash-alt{% endif %} mr-2"></i>
+                {% if stock_actual > 0 %}
+                    No Se Puede Eliminar
+                {% elif stock_historico > 0 or total_movimientos > 0 %}
+                    Marcar Como Inactiva
+                {% else %}
+                    Confirmar Eliminación
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkbox = document.getElementById('confirmar');
+    const botonEliminar = document.getElementById('btn-eliminar');
+    const form = document.querySelector('form[method="post"]');
+    
+    // Solo habilitar el script si la bodega NO tiene stock actual
+    {% if stock_actual == 0 %}
+    
+    // Inicializar el estado del botón según el checkbox
+    botonEliminar.disabled = !checkbox.checked;
+    if (checkbox.checked) {
+        botonEliminar.classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+        botonEliminar.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    
+    checkbox.addEventListener('change', function() {
+        botonEliminar.disabled = !this.checked;
+        if (this.checked) {
+            botonEliminar.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            botonEliminar.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+    
+    // Agregar confirmación adicional al enviar el formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Detener el envío inicial
+        
+        // Determinar el tipo de acción y mensaje apropiado
+        {% if stock_historico > 0 or total_movimientos > 0 %}
+        const accion = "marcar como inactiva";
+        const mensaje = "⚠️ CONFIRMACIÓN ADICIONAL\n\n" +
+                       "La bodega '{{ object.nombre }}' será MARCADA COMO INACTIVA\n" +
+                       "(no se eliminará completamente para preservar el historial)\n\n" +
+                       "• Registros de inventario: {{ stock_historico }}\n" +
+                       "• Movimientos históricos: {{ total_movimientos }}\n\n" +
+                       "¿Estás COMPLETAMENTE seguro de que deseas proceder?";
+        {% else %}
+        const accion = "eliminar completamente";
+        const mensaje = "🚨 CONFIRMACIÓN ADICIONAL\n\n" +
+                       "La bodega '{{ object.nombre }}' será ELIMINADA COMPLETAMENTE\n" +
+                       "Esta acción NO se puede deshacer.\n\n" +
+                       "La bodega está completamente vacía, por lo que se eliminará\n" +
+                       "de forma permanente del sistema.\n\n" +
+                       "¿Estás COMPLETAMENTE seguro de que deseas proceder?";
+        {% endif %}
+        
+        // Mostrar confirmación adicional
+        if (confirm(mensaje)) {
+            // Segunda confirmación más específica
+            const segundaConfirmacion = "✋ ÚLTIMA CONFIRMACIÓN\n\n" +
+                                      "Escribe 'CONFIRMAR' (en mayúsculas) para " + accion + " la bodega:\n\n" +
+                                      "'{{ object.nombre }}'";
+            
+            const respuesta = prompt(segundaConfirmacion);
+            
+            if (respuesta === 'CONFIRMAR') {
+                // Todas las confirmaciones pasadas, enviar formulario
+                form.removeEventListener('submit', arguments.callee);
+                form.submit();
+            } else if (respuesta !== null) {
+                // Usuario escribió algo pero no "CONFIRMAR"
+                alert("❌ Confirmación incorrecta\n\nDebe escribir exactamente 'CONFIRMAR' en mayúsculas.\n\nOperación cancelada por seguridad.");
+            }
+            // Si respuesta es null, el usuario canceló el prompt
+        }
+        // Si no confirma, no pasa nada (formulario no se envía)
+    });
+    
+    {% else %}
+    // Si tiene stock actual, el botón permanece siempre deshabilitado
+    botonEliminar.disabled = true;
+    checkbox.disabled = true;
+    
+    // Agregar evento click para mostrar por qué está bloqueado
+    botonEliminar.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert("🚫 ACCIÓN BLOQUEADA\n\n" +
+              "No se puede eliminar la bodega '{{ object.nombre }}'\n" +
+              "porque tiene {{ stock_actual }} producto(s) con stock actual.\n\n" +
+              "Para eliminar esta bodega:\n" +
+              "1. Transfiera el stock a otra bodega\n" +
+              "2. O realice ajustes de inventario para reducir a 0\n" +
+              "3. Luego intente eliminar nuevamente");
+    });
+    {% endif %}
+});
+    
+    checkbox.addEventListener('change', function() {
+        botonEliminar.disabled = !this.checked;
+        if (this.checked) {
+            botonEliminar.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            botonEliminar.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+});
+</script>
+
+{% endblock %}

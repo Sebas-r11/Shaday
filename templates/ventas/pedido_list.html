@@ -1,0 +1,667 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load permissions %}
+
+{% block title %}Pedidos - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% if user|is_admin_user %}
+        <!-- Panel de Acceso Rápido para Admin -->
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg mb-6">
+            <div class="p-4">
+                <div class="flex items-center mb-3">
+                    <i class="fas fa-tools text-indigo-600 mr-2"></i>
+                    <h3 class="text-lg font-medium text-indigo-800">Panel de Administración</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <a href="{% url 'inventario:categoria_list' %}" 
+                       class="bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                        <i class="fas fa-folder mr-2"></i>Categorías
+                    </a>
+                    <a href="{% url 'inventario:subcategoria_list' %}" 
+                       class="bg-white hover:bg-purple-50 border border-purple-200 text-purple-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                        <i class="fas fa-tags mr-2"></i>Subcategorías
+                    </a>
+                    <a href="{% url 'inventario:producto_list' %}" 
+                       class="bg-white hover:bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                        <i class="fas fa-boxes mr-2"></i>Productos
+                    </a>
+                    <a href="{% url 'inventario:categoria_create' %}" 
+                       class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                        <i class="fas fa-plus mr-2"></i>Nueva Categoría
+                    </a>
+                    <a href="{% url 'inventario:subcategoria_create' %}" 
+                       class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i>Nueva Subcategoría
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        <i class="fas fa-shopping-cart mr-3 text-green-600"></i>
+                        {% if user.role == 'repartidor' %}
+                            Pedidos Disponibles para Entrega
+                        {% else %}
+                            Gestión de Pedidos
+                        {% endif %}
+                    </h1>
+                    <p class="mt-2 text-gray-600">
+                        {% if user.role == 'repartidor' %}
+                            Pedidos completados por bodega listos para crear entregas
+                        {% else %}
+                            Administra todos los pedidos del sistema
+                        {% endif %}
+                    </p>
+                </div>
+                
+                {% if user.role == 'repartidor' %}
+                <div class="flex space-x-3">
+                    <button onclick="seleccionarTodos()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-check-square mr-2"></i>Seleccionar Todos
+                    </button>
+                    <button onclick="crearEntregasMasivas()" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                            disabled id="btnCrearEntregas">
+                        <i class="fas fa-truck mr-2"></i>Crear Entregas (<span id="contadorSeleccionados">0</span>)
+                    </button>
+                    <a href="{% url 'ventas:entregas_repartidor' %}" 
+                       class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-list mr-2"></i>Mis Entregas
+                    </a>
+                </div>
+                {% elif user|can_create_sales %}
+                <div class="flex space-x-3">
+                    <a href="{% url 'ventas:pedido_create' %}" 
+                       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Nuevo Pedido
+                    </a>
+                    <a href="{% url 'ventas:cotizacion_create' %}" 
+                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-file-alt mr-2"></i>Nueva Cotización
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-clock text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Pendientes</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {{ stats.pendientes|default:0 }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i class="fas fa-truck text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">En Proceso</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {{ stats.proceso|default:0 }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Completados</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {{ stats.completados|default:0 }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if user|can_see_prices %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i class="fas fa-dollar-sign text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Total Mes</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            ${{ stats.total_mes|floatformat:0|default:0 }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-tasks text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Para Alistar</p>
+                        <p class="text-2xl font-bold text-gray-900">
+                            {{ stats.proceso|default:0 }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-filter mr-2"></i>Filtros
+                </h3>
+                
+                <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                        <select name="estado" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todos los estados</option>
+                            <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                            <option value="proceso" {% if request.GET.estado == 'proceso' %}selected{% endif %}>En Proceso</option>
+                            <option value="completado" {% if request.GET.estado == 'completado' %}selected{% endif %}>Completado</option>
+                            <option value="cancelado" {% if request.GET.estado == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
+                        <input type="text" name="cliente" value="{{ request.GET.cliente }}" 
+                               placeholder="Buscar por cliente..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    {% if user.role == 'admin' or user.role == 'gerente' %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Vendedor</label>
+                        <select name="vendedor" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Todos los vendedores</option>
+                            {% for vendedor in vendedores %}
+                                <option value="{{ vendedor.id }}" {% if request.GET.vendedor == vendedor.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ vendedor.get_full_name|default:vendedor.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-search mr-2"></i>Filtrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de pedidos -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">
+                    Pedidos ({{ pedidos|length }} resultados)
+                </h3>
+            </div>
+            
+            {% if pedidos %}
+                <!-- Vista de Tabla (Desktop) -->
+                <div class="hidden lg:block overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                {% if user.role == 'repartidor' %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleTodos()" 
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </th>
+                                {% endif %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Número
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Cliente
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Estado
+                                </th>
+                                {% if user|can_see_prices %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Total
+                                </th>
+                                {% endif %}
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Vendedor
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for pedido in pedidos %}
+                                <tr class="hover:bg-gray-50">
+                                    {% if user.role == 'repartidor' %}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if not pedido.entregas.exists %}
+                                        <input type="checkbox" class="pedido-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                               value="{{ pedido.id }}" onchange="actualizarContador()">
+                                        {% else %}
+                                        <span class="text-green-600 text-sm font-semibold">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            Entrega creada ({{ pedido.entregas.count }})
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ pedido.numero }}
+                                        </div>
+                                        {% if pedido.cotizacion_origen %}
+                                            <div class="text-xs text-gray-500">
+                                                Desde: {{ pedido.cotizacion_origen.numero }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            {{ pedido.cliente.nombre_completo }}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ pedido.cliente.documento }}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {{ pedido.fecha|date:"d/m/Y" }}
+                                        {% if pedido.fecha_entrega_estimada %}
+                                            <div class="text-xs text-gray-500">
+                                                Entrega: {{ pedido.fecha_entrega_estimada|date:"d/m/Y" }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if pedido.estado == 'pendiente' %}
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                <i class="fas fa-clock mr-1"></i>Pendiente
+                                            </span>
+                                        {% elif pedido.estado == 'proceso' %}
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                <i class="fas fa-cog mr-1"></i>En Proceso
+                                            </span>
+                                        {% elif pedido.estado == 'completado' %}
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                <i class="fas fa-check mr-1"></i>Completado
+                                            </span>
+                                        {% elif pedido.estado == 'cancelado' %}
+                                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                                <i class="fas fa-times mr-1"></i>Cancelado
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    {% if user|can_see_prices %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        ${{ pedido.total|floatformat:0 }}
+                                    </td>
+                                    {% endif %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {% if pedido.cliente.vendedor_asignado %}
+                                            {{ pedido.cliente.vendedor_asignado.get_full_name|default:pedido.cliente.vendedor_asignado.username }}
+                                        {% else %}
+                                            <span class="text-gray-500 italic">Sin asignar</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end space-x-2">
+                                            <a href="{% url 'ventas:pedido_detail' pedido.pk %}" 
+                                               class="text-blue-600 hover:text-blue-900" title="Ver detalle">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            {% if user.can_create_sales %}
+                                                {% if pedido.estado == 'completado' %}
+                                                    <a href="{% url 'ventas:convertir_a_factura' pedido.pk %}" 
+                                                       class="text-green-600 hover:text-green-900" title="Generar factura"
+                                                       onclick="return confirm('¿Está seguro de generar la factura para este pedido?')">
+                                                        <i class="fas fa-file-invoice-dollar"></i>
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                {% if pedido.estado == 'pendiente' %}
+                                                    <a href="#" onclick="cambiarEstado('{{ pedido.pk }}', 'proceso')" 
+                                                       class="text-green-600 hover:text-green-900" title="Procesar pedido">
+                                                        <i class="fas fa-play"></i>
+                                                    </a>
+                                                {% elif pedido.estado == 'proceso' %}
+                                                    <a href="#" onclick="cambiarEstado('{{ pedido.pk }}', 'completado')" 
+                                                       class="text-purple-600 hover:text-purple-900" title="Completar pedido">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                {% endif %}
+                                                
+                                                {% if pedido.estado != 'cancelado' and pedido.estado != 'completado' %}
+                                                    <a href="#" onclick="cambiarEstado('{{ pedido.pk }}', 'cancelado')" 
+                                                       class="text-red-600 hover:text-red-900" title="Cancelar pedido">
+                                                        <i class="fas fa-times"></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Vista de Cards (Móvil y Tablet) -->
+                <div class="block lg:hidden">
+                    <div class="space-y-4 p-4">
+                        {% for pedido in pedidos %}
+                            <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+                                <!-- Header con número y estado -->
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">{{ pedido.numero }}</h3>
+                                        {% if pedido.cotizacion_origen %}
+                                            <p class="text-xs text-gray-500">Desde: {{ pedido.cotizacion_origen.numero }}</p>
+                                        {% endif %}
+                                        <p class="text-sm text-gray-600">{{ pedido.fecha|date:"d/m/Y" }}</p>
+                                    </div>
+                                    {% if pedido.estado == 'pendiente' %}
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            <i class="fas fa-clock mr-1"></i>Pendiente
+                                        </span>
+                                    {% elif pedido.estado == 'proceso' %}
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                            <i class="fas fa-cog mr-1"></i>En Proceso
+                                        </span>
+                                    {% elif pedido.estado == 'completado' %}
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                            <i class="fas fa-check mr-1"></i>Completado
+                                        </span>
+                                    {% elif pedido.estado == 'cancelado' %}
+                                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                            <i class="fas fa-times mr-1"></i>Cancelado
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Información del cliente -->
+                                <div class="border-t border-gray-100 pt-3 mb-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">Cliente</p>
+                                            <p class="text-sm font-medium text-gray-900">{{ pedido.cliente.nombre_completo }}</p>
+                                            <p class="text-xs text-gray-500">{{ pedido.cliente.documento }}</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">Vendedor</p>
+                                            {% if pedido.vendedor %}
+                                                <p class="text-sm font-medium text-gray-900">{{ pedido.vendedor.get_full_name|default:pedido.vendedor.username }}</p>
+                                            {% else %}
+                                                <p class="text-sm font-medium text-gray-500 italic">Sin asignar</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Fechas y total -->
+                                <div class="border-t border-gray-100 pt-3 mb-3">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        {% if pedido.fecha_entrega_estimada %}
+                                            <div>
+                                                <p class="text-xs text-gray-500 uppercase tracking-wide">Entrega</p>
+                                                <p class="text-sm font-medium text-gray-900">{{ pedido.fecha_entrega_estimada|date:"d/m/Y" }}</p>
+                                            </div>
+                                        {% else %}
+                                            <div></div>
+                                        {% endif %}
+                                        {% if user|can_see_prices %}
+                                        <div class="text-right">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">Total</p>
+                                            <p class="text-lg font-bold text-gray-900">${{ pedido.total|floatformat:0 }}</p>
+                                        </div>
+                                        {% else %}
+                                        <div class="text-right">
+                                            <p class="text-xs text-gray-500 uppercase tracking-wide">Items</p>
+                                            <p class="text-lg font-bold text-gray-900">{{ pedido.items.count }} productos</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Acciones -->
+                                <div class="border-t border-gray-100 pt-3">
+                                    <div class="flex flex-wrap justify-end gap-2">
+                                        <a href="{% url 'ventas:pedido_detail' pedido.pk %}" 
+                                           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            <i class="fas fa-eye mr-2"></i>Ver
+                                        </a>
+                                        
+                                        {% if user.can_create_sales %}
+                                            {% if pedido.estado == 'completado' %}
+                                                <a href="{% url 'ventas:convertir_a_factura' pedido.pk %}" 
+                                                   class="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                                   onclick="return confirm('¿Está seguro de generar la factura para este pedido?')">
+                                                    <i class="fas fa-file-invoice-dollar mr-2"></i>Facturar
+                                                </a>
+                                            {% endif %}
+                                            
+                                            {% if pedido.estado == 'pendiente' %}
+                                                <button onclick="cambiarEstado('{{ pedido.pk }}', 'proceso')" 
+                                                       class="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                    <i class="fas fa-play mr-2"></i>Procesar
+                                                </button>
+                                            {% elif pedido.estado == 'proceso' %}
+                                                <button onclick="cambiarEstado('{{ pedido.pk }}', 'completado')" 
+                                                       class="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                                                    <i class="fas fa-check mr-2"></i>Completar
+                                                </button>
+                                            {% endif %}
+                                            
+                                            {% if pedido.estado != 'cancelado' and pedido.estado != 'completado' %}
+                                                <button onclick="cambiarEstado('{{ pedido.pk }}', 'cancelado')" 
+                                                       class="inline-flex items-center px-3 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                    <i class="fas fa-times mr-2"></i>Cancelar
+                                                </button>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-shopping-cart text-gray-400 text-6xl mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No hay pedidos</h3>
+                    <p class="text-gray-600">
+                        {% if request.GET.estado or request.GET.cliente or request.GET.vendedor %}
+                            No se encontraron pedidos con los filtros aplicados.
+                            <a href="{% url 'ventas:pedido_list' %}" class="text-blue-600 hover:underline">Limpiar filtros</a>
+                        {% else %}
+                            Los pedidos aparecerán aquí cuando se conviertan cotizaciones.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambiar estado -->
+<div id="estadoModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
+                <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Cambiar Estado</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="estadoMessage">
+                    ¿Está seguro de cambiar el estado de este pedido?
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="confirmarEstado" 
+                        class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700">
+                    Confirmar
+                </button>
+                <button onclick="cerrarModal()" 
+                        class="mt-3 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let pedidoActual = null;
+let estadoActual = null;
+
+// Funciones para repartidores
+{% if user.role == 'repartidor' %}
+function actualizarContador() {
+    const checkboxes = document.querySelectorAll('.pedido-checkbox:checked');
+    const count = checkboxes.length;
+    document.getElementById('contadorSeleccionados').textContent = count;
+    document.getElementById('btnCrearEntregas').disabled = count === 0;
+}
+
+function toggleTodos() {
+    const selectAll = document.getElementById('selectAllCheckbox').checked;
+    const checkboxes = document.querySelectorAll('.pedido-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAll);
+    actualizarContador();
+}
+
+function seleccionarTodos() {
+    document.getElementById('selectAllCheckbox').checked = true;
+    toggleTodos();
+}
+
+function crearEntregasMasivas() {
+    const checkboxes = document.querySelectorAll('.pedido-checkbox:checked');
+    const pedidoIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (pedidoIds.length === 0) {
+        alert('Selecciona al menos un pedido para crear entregas');
+        return;
+    }
+    
+    const fechaProgramada = prompt('¿Cuándo programar las entregas? (formato: YYYY-MM-DD HH:MM, deja vacío para ahora + 1 hora)');
+    
+    const data = {
+        pedidos: pedidoIds,
+        fecha_programada: fechaProgramada
+    };
+    
+    fetch('/ventas/entregas/crear/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Éxito: ${data.message}`);
+            location.reload();
+        } else {
+            alert(`Error: ${data.message}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear entregas');
+    });
+}
+{% endif %}
+
+function cambiarEstado(pedidoId, nuevoEstado) {
+    pedidoActual = pedidoId;
+    estadoActual = nuevoEstado;
+    
+    const messages = {
+        'proceso': '¿Desea marcar este pedido como "En Proceso"?',
+        'completado': '¿Desea marcar este pedido como "Completado"? Esta acción no se puede deshacer.',
+        'cancelado': '¿Desea CANCELAR este pedido? Esta acción no se puede deshacer.'
+    };
+    
+    document.getElementById('estadoMessage').textContent = messages[nuevoEstado];
+    document.getElementById('estadoModal').classList.remove('hidden');
+}
+
+function cerrarModal() {
+    document.getElementById('estadoModal').classList.add('hidden');
+    pedidoActual = null;
+    estadoActual = null;
+}
+
+document.getElementById('confirmarEstado').addEventListener('click', function() {
+    if (pedidoActual && estadoActual) {
+        // Crear formulario para enviar cambio de estado
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/ventas/pedidos/${pedidoActual}/cambiar-estado/`;
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            form.appendChild(csrfToken.cloneNode(true));
+        } else {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+        }
+        
+        const estadoInput = document.createElement('input');
+        estadoInput.type = 'hidden';
+        estadoInput.name = 'estado';
+        estadoInput.value = estadoActual;
+        form.appendChild(estadoInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+});
+
+// Cerrar modal con Escape
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        cerrarModal();
+    }
+});
+</script>
+
+{% endblock %}

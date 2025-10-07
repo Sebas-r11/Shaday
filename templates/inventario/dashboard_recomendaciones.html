@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Dashboard de Recomendaciones - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">
+                <i class="fas fa-chart-bar mr-3 text-blue-600"></i>
+                Dashboard de Recomendaciones
+            </h1>
+            <p class="text-gray-600 mt-2">Análisis inteligente de inventario basado en comportamiento de ventas</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'inventario:recomendaciones_list' %}" 
+               class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                <i class="fas fa-list mr-2"></i>Ver Lista
+            </a>
+            <button onclick="generarRecomendaciones()" 
+                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                <i class="fas fa-sync mr-2"></i>Actualizar Análisis
+            </button>
+        </div>
+    </div>
+
+    <!-- Métricas Principales -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-r from-red-400 to-red-600 rounded-lg shadow-lg text-white">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-red-100 text-sm">Recomendaciones Críticas</p>
+                        <p class="text-3xl font-bold">{{ metricas.criticas }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-red-100 text-sm">Requieren acción inmediata</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg shadow-lg text-white">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-orange-100 text-sm">Prioridad Alta</p>
+                        <p class="text-3xl font-bold">{{ metricas.altas }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-orange-100 text-sm">Próximos a agotarse</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-green-400 to-green-600 rounded-lg shadow-lg text-white">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-dollar-sign text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-green-100 text-sm">Inversión Total</p>
+                        <p class="text-2xl font-bold">${{ metricas.inversion_total|floatformat:0 }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-green-100 text-sm">Requerida para reposición</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-lg text-white">
+            <div class="p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-box text-3xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-blue-100 text-sm">Productos Analizados</p>
+                        <p class="text-3xl font-bold">{{ metricas.productos_analizados }}</p>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <p class="text-blue-100 text-sm">Con comportamiento de ventas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos y Análisis -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Distribución por Prioridad -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-chart-pie mr-2 text-blue-600"></i>
+                Distribución por Prioridad
+            </h3>
+            <div class="space-y-4">
+                {% for prioridad in distribucion_prioridad %}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 rounded-full mr-3 
+                            {% if prioridad.nivel == 'critica' %}bg-red-500
+                            {% elif prioridad.nivel == 'alta' %}bg-orange-500
+                            {% elif prioridad.nivel == 'media' %}bg-yellow-500
+                            {% else %}bg-blue-500{% endif %}"></div>
+                        <span class="text-sm font-medium text-gray-700">{{ prioridad.nombre }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-sm text-gray-600 mr-3">{{ prioridad.cantidad }}</span>
+                        <div class="w-16 h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 rounded-full 
+                                {% if prioridad.nivel == 'critica' %}bg-red-500
+                                {% elif prioridad.nivel == 'alta' %}bg-orange-500
+                                {% elif prioridad.nivel == 'media' %}bg-yellow-500
+                                {% else %}bg-blue-500{% endif %}" 
+                                 style="width: {{ prioridad.porcentaje }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tendencias de Ventas -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-chart-line mr-2 text-green-600"></i>
+                Análisis de Tendencias (30 días)
+            </h3>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <p class="text-2xl font-bold text-green-600">{{ tendencias.productos_crecimiento }}</p>
+                        <p class="text-sm text-gray-600">En crecimiento</p>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-lg">
+                        <p class="text-2xl font-bold text-red-600">{{ tendencias.productos_declive }}</p>
+                        <p class="text-sm text-gray-600">En declive</p>
+                    </div>
+                </div>
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <p class="text-xl font-bold text-blue-600">{{ tendencias.venta_promedio_diaria|floatformat:1 }}</p>
+                    <p class="text-sm text-gray-600">Unidades vendidas promedio/día</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Recomendaciones Críticas -->
+    {% if recomendaciones_criticas %}
+    <div class="bg-white rounded-lg shadow-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-fire mr-2 text-red-600"></i>
+                Recomendaciones Críticas - Acción Inmediata
+            </h3>
+        </div>
+        
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock Actual</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Días Restantes</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sugerido</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Inversión</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for rec in recomendaciones_criticas %}
+                        <tr class="hover:bg-red-50">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ rec.producto.codigo }}</div>
+                                <div class="text-sm text-gray-500">{{ rec.producto.nombre|truncatechars:30 }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 h-2 bg-red-200 rounded-full mr-2">
+                                        <div class="h-2 bg-red-600 rounded-full" style="width: {{ rec.porcentaje_stock }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-900">{{ rec.stock_actual }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    {{ rec.dias_cobertura_restante|default:"0" }} días
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">{{ rec.cantidad_sugerida }} unidades</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900">${{ rec.valor_total_sugerido|floatformat:0 }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a href="{% url 'inventario:recomendacion_detail' rec.pk %}" 
+                                   class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium">
+                                    Ver Detalles
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Productos por Rotación -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Productos de Alta Rotación -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-tachometer-alt mr-2 text-green-600"></i>
+                    Alta Rotación (Top 10)
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    {% for producto in productos_alta_rotacion %}
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">{{ producto.codigo }}</div>
+                            <div class="text-xs text-gray-500">{{ producto.nombre|truncatechars:25 }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold text-green-600">{{ producto.rotacion_30_dias|floatformat:1 }}/día</div>
+                            <div class="text-xs text-gray-500">Stock: {{ producto.stock_actual }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">No hay datos de rotación suficientes</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos con Baja Rotación -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-hourglass-half mr-2 text-orange-600"></i>
+                    Baja Rotación (Top 10)
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    {% for producto in productos_baja_rotacion %}
+                    <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">{{ producto.codigo }}</div>
+                            <div class="text-xs text-gray-500">{{ producto.nombre|truncatechars:25 }}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-bold text-orange-600">{{ producto.rotacion_30_dias|floatformat:2 }}/día</div>
+                            <div class="text-xs text-gray-500">Stock: {{ producto.stock_actual }}</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-4">No hay datos de rotación suficientes</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimas Actualizaciones -->
+    <div class="mt-8 bg-white rounded-lg shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-clock mr-2 text-gray-600"></i>
+                Información del Sistema
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Última Actualización</p>
+                    <p class="text-lg font-medium text-gray-900">{{ info_sistema.ultima_actualizacion|default:"Nunca" }}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Productos Monitoreados</p>
+                    <p class="text-lg font-medium text-gray-900">{{ info_sistema.productos_monitoreados }}</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-500">Proveedores Activos</p>
+                    <p class="text-lg font-medium text-gray-900">{{ info_sistema.proveedores_activos }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generarRecomendaciones() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analizando...';
+    
+    fetch('{% url "inventario:generar_recomendaciones_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: 'modo=todos'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        alert('Error de conexión: ' + error.message);
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+// Auto-refresh cada 5 minutos
+setInterval(function() {
+    if (document.visibilityState === 'visible') {
+        location.reload();
+    }
+}, 300000);
+</script>
+{% endblock %}

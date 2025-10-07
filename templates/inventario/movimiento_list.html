@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load permissions %}
+
+{% block title %}Movimientos de Inventario - DistribucioneShaddai{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Movimientos de Inventario</h1>
+            <p class="text-gray-600 mt-2">Historial completo de movimientos de stock</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'inventario:stock_list' %}" 
+               class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                <i class="fas fa-boxes mr-2"></i>Ver Stock
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="p-4">
+            <form method="get" class="space-y-4">
+                <!-- Fila 1: Producto y Bodega -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Buscar Producto</label>
+                        <input type="text" name="producto" value="{{ filtros.producto }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Código o nombre del producto">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bodega</label>
+                        <select name="bodega" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todas las bodegas</option>
+                            {% for bodega in bodegas %}
+                            <option value="{{ bodega.id }}" {% if filtros.bodega == bodega.id|stringformat:"s" %}selected{% endif %}>
+                                {{ bodega.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Movimiento</label>
+                        <select name="tipo" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todos los tipos</option>
+                            <option value="entrada" {% if filtros.tipo == 'entrada' %}selected{% endif %}>Entrada</option>
+                            <option value="salida" {% if filtros.tipo == 'salida' %}selected{% endif %}>Salida</option>
+                            <option value="ajuste" {% if filtros.tipo == 'ajuste' %}selected{% endif %}>Ajuste</option>
+                            <option value="transferencia" {% if filtros.tipo == 'transferencia' %}selected{% endif %}>Transferencia</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Fila 2: Fechas y botón -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Desde</label>
+                        <input type="date" name="fecha_desde" value="{{ filtros.fecha_desde }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Hasta</label>
+                        <input type="date" name="fecha_hasta" value="{{ filtros.fecha_hasta }}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-search mr-2"></i>Filtrar
+                        </button>
+                    </div>
+                    <div class="flex items-end">
+                        {% if request.GET %}
+                        <a href="{% url 'inventario:movimiento_list' %}" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors text-center">
+                            <i class="fas fa-times mr-2"></i>Limpiar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de movimientos -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        {% if movimientos %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fecha/Hora
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Producto
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Bodega
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tipo
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Cantidad
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Motivo
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Usuario
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for movimiento in movimientos %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div class="font-medium">{{ movimiento.fecha_movimiento|date:"d/m/Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ movimiento.fecha_movimiento|date:"H:i" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ movimiento.producto.codigo }}</div>
+                            <div class="text-sm text-gray-500">{{ movimiento.producto.nombre }}</div>
+                            {% if movimiento.variante %}
+                            <div class="text-xs text-gray-400">Variante: {{ movimiento.variante.nombre }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ movimiento.bodega.nombre }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                {% if movimiento.tipo_movimiento == 'entrada' %}bg-green-100 text-green-800{% elif movimiento.tipo_movimiento == 'salida' %}bg-red-100 text-red-800{% elif movimiento.tipo_movimiento == 'ajuste' %}bg-blue-100 text-blue-800{% elif movimiento.tipo_movimiento == 'transferencia' %}bg-purple-100 text-purple-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if movimiento.tipo_movimiento == 'entrada' %}
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                {% elif movimiento.tipo_movimiento == 'salida' %}
+                                    <i class="fas fa-arrow-down mr-1"></i>
+                                {% elif movimiento.tipo_movimiento == 'ajuste' %}
+                                    <i class="fas fa-adjust mr-1"></i>
+                                {% elif movimiento.tipo_movimiento == 'transferencia' %}
+                                    <i class="fas fa-exchange-alt mr-1"></i>
+                                {% endif %}
+                                {{ movimiento.get_tipo_movimiento_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-medium
+                                {% if movimiento.tipo_movimiento == 'entrada' %}text-green-600{% elif movimiento.tipo_movimiento == 'salida' %}text-red-600{% else %}text-blue-600{% endif %}">
+                                {% if movimiento.tipo_movimiento == 'entrada' %}+{% elif movimiento.tipo_movimiento == 'salida' %}-{% endif %}{{ movimiento.cantidad }}
+                            </span>
+                            {% if movimiento.costo_unitario %}
+                            <div class="text-xs text-gray-500">${{ movimiento.costo_unitario|floatformat:0 }} c/u</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if movimiento.motivo %}
+                                {{ movimiento.motivo|truncatechars:50 }}
+                            {% else %}
+                                <span class="text-gray-400 italic">Sin especificar</span>
+                            {% endif %}
+                            {% if movimiento.numero_documento %}
+                            <div class="text-xs text-gray-500">Doc: {{ movimiento.numero_documento }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">
+                                {{ movimiento.usuario.get_full_name|default:movimiento.usuario.username }}
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                {{ movimiento.usuario.rol|capfirst|default:"Usuario" }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {% if movimiento.tipo_movimiento == 'transferencia' %}
+                            <a href="{% url 'inventario:transferencia_pdf' movimiento.id %}" 
+                               class="text-red-600 hover:text-red-900" title="Generar PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-gray-300">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Anterior
+                </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Siguiente
+                </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Mostrando <span class="font-medium">{{ page_obj.start_index }}</span> a 
+                        <span class="font-medium">{{ page_obj.end_index }}</span> de 
+                        <span class="font-medium">{{ page_obj.paginator.count }}</span> movimientos
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Paginación">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-blue-500 bg-blue-50 text-sm font-medium text-blue-600">
+                            {{ num }}
+                        </span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            {{ num }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in filtros.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-exchange-alt text-gray-300 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No se encontraron movimientos</h3>
+            <p class="text-gray-500">
+                {% if request.GET.producto or request.GET.bodega or request.GET.tipo or request.GET.fecha_desde or request.GET.fecha_hasta %}
+                    No hay movimientos que coincidan con los filtros aplicados.
+                {% else %}
+                    No hay movimientos de inventario registrados.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
