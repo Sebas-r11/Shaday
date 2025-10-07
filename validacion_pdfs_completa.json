@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-10-07T08:34:02.703590",
+  "resumen": {
+    "pdfs_validados": 13,
+    "pdfs_fallidos": 4,
+    "total_tests": 17,
+    "porcentaje_exito": 76.47058823529412,
+    "warnings": 10,
+    "errores": 4
+  },
+  "errores": [
+    {
+      "timestamp": "2025-10-07T08:34:02.205072",
+      "categoria": "TEMPLATE_ERROR",
+      "mensaje": "Error en template ventas/pdf/factura.html: Invalid filter: 'mul'",
+      "detalles": {}
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.675250",
+      "categoria": "PDF_404",
+      "mensaje": "Imprimir Pedido: URL no encontrada",
+      "detalles": {}
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.681342",
+      "categoria": "PDF_404",
+      "mensaje": "Imprimir Factura: URL no encontrada",
+      "detalles": {}
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.686692",
+      "categoria": "PDF_404",
+      "mensaje": "PDF Cotización: URL no encontrada",
+      "detalles": {}
+    }
+  ],
+  "warnings": [
+    {
+      "timestamp": "2025-10-07T08:34:01.812982",
+      "mensaje": "HTML a PDF (alternativo): weasyprint no disponible (opcional)"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:01.813292",
+      "mensaje": "HTML a PDF (alternativo): xhtml2pdf no disponible (opcional)"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.132709",
+      "mensaje": "URL PDF no encontrada: inventario:generar_pdf_transferencia"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.132916",
+      "mensaje": "URL PDF no encontrada: inventario:generar_pdf_ajuste"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.135472",
+      "mensaje": "URL PDF no encontrada: compras:generar_pdf_orden"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.135662",
+      "mensaje": "URL PDF no encontrada: compras:imprimir_orden_compra"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.194493",
+      "mensaje": "No se pudo crear proveedor de prueba (modelo no disponible)"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.206588",
+      "mensaje": "Template PDF no encontrado: inventario/pdf/transferencia.html"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.206982",
+      "mensaje": "Template PDF no encontrado: compras/pdf/orden_compra.html"
+    },
+    {
+      "timestamp": "2025-10-07T08:34:02.207263",
+      "mensaje": "Template PDF no encontrado: reportes/ventas_pdf.html"
+    }
+  ]
+}

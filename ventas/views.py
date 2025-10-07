@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.db.models import Q, Sum, Count, Avg, F
 from django.db import models
 from django.contrib import messages
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, HttpResponse
 from django.core.exceptions import PermissionDenied
 from datetime import datetime, timedelta, date
 from decimal import Decimal, InvalidOperation
@@ -567,17 +567,234 @@ def generar_pdf_cotizacion(request, pk):
     
     try:
         from django.http import HttpResponse
-        from django.template.loader import get_template
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib import colors
+        from io import BytesIO
         
         cotizacion = Cotizacion.objects.select_related('cliente').prefetch_related('items__producto').get(pk=pk)
         
-        # Por ahora, redirigir a vista de impresión (implementación completa de PDF requiere librerías adicionales)
-        messages.info(request, 'Funcionalidad de PDF en desarrollo. Use la opción de imprimir y seleccione "Guardar como PDF" en su navegador.')
-        return redirect('ventas:imprimir_cotizacion', pk=pk)
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+        styles = getSampleStyleSheet()
+        
+        # Título
+        title = Paragraph(f"COTIZACIÓN {cotizacion.numero}", styles['Title'])
+        elements.append(title)
+        elements.append(Spacer(1, 12))
+        
+        # Información del cliente
+        cliente_info = f"""
+        <b>Cliente:</b> {cotizacion.cliente.nombre_completo}<br/>
+        <b>Documento:</b> {cotizacion.cliente.numero_documento}<br/>
+        <b>Teléfono:</b> {cotizacion.cliente.telefono}<br/>
+        <b>Dirección:</b> {cotizacion.cliente.direccion}
+        """
+        cliente_para = Paragraph(cliente_info, styles['Normal'])
+        elements.append(cliente_para)
+        elements.append(Spacer(1, 12))
+        
+        # Información de la cotización
+        cotizacion_info = f"""
+        <b>Fecha:</b> {cotizacion.fecha_creacion.strftime('%d/%m/%Y')}<br/>
+        <b>Estado:</b> {cotizacion.estado}<br/>
+        <b>Válida hasta:</b> {cotizacion.fecha_vencimiento.strftime('%d/%m/%Y') if hasattr(cotizacion, 'fecha_vencimiento') and cotizacion.fecha_vencimiento else 'No especificada'}
+        """
+        cotizacion_para = Paragraph(cotizacion_info, styles['Normal'])
+        elements.append(cotizacion_para)
+        elements.append(Spacer(1, 12))
+        
+        # Tabla de items
+        data = [['Producto', 'Cantidad', 'Precio Unit.', 'Subtotal']]
+        
+        total_general = Decimal('0.00')
+        if cotizacion.items.exists():
+            for item in cotizacion.items.all():
+                subtotal = item.cantidad * item.precio_unitario
+                total_general += subtotal
+                data.append([
+                    item.producto.nombre,
+                    str(item.cantidad),
+                    f'${item.precio_unitario:,.2f}',
+                    f'${subtotal:,.2f}'
+                ])
+        else:
+            # Sin items detallados
+            total_general = cotizacion.total
+            data.append([
+                'Items de la cotización',
+                '1',
+                f'${cotizacion.total:,.2f}',
+                f'${cotizacion.total:,.2f}'
+            ])
+        
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 14),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        elements.append(table)
+        elements.append(Spacer(1, 12))
+        
+        # Total
+        total_info = f"""
+        <b>TOTAL COTIZACIÓN:</b> ${total_general:,.2f}
+        """
+        total_para = Paragraph(total_info, styles['Normal'])
+        elements.append(total_para)
+        
+        # Construir PDF
+        doc.build(elements)
+        buffer.seek(0)
+        
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="cotizacion_{cotizacion.numero}.pdf"'
+        
+        return response
         
     except Cotizacion.DoesNotExist:
         messages.error(request, 'Cotización no encontrada.')
         return redirect('ventas:cotizacion_list')
+
+@login_required
+def generar_pdf_factura(request, pk):
+    """Vista para generar PDF de factura"""
+    if not request.user.can_create_sales():
+        messages.error(request, 'No tiene permisos para esta acción.')
+        return redirect('ventas:factura_list')
+    
+    try:
+        from django.http import HttpResponse
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib import colors
+        from io import BytesIO
+        from decimal import Decimal
+        
+        factura = Factura.objects.select_related('cliente').prefetch_related('itemfactura_set').get(pk=pk)
+        
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        elements = []
+        styles = getSampleStyleSheet()
+        
+        # Título
+        title = Paragraph(f"FACTURA {factura.numero}", styles['Title'])
+        elements.append(title)
+        elements.append(Spacer(1, 12))
+        
+        # Información del cliente
+        cliente_info = f"""
+        <b>Cliente:</b> {factura.cliente.nombre_completo}<br/>
+        <b>Documento:</b> {factura.cliente.numero_documento}<br/>
+        <b>Teléfono:</b> {factura.cliente.telefono}<br/>
+        <b>Dirección:</b> {factura.cliente.direccion}
+        """
+        cliente_para = Paragraph(cliente_info, styles['Normal'])
+        elements.append(cliente_para)
+        elements.append(Spacer(1, 12))
+        
+        # Información de la factura
+        factura_info = f"""
+        <b>Fecha de Emisión:</b> {factura.fecha_creacion.strftime('%d/%m/%Y')}<br/>
+        <b>Estado:</b> {factura.estado.title()}<br/>
+        <b>Método de Pago:</b> Efectivo/Transferencia
+        """
+        factura_para = Paragraph(factura_info, styles['Normal'])
+        elements.append(factura_para)
+        elements.append(Spacer(1, 12))
+        
+        # Tabla de items
+        data = [['Descripción', 'Cantidad', 'Precio Unit.', 'Subtotal']]
+        
+        total_general = Decimal('0.00')
+        if factura.itemfactura_set.exists():
+            for item in factura.itemfactura_set.all():
+                subtotal = item.cantidad * item.precio
+                total_general += subtotal
+                data.append([
+                    f'Item Factura #{item.id}',
+                    str(item.cantidad),
+                    f'${item.precio:,.2f}',
+                    f'${subtotal:,.2f}'
+                ])
+        else:
+            # Sin items detallados - usar total de factura
+            total_general = factura.total
+            data.append([
+                'Productos y servicios',
+                '1',
+                f'${factura.total:,.2f}',
+                f'${factura.total:,.2f}'
+            ])
+        
+        # Calcular impuestos (ejemplo: 19% IVA)
+        iva_porcentaje = Decimal('0.19')
+        subtotal_sin_iva = total_general / (1 + iva_porcentaje)
+        iva_valor = total_general - subtotal_sin_iva
+        
+        # Agregar fila de subtotal
+        data.append(['', '', 'Subtotal:', f'${subtotal_sin_iva:,.2f}'])
+        data.append(['', '', 'IVA (19%):', f'${iva_valor:,.2f}'])
+        
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 14),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-3, -3), colors.beige),
+            ('BACKGROUND', (-3, -2), (-1, -1), colors.lightgrey),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ('FONTNAME', (-3, -2), (-1, -1), 'Helvetica-Bold'),
+        ]))
+        
+        elements.append(table)
+        elements.append(Spacer(1, 12))
+        
+        # Total final
+        total_info = f"""
+        <b>TOTAL A PAGAR:</b> ${total_general:,.2f}
+        """
+        total_para = Paragraph(total_info, styles['Heading2'])
+        elements.append(total_para)
+        
+        elements.append(Spacer(1, 24))
+        
+        # Términos y condiciones
+        terminos = """
+        <b>Términos y Condiciones:</b><br/>
+        • Esta factura debe ser cancelada en los términos acordados.<br/>
+        • Los precios incluyen IVA cuando aplique.<br/>
+        • Documento válido como soporte contable.
+        """
+        terminos_para = Paragraph(terminos, styles['Normal'])
+        elements.append(terminos_para)
+        
+        # Construir PDF
+        doc.build(elements)
+        buffer.seek(0)
+        
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="factura_{factura.numero}.pdf"'
+        
+        return response
+        
+    except Factura.DoesNotExist:
+        messages.error(request, 'Factura no encontrada.')
+        return redirect('ventas:factura_list')
 
 def convertir_a_pedido(request, pk):
     """Vista para convertir cotización a pedido"""
@@ -882,27 +1099,107 @@ def cambiar_estado_pedido(request, pk):
         messages.error(request, 'Pedido no encontrado.')
         return redirect('ventas:pedido_list')
 
+@login_required
 def imprimir_pedido(request, pk):
-    """Vista para imprimir pedido"""
+    """Generar PDF de pedido"""
     if not request.user.can_create_sales():
-        messages.error(request, 'No tiene permisos para esta acción.')
-        return redirect('ventas:pedido_list')
+        return HttpResponse('Sin permisos', status=403)
     
-    try:
-        pedido = Pedido.objects.select_related(
-            'cliente', 'vendedor', 'bodega', 'cotizacion_origen'
-        ).prefetch_related('items__producto', 'items__variante').get(pk=pk)
-        
-        # Si es vendedor (no admin), verificar que sea su pedido
-        if request.user.role == 'vendedor' and not request.user.is_admin_user() and pedido.vendedor != request.user:
-            messages.error(request, 'No puede imprimir pedidos de otros vendedores.')
-            return redirect('ventas:pedido_list')
-        
-        return render(request, 'ventas/pedido_print.html', {'pedido': pedido})
-        
-    except Pedido.DoesNotExist:
-        messages.error(request, 'Pedido no encontrado.')
-        return redirect('ventas:pedido_list')
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    # Si es vendedor (no admin), verificar que sea su pedido
+    if request.user.role == 'vendedor' and not request.user.is_admin_user() and pedido.asignado_a != request.user:
+        return HttpResponse('Sin permisos para este pedido', status=403)
+    
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib import colors
+    from io import BytesIO
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Título
+    title = Paragraph(f"PEDIDO {pedido.numero}", styles['Title'])
+    elements.append(title)
+    elements.append(Spacer(1, 12))
+    
+    # Información del cliente
+    cliente_info = f"""
+    <b>Cliente:</b> {pedido.cliente.nombre_completo}<br/>
+    <b>Documento:</b> {pedido.cliente.numero_documento}<br/>
+    <b>Teléfono:</b> {pedido.cliente.telefono}<br/>
+    <b>Dirección:</b> {pedido.cliente.direccion}
+    """
+    cliente_para = Paragraph(cliente_info, styles['Normal'])
+    elements.append(cliente_para)
+    elements.append(Spacer(1, 12))
+    
+    # Información del pedido
+    pedido_info = f"""
+    <b>Fecha:</b> {pedido.fecha_creacion.strftime('%d/%m/%Y')}<br/>
+    <b>Estado:</b> {pedido.estado}<br/>
+    <b>Asignado a:</b> {pedido.asignado_a.get_full_name() if pedido.asignado_a else 'No asignado'}
+    """
+    pedido_para = Paragraph(pedido_info, styles['Normal'])
+    elements.append(pedido_para)
+    elements.append(Spacer(1, 12))
+    
+    # Tabla de items
+    data = [['Producto', 'Cantidad', 'Precio Unit.', 'Subtotal']]
+    
+    # Items del pedido (modelo simplificado)
+    if pedido.items.exists():
+        for item in pedido.items.all():
+            subtotal = item.cantidad * item.precio_unitario
+            data.append([
+                f'Item #{item.id}',
+                str(item.cantidad),
+                f'${item.precio_unitario:,.2f}',
+                f'${subtotal:,.2f}'
+            ])
+    else:
+        # Sin items detallados
+        data.append([
+            'Items del pedido',
+            '1',
+            f'${pedido.total:,.2f}',
+            f'${pedido.total:,.2f}'
+        ])
+    
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 12))
+    
+    # Total
+    total_info = f"""
+    <b>TOTAL:</b> ${pedido.total:,.2f}
+    """
+    total_para = Paragraph(total_info, styles['Normal'])
+    elements.append(total_para)
+    
+    # Construir PDF
+    doc.build(elements)
+    buffer.seek(0)
+    
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="pedido_{pedido.numero}.pdf"'
+    
+    return response
 
 class PedidoCreateView(LoginRequiredMixin, VentasRequiredMixin, CreateView):
     """Vista para crear nuevos pedidos directamente"""
@@ -2875,9 +3172,213 @@ def reporte_ventas(request):
     messages.info(request, 'Funcionalidad de reportes en desarrollo.')
     return redirect('ventas:dashboard')
 
+# ============= EXPORTACIÓN A EXCEL/CSV =============
+
 @login_required
-def imprimir_pedido(request, pk):
-    """Vista simple para imprimir pedido"""
-    pedido = get_object_or_404(Pedido, pk=pk)
-    messages.info(request, 'Pedido enviado a impresión.')
-    return redirect('ventas:pedido_detail', pk=pk)
+def exportar_pedidos_excel(request):
+    """Exportar pedidos filtrados a Excel"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from django.http import HttpResponse
+    import io
+    
+    # Obtener filtros desde GET parameters
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    estado = request.GET.get('estado')
+    vendedor = request.GET.get('vendedor')
+    cliente = request.GET.get('cliente')
+    
+    # Construir queryset con filtros
+    pedidos = Pedido.objects.all().select_related('cliente', 'asignado_a').order_by('-fecha_creacion')
+    
+    if fecha_inicio:
+        from datetime import datetime
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            pedidos = pedidos.filter(fecha_creacion__date__gte=fecha_inicio)
+        except ValueError:
+            pass
+    
+    if fecha_fin:
+        from datetime import datetime
+        try:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            pedidos = pedidos.filter(fecha_creacion__date__lte=fecha_fin)
+        except ValueError:
+            pass
+    
+    if estado and estado != 'todos':
+        pedidos = pedidos.filter(estado=estado)
+    
+    if vendedor and vendedor != 'todos':
+        pedidos = pedidos.filter(cliente__vendedor_asignado_id=vendedor)
+    
+    if cliente:
+        pedidos = pedidos.filter(
+            Q(cliente__nombre_completo__icontains=cliente) |
+            Q(cliente__numero_documento__icontains=cliente)
+        )
+    
+    # Crear workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Pedidos"
+    
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+    
+    # Headers
+    headers = [
+        'Número', 'Cliente', 'Documento', 'Vendedor', 'Estado', 'Total',
+        'Fecha Creación', 'Asignado a'
+    ]
+    
+    # Escribir headers
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+    
+    # Escribir datos
+    for row, pedido in enumerate(pedidos, 2):
+        data = [
+            pedido.numero or f"PED-{pedido.id}",
+            pedido.cliente.nombre_completo,
+            pedido.cliente.numero_documento,
+            pedido.cliente.vendedor_asignado.get_full_name() if pedido.cliente.vendedor_asignado else 'Sin asignar',
+            pedido.get_estado_display(),
+            float(pedido.total),
+            pedido.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
+            pedido.asignado_a.get_full_name() if pedido.asignado_a else 'Sin asignar'
+        ]
+        
+        for col, value in enumerate(data, 1):
+            cell = ws.cell(row=row, column=col, value=value)
+            cell.border = border
+            
+            # Formato especial para números
+            if col == 6:  # Total
+                cell.number_format = '_-$* #,##0.00_-;-$* #,##0.00_-;_-$* "-"??_-;_-@_-'
+    
+    # Ajustar anchos de columna
+    column_widths = {
+        'A': 15,  # Número
+        'B': 30,  # Cliente
+        'C': 20,  # Documento
+        'D': 25,  # Vendedor
+        'E': 15,  # Estado
+        'F': 15,  # Total
+        'G': 20,  # Fecha Creación
+        'H': 25   # Asignado a
+    }
+    
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+    
+    # Preparar respuesta HTTP
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    # Nombre del archivo con timestamp
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'pedidos_export_{timestamp}.xlsx'
+    
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+@login_required
+def exportar_pedidos_csv(request):
+    """Exportar pedidos filtrados a CSV"""
+    import csv
+    from django.http import HttpResponse
+    
+    # Obtener filtros desde GET parameters (mismo que Excel)
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    estado = request.GET.get('estado')
+    vendedor = request.GET.get('vendedor')
+    cliente = request.GET.get('cliente')
+    
+    # Construir queryset con filtros
+    pedidos = Pedido.objects.all().select_related('cliente', 'asignado_a').order_by('-fecha_creacion')
+    
+    if fecha_inicio:
+        from datetime import datetime
+        try:
+            fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+            pedidos = pedidos.filter(fecha_creacion__date__gte=fecha_inicio)
+        except ValueError:
+            pass
+    
+    if fecha_fin:
+        from datetime import datetime
+        try:
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            pedidos = pedidos.filter(fecha_creacion__date__lte=fecha_fin)
+        except ValueError:
+            pass
+    
+    if estado and estado != 'todos':
+        pedidos = pedidos.filter(estado=estado)
+    
+    if vendedor and vendedor != 'todos':
+        pedidos = pedidos.filter(cliente__vendedor_asignado_id=vendedor)
+    
+    if cliente:
+        pedidos = pedidos.filter(
+            Q(cliente__nombre_completo__icontains=cliente) |
+            Q(cliente__numero_documento__icontains=cliente)
+        )
+    
+    # Crear respuesta CSV
+    from datetime import datetime
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'pedidos_export_{timestamp}.csv'
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # Configurar CSV writer con encoding UTF-8
+    writer = csv.writer(response)
+    
+    # Escribir headers
+    writer.writerow([
+        'Número', 'Cliente', 'Documento', 'Vendedor', 'Estado', 'Total',
+        'Fecha Creación', 'Asignado a'
+    ])
+    
+    # Escribir datos
+    for pedido in pedidos:
+        writer.writerow([
+            pedido.numero or f"PED-{pedido.id}",
+            pedido.cliente.nombre_completo,
+            pedido.cliente.numero_documento,
+            pedido.cliente.vendedor_asignado.get_full_name() if pedido.cliente.vendedor_asignado else 'Sin asignar',
+            pedido.get_estado_display(),
+            str(pedido.total),
+            pedido.fecha_creacion.strftime('%Y-%m-%d %H:%M'),
+            pedido.asignado_a.get_full_name() if pedido.asignado_a else 'Sin asignar'
+        ])
+    
+    return response
+
+# Función de imprimir_pedido PDF definida anteriormente en la línea 886

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pedido #{{ pedido.id }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+        .info-section { margin-bottom: 20px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table th, .items-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .items-table th { background-color: #f2f2f2; }
+        .total-section { text-align: right; font-weight: bold; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PEDIDO #{{ pedido.id }}</h1>
+        <p>Fecha: {{ pedido.fecha_creacion|date:"d/m/Y" }}</p>
+    </div>
+
+    <div class="info-section">
+        <h3>Información del Cliente</h3>
+                    <p><strong>Cliente:</strong> {{ pedido.cliente.nombre_completo }}</p>
+        <p><strong>Documento:</strong> {{ pedido.cliente.numero_documento }}</p>
+        <p><strong>Teléfono:</strong> {{ pedido.cliente.telefono }}</p>
+        {% if pedido.cliente.direccion %}
+        <p><strong>Dirección:</strong> {{ pedido.cliente.direccion }}</p>
+        {% endif %}
+    </div>
+
+    <div class="info-section">
+        <h3>Detalles del Pedido</h3>
+        <p><strong>Estado:</strong> {{ pedido.get_estado_display }}</p>
+        <p><strong>Vendedor:</strong> {{ pedido.asignado_a.get_full_name|default:pedido.asignado_a.username }}</p>
+        {% if pedido.observaciones %}
+        <p><strong>Observaciones:</strong> {{ pedido.observaciones }}</p>
+        {% endif %}
+    </div>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in pedido.items.all %}
+            <tr>
+                <td>{{ item.producto.codigo }} - {{ item.producto.nombre }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>${{ item.precio_unitario|floatformat:2 }}</td>
+                <td>${{ item.subtotal|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <p>TOTAL: ${{ pedido.total|floatformat:2 }}</p>
+    </div>
+
+    <div style="margin-top: 50px; text-align: center; color: #666;">
+        <p>Documento generado automáticamente - {{ "now"|date:"d/m/Y H:i" }}</p>
+    </div>
+</body>
+</html>

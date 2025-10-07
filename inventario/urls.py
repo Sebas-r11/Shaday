@@ -36,12 +36,14 @@ from . import views  # Para vistas que no se movieron aún
 from .reporte_views import reporte_integracion_ventas_inventario
 from . import views_devoluciones
 from . import views_simple
+from . import alertas_views
 
 app_name = 'inventario'
 
 urlpatterns = [
     # Página principal del inventario
     path('', InventarioHomeView.as_view(), name='home'),
+    path('dashboard/', InventarioHomeView.as_view(), name='dashboard'),  # Alias para dashboard
     path('menu/', InventarioMenuView.as_view(), name='menu'),
     
     # Productos
@@ -126,4 +128,12 @@ urlpatterns = [
     
     # Vistas simples (sin templates complejos)
     path('presentaciones-simple/', views_simple.presentaciones_proveedor_simple, name='presentaciones_simple'),
+    
+    # Alertas de Stock
+    path('alertas/', alertas_views.dashboard_alertas, name='dashboard_alertas'),
+    path('alertas/lista/', alertas_views.lista_alertas, name='lista_alertas'),
+    path('alertas/<int:alerta_id>/resolver/', alertas_views.resolver_alerta, name='resolver_alerta'),
+    path('alertas/<int:alerta_id>/marcar-vista/', alertas_views.marcar_vista_alerta, name='marcar_vista_alerta'),
+    path('alertas/generar/', alertas_views.generar_alertas_manuales, name='generar_alertas'),
+    path('api/alertas/', alertas_views.api_alertas_dashboard, name='api_alertas'),
 ]

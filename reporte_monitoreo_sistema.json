@@ -1,0 +1,10 @@
+{
+  "inicio_monitoreo": "2025-10-07T08:03:36.921671",
+  "errores": [],
+  "urls_probadas": 5,
+  "urls_exitosas": 5,
+  "urls_fallidas": 0,
+  "fin_monitoreo": "2025-10-07T08:03:37.853791",
+  "total_errores": 0,
+  "porcentaje_exito": 100.0
+}

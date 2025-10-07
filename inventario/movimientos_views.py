@@ -26,10 +26,10 @@ from .models import MovimientoInventario, Producto, Bodega, Stock
 
 
 class AdminInventarioMixin(UserPassesTestMixin):
-    """Mixin para funciones estratégicas de inventario (solo administradores)"""
+    """Mixin para funciones estratégicas de inventario (admins y bodega)"""
     def test_func(self):
         return (self.request.user.is_superuser or 
-                self.request.user.role in ['superadmin', 'administrador'])
+                self.request.user.role in ['superadmin', 'administrador', 'bodega'])
 
 
 # ============= VISTAS DE MOVIMIENTOS =============
@@ -85,7 +85,7 @@ class MovimientoInventarioListView(AdminInventarioMixin, ListView):
             except ValueError:
                 pass
         
-        return queryset.order_by('-fecha_creacion')
+        return queryset.order_by('-fecha_movimiento')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -93,7 +93,7 @@ class MovimientoInventarioListView(AdminInventarioMixin, ListView):
         
         # Estadísticas de movimientos
         context['total_movimientos_hoy'] = MovimientoInventario.objects.filter(
-            fecha_creacion__date=timezone.now().date()
+            fecha_movimiento__date=timezone.now().date()
         ).count()
         
         context['movimientos_por_tipo'] = MovimientoInventario.objects.values(

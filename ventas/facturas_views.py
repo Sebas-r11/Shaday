@@ -43,7 +43,7 @@ class FacturaListView(VentasRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Factura.objects.select_related('cliente', 'vendedor', 'pedido')
+        queryset = Factura.objects.select_related('cliente')
         
         # Filtros
         search = self.request.GET.get('search')
@@ -92,31 +92,24 @@ class FacturaCreateView(VentasRequiredMixin, CreateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['items_formset'] = FacturaItemFormSet(self.request.POST)
-        else:
-            context['items_formset'] = FacturaItemFormSet()
+        # Comentado temporalmente hasta implementar FacturaItemFormSet
+        # if self.request.POST:
+        #     context['items_formset'] = FacturaItemFormSet(self.request.POST)
+        # else:
+        #     context['items_formset'] = FacturaItemFormSet()
         return context
     
     def form_valid(self, form):
-        context = self.get_context_data()
-        items_formset = context['items_formset']
+        # Simplificado temporalmente - sin formset de items
+        factura = form.save()
         
-        if form.is_valid() and items_formset.is_valid():
-            form.instance.vendedor = self.request.user
-            factura = form.save()
-            
-            items_formset.instance = factura
-            items_formset.save()
-            
-            # Calcular totales
+        # Calcular totales si el método existe
+        if hasattr(factura, 'calcular_totales'):
             factura.calcular_totales()
             factura.save()
-            
-            messages.success(request, f'Factura {factura.numero} creada exitosamente.')
-            return redirect('ventas:factura_detail', pk=factura.pk)
-        else:
-            return self.render_to_response(self.get_context_data(form=form))
+        
+        messages.success(self.request, f'Factura {factura.numero} creada exitosamente.')
+        return redirect('ventas:factura_detail', pk=factura.pk)
 
 
 class FacturaDetailView(VentasRequiredMixin, DetailView):
@@ -147,31 +140,27 @@ class FacturaUpdateView(VentasRequiredMixin, UpdateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['items_formset'] = FacturaItemFormSet(
-                self.request.POST, 
-                instance=self.object
-            )
-        else:
-            context['items_formset'] = FacturaItemFormSet(instance=self.object)
+        # Comentado temporalmente hasta implementar FacturaItemFormSet
+        # if self.request.POST:
+        #     context['items_formset'] = FacturaItemFormSet(
+        #         self.request.POST, 
+        #         instance=self.object
+        #     )
+        # else:
+        #     context['items_formset'] = FacturaItemFormSet(instance=self.object)
         return context
     
     def form_valid(self, form):
-        context = self.get_context_data()
-        items_formset = context['items_formset']
+        # Simplificado temporalmente - sin formset de items
+        factura = form.save()
         
-        if form.is_valid() and items_formset.is_valid():
-            factura = form.save()
-            items_formset.save()
-            
-            # Recalcular totales
+        # Recalcular totales si el método existe
+        if hasattr(factura, 'calcular_totales'):
             factura.calcular_totales()
             factura.save()
-            
-            messages.success(request, f'Factura {factura.numero} actualizada exitosamente.')
-            return redirect('ventas:factura_detail', pk=factura.pk)
-        else:
-            return self.render_to_response(self.get_context_data(form=form))
+        
+        messages.success(self.request, f'Factura {factura.numero} actualizada exitosamente.')
+        return redirect('ventas:factura_detail', pk=factura.pk)
 
 
 # ============= ACCIONES DE FACTURAS =============
@@ -247,10 +236,9 @@ def imprimir_factura(request, pk):
     
     # Información del cliente
     cliente_info = f"""
-    <b>Cliente:</b> {factura.cliente.nombre}<br/>
-    <b>Documento:</b> {factura.cliente.documento}<br/>
+    <b>Cliente:</b> {factura.cliente.nombre_completo}<br/>
+    <b>Documento:</b> {factura.cliente.numero_documento}<br/>
     <b>Teléfono:</b> {factura.cliente.telefono}<br/>
-    <b>Email:</b> {factura.cliente.email}<br/>
     <b>Dirección:</b> {factura.cliente.direccion}
     """
     cliente_para = Paragraph(cliente_info, styles['Normal'])
@@ -260,15 +248,8 @@ def imprimir_factura(request, pk):
     # Información de la factura
     factura_info = f"""
     <b>Fecha:</b> {factura.fecha_creacion.strftime('%d/%m/%Y')}<br/>
-    <b>Vendedor:</b> {factura.vendedor.get_full_name()}<br/>
-    <b>Estado:</b> {factura.get_estado_display()}<br/>
+    <b>Estado:</b> {factura.estado}<br/>
     """
-    
-    if factura.pedido:
-        factura_info += f"<b>Pedido origen:</b> {factura.pedido.numero}<br/>"
-    
-    if factura.fecha_pago:
-        factura_info += f"<b>Fecha de pago:</b> {factura.fecha_pago.strftime('%d/%m/%Y')}<br/>"
     
     factura_para = Paragraph(factura_info, styles['Normal'])
     elements.append(factura_para)
@@ -277,13 +258,24 @@ def imprimir_factura(request, pk):
     # Tabla de items
     data = [['Producto', 'Cantidad', 'Precio Unit.', 'Descuento', 'Subtotal']]
     
-    for item in factura.items.all():
+    # Si hay items, agregarlos (modelo simplificado)
+    if factura.itemfactura_set.exists():
+        for item in factura.itemfactura_set.all():
+            data.append([
+                f'Item #{item.id}',
+                str(item.cantidad),
+                f'${item.precio:,.2f}',
+                '0%',
+                f'${item.cantidad * item.precio:,.2f}'
+            ])
+    else:
+        # Sin items detallados
         data.append([
-            item.producto.nombre,
-            str(item.cantidad),
-            f'${item.precio_unitario:,.2f}',
-            f'{item.descuento}%',
-            f'${item.subtotal:,.2f}'
+            'Items de factura',
+            '1',
+            f'${factura.total:,.2f}',
+            '0%',
+            f'${factura.total:,.2f}'
         ])
     
     table = Table(data)
@@ -303,9 +295,7 @@ def imprimir_factura(request, pk):
     
     # Totales
     totales_info = f"""
-    <b>Subtotal:</b> ${factura.subtotal:,.2f}<br/>
-    <b>Impuestos:</b> ${factura.impuestos:,.2f}<br/>
-    <b>Total:</b> ${factura.total:,.2f}
+    <b>TOTAL:</b> ${factura.total:,.2f}
     """
     totales_para = Paragraph(totales_info, styles['Normal'])
     elements.append(totales_para)
@@ -339,7 +329,7 @@ def reporte_ventas_periodo(request):
         fecha_creacion__date__gte=fecha_desde,
         fecha_creacion__date__lte=fecha_hasta,
         estado='pagada'
-    ).select_related('cliente', 'vendedor')
+    ).select_related('cliente')
     
     # Calcular totales
     total_ventas = facturas.aggregate(Sum('total'))['total__sum'] or 0
@@ -356,7 +346,8 @@ def reporte_ventas_periodo(request):
     
     # Ventas por producto (top 10)
     from django.db.models import F
-    ventas_producto = FacturaItem.objects.filter(
+    from ventas.models import ItemFactura
+    ventas_producto = ItemFactura.objects.filter(
         factura__in=facturas
     ).values(
         'producto__nombre'

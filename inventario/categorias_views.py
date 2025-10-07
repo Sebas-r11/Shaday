@@ -37,7 +37,7 @@ class CategoriaListView(InventarioViewMixin, ListView):
     
     def get_queryset(self):
         queryset = Categoria.objects.annotate(
-            productos_count=Count('productos'),
+            productos_count=Count('producto'),
             subcategorias_count=Count('subcategorias')
         )
         
@@ -58,7 +58,7 @@ class CategoriaListView(InventarioViewMixin, ListView):
         
         # Categorías con más productos
         context['top_categorias'] = Categoria.objects.annotate(
-            productos_count=Count('productos')
+            productos_count=Count('producto')
         ).order_by('-productos_count')[:5]
         
         return context

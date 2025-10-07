@@ -215,6 +215,31 @@
                     </div>
                 </form>
             </div>
+            
+            <!-- Sección de Exportación -->
+            {% if user|can_create_sales %}
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-download text-gray-600 mr-2"></i>
+                        <span class="text-sm font-medium text-gray-700">Exportar Datos:</span>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="exportarExcel()" 
+                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-file-excel mr-2"></i>Excel
+                        </button>
+                        <button onclick="exportarCSV()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                            <i class="fas fa-file-csv mr-2"></i>CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    Los archivos incluirán todos los pedidos según los filtros aplicados
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Lista de pedidos -->
@@ -662,6 +687,75 @@ document.addEventListener('keydown', function(event) {
         cerrarModal();
     }
 });
+
+// ============= FUNCIONES DE EXPORTACIÓN =============
+function obtenerParametrosFiltros() {
+    const params = new URLSearchParams();
+    
+    // Obtener valores del formulario de filtros
+    const estado = document.querySelector('select[name="estado"]').value;
+    const cliente = document.querySelector('input[name="cliente"]').value;
+    
+    if (estado) params.append('estado', estado);
+    if (cliente) params.append('cliente', cliente);
+    
+    {% if user.role == 'admin' or user.role == 'gerente' %}
+    const vendedor = document.querySelector('select[name="vendedor"]').value;
+    if (vendedor) params.append('vendedor', vendedor);
+    {% endif %}
+    
+    return params.toString();
+}
+
+function exportarExcel() {
+    const filtros = obtenerParametrosFiltros();
+    const url = `{% url 'ventas:exportar_pedidos_excel' %}${filtros ? '?' + filtros : ''}`;
+    
+    // Mostrar indicador de carga
+    const btnExcel = document.querySelector('button[onclick="exportarExcel()"]');
+    const textoOriginal = btnExcel.innerHTML;
+    btnExcel.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generando...';
+    btnExcel.disabled = true;
+    
+    // Crear link temporal para descarga
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Restaurar botón después de un momento
+    setTimeout(() => {
+        btnExcel.innerHTML = textoOriginal;
+        btnExcel.disabled = false;
+    }, 2000);
+}
+
+function exportarCSV() {
+    const filtros = obtenerParametrosFiltros();
+    const url = `{% url 'ventas:exportar_pedidos_csv' %}${filtros ? '?' + filtros : ''}`;
+    
+    // Mostrar indicador de carga
+    const btnCSV = document.querySelector('button[onclick="exportarCSV()"]');
+    const textoOriginal = btnCSV.innerHTML;
+    btnCSV.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generando...';
+    btnCSV.disabled = true;
+    
+    // Crear link temporal para descarga
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Restaurar botón después de un momento
+    setTimeout(() => {
+        btnCSV.innerHTML = textoOriginal;
+        btnCSV.disabled = false;
+    }, 2000);
+}
 </script>
 
 {% endblock %}

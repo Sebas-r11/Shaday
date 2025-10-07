@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard Inventario{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+    .dashboard-card {
+        @apply bg-white rounded-lg shadow-md p-6 border border-gray-200;
+    }
+    .stat-number {
+        @apply text-3xl font-bold text-blue-600;
+    }
+    .stat-label {
+        @apply text-sm text-gray-600 mt-1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard de Inventario</h1>
+        <p class="text-gray-600">Resumen general del estado de inventario</p>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    {% if estadisticas %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="dashboard-card">
+            <div class="stat-number">{{ estadisticas.total_productos|default:0 }}</div>
+            <div class="stat-label">Total Productos</div>
+        </div>
+        <div class="dashboard-card">
+            <div class="stat-number">{{ estadisticas.total_categorias|default:0 }}</div>
+            <div class="stat-label">Categorías Activas</div>
+        </div>
+        <div class="dashboard-card">
+            <div class="stat-number">{{ estadisticas.total_bodegas|default:0 }}</div>
+            <div class="stat-label">Bodegas Activas</div>
+        </div>
+        <div class="dashboard-card">
+            <div class="stat-number">{{ estadisticas.productos_registrados|default:0 }}</div>
+            <div class="stat-label">Productos Registrados</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Productos Recientes -->
+    {% if productos_recientes %}
+    <div class="dashboard-card mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Productos Recientes</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Código</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Categoría</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Fecha Creación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos_recientes %}
+                    <tr class="border-b border-gray-200">
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ producto.codigo }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-900">{{ producto.nombre }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-600">{{ producto.categoria.nombre }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-600">{{ producto.fecha_creacion|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Accesos Rápidos -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="dashboard-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Productos</h3>
+            <div class="space-y-2">
+                <a href="{% url 'inventario:producto_list' %}" class="block text-blue-600 hover:text-blue-800">Ver todos los productos</a>
+                <a href="{% url 'inventario:producto_create' %}" class="block text-blue-600 hover:text-blue-800">Crear nuevo producto</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Stock</h3>
+            <div class="space-y-2">
+                <a href="{% url 'inventario:stock_list' %}" class="block text-blue-600 hover:text-blue-800">Ver stock actual</a>
+                <a href="{% url 'inventario:movimiento_list' %}" class="block text-blue-600 hover:text-blue-800">Movimientos de inventario</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-card">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Configuración</h3>
+            <div class="space-y-2">
+                <a href="{% url 'inventario:categoria_list' %}" class="block text-blue-600 hover:text-blue-800">Gestionar categorías</a>
+                <a href="{% url 'inventario:bodega_list' %}" class="block text-blue-600 hover:text-blue-800">Gestionar bodegas</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('Dashboard Inventario cargado exitosamente');
+</script>
+{% endblock %}

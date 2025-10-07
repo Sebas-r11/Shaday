@@ -30,7 +30,8 @@ ALLOWED_HOSTS = [
     '192.168.1.14', 
     'localhost', 
     '127.0.0.1',
-    'shaddai'
+    'shaddai',
+    'testserver'  # Para pruebas automatizadas
 ]
 
 
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     'crm',
     'compras',
     'analytics',
+    'api',
 ]
 
 MIDDLEWARE = [

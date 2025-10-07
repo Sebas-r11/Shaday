@@ -1,0 +1,71 @@
+{
+  "timestamp": "2025-10-07T07:53:05.078483",
+  "urls_restantes": [
+    {
+      "url": "ventas:pedido_detail",
+      "args": [
+        1
+      ],
+      "status": "✅ FUNCIONA"
+    },
+    {
+      "url": "inventario:producto_detail",
+      "args": [
+        1
+      ],
+      "status": "✅ FUNCIONA"
+    },
+    {
+      "url": "accounts:user_detail",
+      "args": [
+        1
+      ],
+      "status": "✅ FUNCIONA"
+    },
+    {
+      "url": "ventas:cliente_detail",
+      "args": [
+        1
+      ],
+      "status": "✅ FUNCIONA"
+    },
+    {
+      "url": "analytics:dashboard",
+      "args": [],
+      "status": "✅ FUNCIONA"
+    }
+  ],
+  "modelos_datos": {
+    "pedidos": 0,
+    "facturas": 0,
+    "productos": 3,
+    "usuarios": 9
+  },
+  "vistas_criticas": [
+    {
+      "url": "/",
+      "descripcion": "Página principal",
+      "status": "✅ 302"
+    },
+    {
+      "url": "/admin/",
+      "descripcion": "Admin Django",
+      "status": "✅ 302"
+    },
+    {
+      "url": "/accounts/login/",
+      "descripcion": "Login",
+      "status": "✅ 200"
+    },
+    {
+      "url": "/ventas/",
+      "descripcion": "Dashboard ventas",
+      "status": "✅ 302"
+    },
+    {
+      "url": "/inventario/",
+      "descripcion": "Dashboard inventario",
+      "status": "❌ ERROR: 'AnonymousUser' object has no attribute 'role'"
+    }
+  ]
+}

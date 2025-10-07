@@ -49,7 +49,7 @@ def dashboard_view(request):
     ).aggregate(Sum('total'))['total__sum'] or 0
     
     # Entregas del día
-    entregas_hoy = Entrega.objects.filter(fecha_creacion__date=hoy).count()
+    entregas_hoy = Entrega.objects.filter(fecha_programada__date=hoy).count()
     entregas_pendientes = Entrega.objects.filter(
         estado__in=['pendiente', 'asignada', 'en_ruta']
     ).count()
@@ -76,7 +76,7 @@ def dashboard_view(request):
     # Top productos vendidos del mes
     from inventario.models import MovimientoInventario
     top_productos = MovimientoInventario.objects.filter(
-        fecha_creacion__date__gte=primer_dia_mes,
+        fecha_movimiento__date__gte=primer_dia_mes,
         tipo_movimiento='salida',
         motivo='venta'
     ).values(
@@ -90,7 +90,7 @@ def dashboard_view(request):
         fecha_creacion__date__gte=primer_dia_mes,
         estado='pagada'
     ).values(
-        'cliente__nombre'
+        'cliente__nombre_completo'
     ).annotate(
         total_compras=Sum('total'),
         num_facturas=Count('id')
@@ -107,9 +107,43 @@ def dashboard_view(request):
         'ventas_semana': ventas_semana,
         'top_productos': top_productos,
         'top_clientes': top_clientes,
+        'title': 'Dashboard de Ventas'
     }
     
     return render(request, 'ventas/dashboard.html', context)
+
+@login_required
+def dashboard_charts_view(request):
+    """Dashboard avanzado con gráficos interactivos"""
+    if not request.user.can_create_sales():
+        return redirect('dashboard')
+    context = {
+        'ventas_mes': ventas_mes,
+        'pedidos_pendientes': pedidos_pendientes,
+        'pedidos_alistamiento': pedidos_alistamiento,
+        'facturas_pendientes': facturas_pendientes,
+        'entregas_hoy': entregas_hoy,
+        'entregas_pendientes': entregas_pendientes,
+        'cotizaciones_pendientes': cotizaciones_pendientes,
+        'ventas_semana': ventas_semana,
+        'top_productos': top_productos,
+        'top_clientes': top_clientes,
+        'title': 'Dashboard de Ventas'
+    }
+    
+    return render(request, 'ventas/dashboard.html', context)
+
+@login_required
+def dashboard_charts_view(request):
+    """Dashboard avanzado con gráficos interactivos"""
+    if not request.user.can_create_sales():
+        return redirect('dashboard')
+    
+    context = {
+        'title': 'Dashboard Avanzado'
+    }
+    
+    return render(request, 'ventas/dashboard_charts.html', context)
 
 
 # ============= APIS GENERALES =============
@@ -246,6 +280,197 @@ def calcular_estadisticas_periodo(fecha_inicio, fecha_fin):
     
     return stats
 
+
+# ============= APIS PARA GRÁFICOS DEL DASHBOARD =============
+
+@login_required
+def api_ventas_por_mes(request):
+    """API para gráfico de ventas por mes de los últimos 12 meses"""
+    from django.db.models import Sum
+    from datetime import datetime, timedelta
+    import calendar
+    
+    hoy = timezone.now().date()
+    hace_12_meses = hoy - timedelta(days=365)
+    
+    # Obtener ventas por mes
+    ventas_por_mes = []
+    for i in range(12):
+        # Calcular el mes
+        mes_actual = hoy.replace(day=1) - timedelta(days=30*i)
+        mes_siguiente = mes_actual.replace(day=28) + timedelta(days=4)
+        mes_siguiente = mes_siguiente.replace(day=1)
+        
+        ventas_mes = Factura.objects.filter(
+            fecha_creacion__date__gte=mes_actual,
+            fecha_creacion__date__lt=mes_siguiente,
+            estado='pagada'
+        ).aggregate(Sum('total'))['total__sum'] or 0
+        
+        ventas_por_mes.append({
+            'mes': calendar.month_name[mes_actual.month][:3] + f' {mes_actual.year}',
+            'ventas': float(ventas_mes),
+            'fecha': mes_actual.isoformat()
+        })
+    
+    ventas_por_mes.reverse()  # Ordenar cronológicamente
+    
+    return JsonResponse({
+        'success': True,
+        'data': ventas_por_mes
+    })
+
+@login_required  
+def api_productos_mas_vendidos(request):
+    """API para gráfico de productos más vendidos"""
+    from inventario.models import MovimientoInventario
+    from django.db.models import Sum
+    
+    hoy = timezone.now().date()
+    hace_30_dias = hoy - timedelta(days=30)
+    
+    productos_vendidos = MovimientoInventario.objects.filter(
+        fecha_movimiento__date__gte=hace_30_dias,
+        tipo_movimiento='salida',
+        motivo='venta'
+    ).values(
+        'producto__nombre'
+    ).annotate(
+        cantidad_vendida=Sum('cantidad')
+    ).order_by('-cantidad_vendida')[:10]
+    
+    data = []
+    for item in productos_vendidos:
+        data.append({
+            'producto': item['producto__nombre'],
+            'cantidad': float(item['cantidad_vendida'])
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'data': data
+    })
+
+@login_required
+def api_estados_pedidos(request):
+    """API para gráfico de distribución de estados de pedidos"""
+    estados_count = {}
+    
+    for estado_code, estado_name in Pedido.ESTADO_CHOICES:
+        count = Pedido.objects.filter(estado=estado_code).count()
+        if count > 0:
+            estados_count[estado_name] = count
+    
+    data = []
+    for estado, count in estados_count.items():
+        data.append({
+            'estado': estado,
+            'cantidad': count
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'data': data
+    })
+
+@login_required
+def api_ventas_por_vendedor(request):
+    """API para gráfico de ventas por vendedor del mes"""
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    hoy = timezone.now().date()
+    primer_dia_mes = hoy.replace(day=1)
+    
+    # Obtener vendedores con ventas
+    vendedores_ventas = Factura.objects.filter(
+        fecha_creacion__date__gte=primer_dia_mes,
+        estado='pagada',
+        cliente__vendedor_asignado__isnull=False
+    ).values(
+        'cliente__vendedor_asignado__first_name',
+        'cliente__vendedor_asignado__last_name'
+    ).annotate(
+        total_ventas=Sum('total'),
+        num_ventas=Count('id')
+    ).order_by('-total_ventas')[:8]
+    
+    data = []
+    for item in vendedores_ventas:
+        nombre = f"{item['cliente__vendedor_asignado__first_name']} {item['cliente__vendedor_asignado__last_name']}"
+        if not nombre.strip():
+            nombre = "Vendedor Sin Nombre"
+            
+        data.append({
+            'vendedor': nombre,
+            'ventas': float(item['total_ventas']),
+            'num_ventas': item['num_ventas']
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'data': data
+    })
+
+@login_required
+def api_estadisticas_dashboard(request):
+    """API para estadísticas generales del dashboard"""
+    hoy = timezone.now().date()
+    primer_dia_mes = hoy.replace(day=1)
+    mes_anterior = (primer_dia_mes - timedelta(days=1)).replace(day=1)
+    
+    # Estadísticas del mes actual
+    pedidos_mes = Pedido.objects.filter(fecha_creacion__date__gte=primer_dia_mes).count()
+    ventas_mes = Factura.objects.filter(
+        fecha_creacion__date__gte=primer_dia_mes,
+        estado='pagada'
+    ).aggregate(Sum('total'))['total__sum'] or 0
+    
+    # Estadísticas del mes anterior para comparación
+    pedidos_mes_anterior = Pedido.objects.filter(
+        fecha_creacion__date__gte=mes_anterior,
+        fecha_creacion__date__lt=primer_dia_mes
+    ).count()
+    
+    ventas_mes_anterior = Factura.objects.filter(
+        fecha_creacion__date__gte=mes_anterior,
+        fecha_creacion__date__lt=primer_dia_mes,
+        estado='pagada'
+    ).aggregate(Sum('total'))['total__sum'] or 0
+    
+    # Calcular crecimientos
+    crecimiento_pedidos = 0
+    if pedidos_mes_anterior > 0:
+        crecimiento_pedidos = ((pedidos_mes - pedidos_mes_anterior) / pedidos_mes_anterior) * 100
+    
+    crecimiento_ventas = 0
+    if ventas_mes_anterior > 0:
+        crecimiento_ventas = ((ventas_mes - ventas_mes_anterior) / ventas_mes_anterior) * 100
+    
+    # Pedidos pendientes
+    pedidos_pendientes = Pedido.objects.filter(estado='pendiente').count()
+    pedidos_proceso = Pedido.objects.filter(estado='proceso').count()
+    
+    # Alertas de stock
+    try:
+        from inventario.models import AlertaStock
+        alertas_stock = AlertaStock.objects.filter(vista=False).count()
+    except:
+        alertas_stock = 0
+    
+    return JsonResponse({
+        'success': True,
+        'data': {
+            'pedidos_mes': pedidos_mes,
+            'ventas_mes': float(ventas_mes),
+            'crecimiento_pedidos': round(crecimiento_pedidos, 1),
+            'crecimiento_ventas': round(crecimiento_ventas, 1),
+            'pedidos_pendientes': pedidos_pendientes,
+            'pedidos_proceso': pedidos_proceso,
+            'alertas_stock': alertas_stock,
+            'mes_actual': primer_dia_mes.strftime('%B %Y')
+        }
+    })
 
 # ============= VISTAS DE PRUEBA/DESARROLLO =============
 

@@ -1959,3 +1959,220 @@ class RecomendacionReposicion(models.Model):
         self.procesado_por = usuario
         self.notas_procesamiento = f"Rechazada: {razon}"
         self.save(update_fields=['estado', 'activa', 'procesado_por', 'notas_procesamiento'])
+
+
+class AlertaStock(models.Model):
+    """Alertas automáticas de stock bajo"""
+    
+    TIPO_ALERTA_CHOICES = [
+        ('stock_bajo', 'Stock Bajo'),
+        ('agotado', 'Producto Agotado'),
+        ('cerca_minimo', 'Cerca del Mínimo'),
+    ]
+    
+    NIVEL_CHOICES = [
+        ('info', 'Información'),
+        ('advertencia', 'Advertencia'),
+        ('critico', 'Crítico'),
+    ]
+    
+    producto = models.ForeignKey(
+        Producto, 
+        on_delete=models.CASCADE, 
+        related_name='alertas_stock',
+        verbose_name='Producto'
+    )
+    
+    tipo_alerta = models.CharField(
+        max_length=20, 
+        choices=TIPO_ALERTA_CHOICES,
+        verbose_name='Tipo de Alerta'
+    )
+    
+    nivel = models.CharField(
+        max_length=15, 
+        choices=NIVEL_CHOICES,
+        default='advertencia',
+        verbose_name='Nivel de Alerta'
+    )
+    
+    mensaje = models.TextField(verbose_name='Mensaje de la Alerta')
+    
+    stock_actual = models.IntegerField(
+        default=0,
+        verbose_name='Stock Actual al momento de la alerta'
+    )
+    
+    stock_minimo = models.IntegerField(
+        default=0,
+        verbose_name='Stock Mínimo'
+    )
+    
+    activa = models.BooleanField(
+        default=True,
+        verbose_name='Alerta Activa'
+    )
+    
+    vista = models.BooleanField(
+        default=False,
+        verbose_name='Vista por usuario'
+    )
+    
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha de Creación'
+    )
+    
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Última Actualización'
+    )
+    
+    fecha_resuelto = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de Resolución'
+    )
+    
+    resuelto_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Resuelto por'
+    )
+    
+    class Meta:
+        verbose_name = 'Alerta de Stock'
+        verbose_name_plural = 'Alertas de Stock'
+        ordering = ['-fecha_creacion', 'nivel', 'producto__codigo']
+        unique_together = ['producto', 'tipo_alerta']
+    
+    def __str__(self):
+        return f"Alerta {self.get_nivel_display()}: {self.producto.codigo} - {self.get_tipo_alerta_display()}"
+    
+    def marcar_como_vista(self, usuario=None):
+        """Marca la alerta como vista por un usuario"""
+        self.vista = True
+        if usuario:
+            # Aquí se podría agregar un log de quién la vio
+            pass
+        self.save(update_fields=['vista'])
+    
+    def resolver_alerta(self, usuario=None):
+        """Marca la alerta como resuelta"""
+        from django.utils import timezone
+        
+        self.activa = False
+        self.fecha_resuelto = timezone.now()
+        if usuario:
+            self.resuelto_por = usuario
+        
+        self.save(update_fields=['activa', 'fecha_resuelto', 'resuelto_por'])
+    
+    def actualizar_stock(self, nuevo_stock):
+        """Actualiza el stock actual en la alerta"""
+        from django.utils import timezone
+        
+        self.stock_actual = nuevo_stock
+        self.fecha_actualizacion = timezone.now()
+        
+        # Si el stock ya no está bajo, resolver automáticamente
+        if nuevo_stock > self.stock_minimo:
+            self.resolver_alerta()
+        
+        self.save(update_fields=['stock_actual', 'fecha_actualizacion'])
+    
+    @property
+    def dias_desde_creacion(self):
+        """Días transcurridos desde que se creó la alerta"""
+        from django.utils import timezone
+        
+        delta = timezone.now() - self.fecha_creacion
+        return delta.days
+    
+    @property
+    def requiere_atencion_urgente(self):
+        """Determina si requiere atención urgente"""
+        return (
+            self.nivel == 'critico' or 
+            (self.nivel == 'advertencia' and self.dias_desde_creacion > 3) or
+            self.stock_actual == 0
+        )
+    
+    @classmethod
+    def generar_alerta_automatica(cls, producto):
+        """Genera o actualiza una alerta automática para un producto"""
+        from django.utils import timezone
+        
+        # Calcular stock actual (simplificado)
+        try:
+            # Aquí iría la lógica real de cálculo de stock
+            stock_actual = max(0, producto.stock_minimo - 2)  # Simulación
+        except:
+            stock_actual = 0
+        
+        # Determinar tipo y nivel de alerta
+        if stock_actual == 0:
+            tipo_alerta = 'agotado'
+            nivel = 'critico'
+            mensaje = f"PRODUCTO AGOTADO: {producto.nombre} no tiene stock disponible"
+        elif stock_actual <= producto.stock_minimo:
+            tipo_alerta = 'stock_bajo'
+            nivel = 'critico' if stock_actual <= producto.stock_minimo * 0.5 else 'advertencia'
+            mensaje = f"STOCK BAJO: {producto.nombre} - Stock actual: {stock_actual}, Mínimo: {producto.stock_minimo}"
+        elif stock_actual <= producto.stock_minimo * 1.2:  # 20% por encima del mínimo
+            tipo_alerta = 'cerca_minimo'
+            nivel = 'advertencia'
+            mensaje = f"CERCA DEL MÍNIMO: {producto.nombre} - Stock actual: {stock_actual}, Mínimo: {producto.stock_minimo}"
+        else:
+            # No necesita alerta
+            # Resolver alertas existentes si las hay
+            cls.objects.filter(producto=producto, activa=True).update(
+                activa=False,
+                fecha_resuelto=timezone.now()
+            )
+            return None
+        
+        # Crear o actualizar alerta
+        alerta, created = cls.objects.get_or_create(
+            producto=producto,
+            tipo_alerta=tipo_alerta,
+            defaults={
+                'nivel': nivel,
+                'mensaje': mensaje,
+                'stock_actual': stock_actual,
+                'stock_minimo': producto.stock_minimo,
+                'activa': True,
+            }
+        )
+        
+        if not created:
+            # Actualizar alerta existente
+            alerta.mensaje = mensaje
+            alerta.stock_actual = stock_actual
+            alerta.nivel = nivel
+            alerta.activa = True
+            alerta.fecha_actualizacion = timezone.now()
+            alerta.save()
+        
+        return alerta
+    
+    @classmethod
+    def obtener_alertas_dashboard(cls, usuario=None, limit=10):
+        """Obtiene alertas para mostrar en el dashboard"""
+        alertas = cls.objects.filter(activa=True).select_related('producto', 'producto__categoria')
+        
+        # Ordenar por prioridad: críticas primero, luego por fecha
+        alertas = alertas.order_by(
+            models.Case(
+                models.When(nivel='critico', then=models.Value(1)),
+                models.When(nivel='advertencia', then=models.Value(2)),
+                models.When(nivel='info', then=models.Value(3)),
+                default=models.Value(4),
+                output_field=models.IntegerField(),
+            ),
+            '-fecha_creacion'
+        )[:limit]
+        
+        return alertas

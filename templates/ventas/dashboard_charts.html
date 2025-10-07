@@ -1,0 +1,532 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Avanzado - DistribucioneShaddai{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header del Dashboard -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-chart-pie mr-4 text-blue-600"></i>
+                        Dashboard Avanzado
+                    </h1>
+                    <p class="mt-2 text-gray-600">
+                        Panel de control con métricas en tiempo real
+                    </p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'ventas:dashboard' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Dashboard Clásico
+                    </a>
+                    <button id="refreshData" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Actualizar
+                    </button>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500">Última actualización</p>
+                        <p id="lastUpdate" class="text-lg font-medium text-gray-900">{{ "now"|date:"H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 flex items-center">
+                <i class="fas fa-spinner fa-spin text-blue-600 mr-3"></i>
+                <span class="text-gray-700">Cargando datos...</span>
+            </div>
+        </div>
+
+        <!-- KPIs Principales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <!-- KPI: Pedidos del Mes -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Pedidos del Mes</p>
+                        <p id="kpi-pedidos" class="text-3xl font-bold text-gray-900">--</p>
+                        <p id="kpi-pedidos-crecimiento" class="text-sm mt-1">
+                            <span class="loading-placeholder"></span>
+                        </p>
+                    </div>
+                    <div class="text-blue-500">
+                        <i class="fas fa-shopping-cart text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI: Ventas del Mes -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Ventas del Mes</p>
+                        <p id="kpi-ventas" class="text-3xl font-bold text-gray-900">--</p>
+                        <p id="kpi-ventas-crecimiento" class="text-sm mt-1">
+                            <span class="loading-placeholder"></span>
+                        </p>
+                    </div>
+                    <div class="text-green-500">
+                        <i class="fas fa-dollar-sign text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI: Pedidos Pendientes -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Pedidos Pendientes</p>
+                        <p id="kpi-pendientes" class="text-3xl font-bold text-gray-900">--</p>
+                        <p class="text-sm text-gray-500 mt-1">Requieren atención</p>
+                    </div>
+                    <div class="text-yellow-500">
+                        <i class="fas fa-clock text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI: Alertas de Stock -->
+            <div class="bg-white rounded-lg shadow p-6 border-l-4 border-red-500 transform hover:scale-105 transition-transform">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Alertas de Stock</p>
+                        <p id="kpi-alertas" class="text-3xl font-bold text-gray-900">--</p>
+                        <p class="text-sm text-gray-500 mt-1">Stock bajo</p>
+                    </div>
+                    <div class="text-red-500">
+                        <i class="fas fa-exclamation-triangle text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Principales -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+            
+            <!-- Gráfico: Ventas por Mes -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                        Evolución de Ventas (12 meses)
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="relative h-80">
+                        <canvas id="ventasPorMesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico: Estados de Pedidos -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <i class="fas fa-pie-chart mr-2 text-green-600"></i>
+                        Distribución de Pedidos
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="relative h-80">
+                        <canvas id="estadosPedidosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos Secundarios -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+            
+            <!-- Gráfico: Productos Más Vendidos -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <i class="fas fa-box mr-2 text-purple-600"></i>
+                        Productos Más Vendidos (30 días)
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="relative h-80">
+                        <canvas id="productosVendidosChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico: Ventas por Vendedor -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <i class="fas fa-users mr-2 text-orange-600"></i>
+                        Ventas por Vendedor (Mes Actual)
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="relative h-80">
+                        <canvas id="ventasPorVendedorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accesos Rápidos -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-bolt mr-2 text-yellow-600"></i>
+                    Accesos Rápidos
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <a href="{% url 'ventas:pedido_create' %}" class="bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-4 text-center transition-colors">
+                        <i class="fas fa-plus-circle text-blue-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-medium text-blue-700">Nuevo Pedido</p>
+                    </a>
+                    <a href="{% url 'ventas:cliente_create' %}" class="bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg p-4 text-center transition-colors">
+                        <i class="fas fa-user-plus text-green-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-medium text-green-700">Nuevo Cliente</p>
+                    </a>
+                    <a href="{% url 'ventas:factura_create' %}" class="bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg p-4 text-center transition-colors">
+                        <i class="fas fa-file-invoice text-purple-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-medium text-purple-700">Nueva Factura</p>
+                    </a>
+                    <a href="{% url 'inventario:dashboard_alertas' %}" class="bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg p-4 text-center transition-colors">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-medium text-red-700">Ver Alertas</p>
+                    </a>
+                    <a href="{% url 'ventas:pedido_list' %}" class="bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 rounded-lg p-4 text-center transition-colors">
+                        <i class="fas fa-list text-yellow-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-medium text-yellow-700">Ver Pedidos</p>
+                    </a>
+                    <a href="{% url 'inventario:producto_list' %}" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg p-4 text-center transition-colors">
+                        <i class="fas fa-boxes text-indigo-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-medium text-indigo-700">Inventario</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Custom -->
+<style>
+.loading-placeholder {
+    display: inline-block;
+    width: 60px;
+    height: 12px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+</style>
+
+<!-- JavaScript para Gráficos -->
+<script>
+// Variables globales para los gráficos
+let ventasPorMesChart, estadosPedidosChart, productosVendidosChart, ventasPorVendedorChart;
+
+// Configuración de colores
+const chartColors = {
+    primary: '#3B82F6',
+    success: '#10B981', 
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    info: '#06B6D4',
+    purple: '#8B5CF6',
+    orange: '#F97316'
+};
+
+// Configuración base para todos los gráficos
+const defaultChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            position: 'bottom',
+        }
+    }
+};
+
+// Función para mostrar loading
+function showLoading() {
+    document.getElementById('loadingIndicator').classList.remove('hidden');
+}
+
+// Función para ocultar loading
+function hideLoading() {
+    document.getElementById('loadingIndicator').classList.add('hidden');
+}
+
+// Función para actualizar timestamp
+function updateTimestamp() {
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Función para cargar estadísticas generales
+async function loadEstadisticas() {
+    try {
+        const response = await fetch('{% url "ventas:api_estadisticas_dashboard" %}');
+        const result = await response.json();
+        
+        if (result.success) {
+            const data = result.data;
+            
+            // Actualizar KPIs
+            document.getElementById('kpi-pedidos').textContent = data.pedidos_mes;
+            document.getElementById('kpi-ventas').textContent = '$' + data.ventas_mes.toLocaleString();
+            document.getElementById('kpi-pendientes').textContent = data.pedidos_pendientes;
+            document.getElementById('kpi-alertas').textContent = data.alertas_stock;
+            
+            // Actualizar indicadores de crecimiento
+            const crecimientoPedidos = data.crecimiento_pedidos;
+            const crecimientoVentas = data.crecimiento_ventas;
+            
+            document.getElementById('kpi-pedidos-crecimiento').innerHTML = 
+                `<span class="${crecimientoPedidos >= 0 ? 'text-green-600' : 'text-red-600'} text-sm flex items-center">
+                    <i class="fas fa-arrow-${crecimientoPedidos >= 0 ? 'up' : 'down'} mr-1"></i>
+                    ${Math.abs(crecimientoPedidos).toFixed(1)}% vs mes anterior
+                </span>`;
+                
+            document.getElementById('kpi-ventas-crecimiento').innerHTML = 
+                `<span class="${crecimientoVentas >= 0 ? 'text-green-600' : 'text-red-600'} text-sm flex items-center">
+                    <i class="fas fa-arrow-${crecimientoVentas >= 0 ? 'up' : 'down'} mr-1"></i>
+                    ${Math.abs(crecimientoVentas).toFixed(1)}% vs mes anterior
+                </span>`;
+        }
+    } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+    }
+}
+
+// Función para cargar gráfico de ventas por mes
+async function loadVentasPorMes() {
+    try {
+        const response = await fetch('{% url "ventas:api_ventas_por_mes" %}');
+        const result = await response.json();
+        
+        if (result.success) {
+            const ctx = document.getElementById('ventasPorMesChart').getContext('2d');
+            
+            if (ventasPorMesChart) {
+                ventasPorMesChart.destroy();
+            }
+            
+            ventasPorMesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: result.data.map(item => item.mes),
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: result.data.map(item => item.ventas),
+                        borderColor: chartColors.primary,
+                        backgroundColor: chartColors.primary + '20',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando ventas por mes:', error);
+    }
+}
+
+// Función para cargar gráfico de estados de pedidos
+async function loadEstadosPedidos() {
+    try {
+        const response = await fetch('{% url "ventas:api_estados_pedidos" %}');
+        const result = await response.json();
+        
+        if (result.success) {
+            const ctx = document.getElementById('estadosPedidosChart').getContext('2d');
+            
+            if (estadosPedidosChart) {
+                estadosPedidosChart.destroy();
+            }
+            
+            const colors = [chartColors.primary, chartColors.success, chartColors.warning, chartColors.danger, chartColors.info];
+            
+            estadosPedidosChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: result.data.map(item => item.estado),
+                    datasets: [{
+                        data: result.data.map(item => item.cantidad),
+                        backgroundColor: colors.slice(0, result.data.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    cutout: '60%'
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando estados de pedidos:', error);
+    }
+}
+
+// Función para cargar gráfico de productos más vendidos
+async function loadProductosVendidos() {
+    try {
+        const response = await fetch('{% url "ventas:api_productos_vendidos" %}');
+        const result = await response.json();
+        
+        if (result.success) {
+            const ctx = document.getElementById('productosVendidosChart').getContext('2d');
+            
+            if (productosVendidosChart) {
+                productosVendidosChart.destroy();
+            }
+            
+            productosVendidosChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: result.data.map(item => item.producto.length > 15 ? item.producto.substring(0, 15) + '...' : item.producto),
+                    datasets: [{
+                        label: 'Cantidad Vendida',
+                        data: result.data.map(item => item.cantidad),
+                        backgroundColor: chartColors.purple,
+                        borderColor: chartColors.purple,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando productos vendidos:', error);
+    }
+}
+
+// Función para cargar gráfico de ventas por vendedor
+async function loadVentasPorVendedor() {
+    try {
+        const response = await fetch('{% url "ventas:api_ventas_vendedor" %}');
+        const result = await response.json();
+        
+        if (result.success) {
+            const ctx = document.getElementById('ventasPorVendedorChart').getContext('2d');
+            
+            if (ventasPorVendedorChart) {
+                ventasPorVendedorChart.destroy();
+            }
+            
+            ventasPorVendedorChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: result.data.map(item => item.vendedor),
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: result.data.map(item => item.ventas),
+                        backgroundColor: chartColors.orange,
+                        borderColor: chartColors.orange,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    ...defaultChartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando ventas por vendedor:', error);
+    }
+}
+
+// Función para cargar todos los datos
+async function loadAllData() {
+    showLoading();
+    
+    try {
+        await Promise.all([
+            loadEstadisticas(),
+            loadVentasPorMes(),
+            loadEstadosPedidos(),
+            loadProductosVendidos(),
+            loadVentasPorVendedor()
+        ]);
+        
+        updateTimestamp();
+    } catch (error) {
+        console.error('Error cargando datos:', error);
+    } finally {
+        hideLoading();
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar datos iniciales
+    loadAllData();
+    
+    // Botón de actualizar
+    document.getElementById('refreshData').addEventListener('click', loadAllData);
+    
+    // Auto-refresh cada 5 minutos
+    setInterval(loadAllData, 300000);
+});
+</script>
+{% endblock %}

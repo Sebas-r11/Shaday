@@ -42,7 +42,7 @@ class CotizacionListView(VentasRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Cotizacion.objects.select_related('cliente', 'vendedor')
+        queryset = Cotizacion.objects.select_related('cliente')
         
         # Filtros
         search = self.request.GET.get('search')
@@ -279,10 +279,9 @@ def imprimir_cotizacion(request, pk):
     
     # Información del cliente
     cliente_info = f"""
-    <b>Cliente:</b> {cotizacion.cliente.nombre}<br/>
-    <b>Documento:</b> {cotizacion.cliente.documento}<br/>
+    <b>Cliente:</b> {cotizacion.cliente.nombre_completo}<br/>
+    <b>Documento:</b> {cotizacion.cliente.numero_documento}<br/>
     <b>Teléfono:</b> {cotizacion.cliente.telefono}<br/>
-    <b>Email:</b> {cotizacion.cliente.email}<br/>
     <b>Dirección:</b> {cotizacion.cliente.direccion}
     """
     cliente_para = Paragraph(cliente_info, styles['Normal'])

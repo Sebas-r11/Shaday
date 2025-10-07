@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-10-07T08:05:26.844086",
+  "resumen": {
+    "tests_pasados": 60,
+    "tests_fallidos": 1,
+    "total_tests": 61,
+    "porcentaje_exito": 98.36065573770492,
+    "errores_criticos": 0,
+    "warnings": 0
+  },
+  "errores": [
+    {
+      "timestamp": "2025-10-07T08:05:24.082430",
+      "categoria": "TEMPLATE_MISSING",
+      "mensaje": "Template inventario/dashboard.html no existe",
+      "detalles": {}
+    }
+  ],
+  "warnings": []
+}

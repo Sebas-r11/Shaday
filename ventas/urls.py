@@ -1,8 +1,10 @@
 from django.urls import path
 from . import views
 from .general_views import (
-    dashboard_view, buscar_productos_api, obtener_precio_producto,
-    verificar_stock_disponible, test_autocompletado, test_ajax_simple, test_syntax
+    dashboard_view, dashboard_charts_view, buscar_productos_api, obtener_precio_producto,
+    verificar_stock_disponible, test_autocompletado, test_ajax_simple, test_syntax,
+    api_ventas_por_mes, api_productos_mas_vendidos, api_estados_pedidos,
+    api_ventas_por_vendedor, api_estadisticas_dashboard
 )
 from .clientes_views import (
     ClienteListView, ClienteCreateView, ClienteDetailView, ClienteUpdateView,
@@ -38,6 +40,7 @@ app_name = 'ventas'
 urlpatterns = [
     # Dashboard
     path('', dashboard_view, name='dashboard'),
+    path('charts/', dashboard_charts_view, name='dashboard_charts'),
     
     # Clientes
     path('clientes/', ClienteListView.as_view(), name='cliente_list'),
@@ -76,6 +79,7 @@ urlpatterns = [
     path('facturas/<int:pk>/', FacturaDetailView.as_view(), name='factura_detail'),
     path('facturas/<int:pk>/editar/', FacturaUpdateView.as_view(), name='factura_update'),
     path('facturas/<int:pk>/imprimir/', imprimir_factura, name='imprimir_factura'),
+    path('facturas/<int:pk>/generar-pdf/', views.generar_pdf_factura, name='generar_pdf_factura'),
     path('facturas/<int:pk>/marcar-pagada/', marcar_factura_pagada, name='marcar_factura_pagada'),
     path('facturas/<int:pk>/cancelar/', cancelar_factura, name='cancelar_factura'),
     path('facturas/<int:pk>/anular/', views.anular_factura, name='anular_factura'),
@@ -107,10 +111,21 @@ urlpatterns = [
     path('api/estadisticas/ventas/', estadisticas_ventas_api, name='api_estadisticas_ventas'),
     path('api/estadisticas/entregas/', estadisticas_entregas_api, name='api_estadisticas_entregas'),
     
+    # APIs para Dashboard con Gráficos
+    path('api/dashboard/ventas-por-mes/', api_ventas_por_mes, name='api_ventas_por_mes'),
+    path('api/dashboard/productos-vendidos/', api_productos_mas_vendidos, name='api_productos_vendidos'),
+    path('api/dashboard/estados-pedidos/', api_estados_pedidos, name='api_estados_pedidos'),
+    path('api/dashboard/ventas-por-vendedor/', api_ventas_por_vendedor, name='api_ventas_vendedor'),
+    path('api/dashboard/estadisticas/', api_estadisticas_dashboard, name='api_estadisticas_dashboard'),
+    
     # APIs Repartidor
     path('api/entregas/<int:pk>/completar/', completar_entrega_api, name='api_completar_entrega'),
     path('api/entregas/repartidor/', obtener_entregas_repartidor, name='api_entregas_repartidor'),
     path('api/repartidor/ubicacion/', actualizar_ubicacion_repartidor, name='api_ubicacion_repartidor'),
+    
+    # Exportación de datos
+    path('pedidos/exportar/excel/', views.exportar_pedidos_excel, name='exportar_pedidos_excel'),
+    path('pedidos/exportar/csv/', views.exportar_pedidos_csv, name='exportar_pedidos_csv'),
     
     # Vistas de prueba/desarrollo
     path('test-autocompletado/', test_autocompletado, name='test_autocompletado'),

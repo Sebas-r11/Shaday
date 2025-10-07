@@ -1,0 +1,23 @@
+{
+  "timestamp": "2025-10-07T07:53:57.759708",
+  "version_django": [
+    4,
+    2,
+    24,
+    "final",
+    0
+  ],
+  "configuracion": {
+    "debug": true,
+    "database": "django.db.backends.sqlite3",
+    "allowed_hosts": [
+      "100.110.55.39",
+      "192.168.1.14",
+      "localhost",
+      "127.0.0.1",
+      "shaddai",
+      "testserver"
+    ],
+    "installed_apps": 12
+  }
+}

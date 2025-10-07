@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cotización #{{ cotizacion.numero }}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            color: #333; 
+        }
+        .header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #28a745; 
+            padding-bottom: 10px; 
+        }
+        .info-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 30px; 
+            margin-bottom: 30px; 
+        }
+        .info-section { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 20px; 
+        }
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+        }
+        th { 
+            background-color: #f2f2f2; 
+        }
+        .totales { 
+            text-align: right; 
+            font-weight: bold; 
+            margin-top: 20px; 
+        }
+        .validez { 
+            background: #fff3cd; 
+            border: 1px solid #ffeaa7; 
+            padding: 10px; 
+            border-radius: 5px; 
+            margin-top: 20px; 
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>COTIZACIÓN</h1>
+        <h2>N° {{ cotizacion.numero|default:"Sin número" }}</h2>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-section">
+            <h3>Información del Cliente</h3>
+            <p><strong>Cliente:</strong> {{ cotizacion.cliente.nombre_completo|default:"Cliente no especificado" }}</p>
+            <p><strong>Email:</strong> {{ cotizacion.cliente.email|default:"No especificado" }}</p>
+            <p><strong>Teléfono:</strong> {{ cotizacion.cliente.telefono|default:"No especificado" }}</p>
+        </div>
+        
+        <div class="info-section">
+            <h3>Información de la Cotización</h3>
+            <p><strong>Fecha:</strong> {{ cotizacion.fecha_creacion|date:"d/m/Y"|default:"Fecha no especificada" }}</p>
+            <p><strong>Estado:</strong> {{ cotizacion.get_estado_display|default:"Estado no especificado" }}</p>
+            <p><strong>Total:</strong> ${{ cotizacion.total|floatformat:2|default:"0.00" }}</p>
+        </div>
+    </div>
+
+    <h3>Detalle de Items</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td colspan="4" style="text-align: center; color: #666;">
+                    Items de cotización disponibles según modelo
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="totales">
+        <p><strong>TOTAL COTIZACIÓN: ${{ cotizacion.total|floatformat:2|default:"0.00" }}</strong></p>
+    </div>
+
+    <div class="validez">
+        <h4>Validez de la Cotización</h4>
+        <p>Esta cotización tiene validez de 30 días a partir de la fecha de emisión.</p>
+    </div>
+</body>
+</html>

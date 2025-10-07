@@ -29,12 +29,18 @@ class VentasRequiredMixin(UserPassesTestMixin):
 class BodegaRequiredMixin(UserPassesTestMixin):
     """Mixin para verificar permisos de bodega"""
     def test_func(self):
-        return self.request.user.can_manage_inventory()
+        return self.request.user.can_prepare_orders()
 
 
 # ============= VISTAS DE PEDIDOS =============
 
-class PedidoListView(VentasRequiredMixin, ListView):
+class VentasYBodegaMixin(UserPassesTestMixin):
+    """Mixin para permitir acceso tanto a ventas como a bodega"""
+    def test_func(self):
+        return (self.request.user.can_create_sales() or 
+                self.request.user.can_prepare_orders())
+
+class PedidoListView(VentasYBodegaMixin, ListView):
     """Lista de pedidos"""
     model = Pedido
     template_name = 'ventas/pedido_list.html'
@@ -42,7 +48,7 @@ class PedidoListView(VentasRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = Pedido.objects.select_related('cliente', 'vendedor')
+        queryset = Pedido.objects.select_related('cliente', 'asignado_a')
         
         # Filtros
         search = self.request.GET.get('search')
@@ -323,11 +329,15 @@ class PedidosAlistamientoView(BodegaRequiredMixin, ListView):
     def get_queryset(self):
         return Pedido.objects.filter(
             estado='alistamiento'
-        ).order_by('fecha_alistamiento')
+        ).order_by('fecha_creacion')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['total_alistamiento'] = self.get_queryset().count()
+        # Agregar contadores para otros estados que el template pueda necesitar
+        context['total_proceso'] = Pedido.objects.filter(estado='proceso').count()
+        context['total_pendiente'] = Pedido.objects.filter(estado='pendiente').count()
+        context['total_completado'] = Pedido.objects.filter(estado='completado').count()
         return context
 
 
@@ -368,7 +378,7 @@ def obtener_pedidos_pendientes(request):
         data.append({
             'id': pedido.id,
             'numero': pedido.numero,
-            'cliente': pedido.cliente.nombre,
+            'cliente': pedido.cliente.nombre_completo,
             'total': float(pedido.total),
             'fecha_creacion': pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
             'items_count': pedido.items.count()

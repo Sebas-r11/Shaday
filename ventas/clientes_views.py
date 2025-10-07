@@ -56,7 +56,7 @@ class ClienteListView(VentasRequiredMixin, ListView):
         if ciudad:
             queryset = queryset.filter(ciudad__id=ciudad)
         
-        return queryset.order_by('nombre')
+        return queryset.order_by('nombre_completo')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -75,7 +75,7 @@ class ClienteCreateView(VentasRequiredMixin, CreateView):
     
     def form_valid(self, form):
         form.instance.usuario_creacion = self.request.user
-        messages.success(self.request, f'Cliente {form.instance.nombre} creado exitosamente.')
+        messages.success(self.request, f'Cliente {form.instance.nombre_completo} creado exitosamente.')
         return super().form_valid(form)
 
 
@@ -118,7 +118,7 @@ class ClienteUpdateView(VentasRequiredMixin, UpdateView):
     success_url = reverse_lazy('ventas:cliente_list')
     
     def form_valid(self, form):
-        messages.success(self.request, f'Cliente {form.instance.nombre} actualizado exitosamente.')
+        messages.success(self.request, f'Cliente {form.instance.nombre_completo} actualizado exitosamente.')
         return super().form_valid(form)
 
 
@@ -144,8 +144,8 @@ def buscar_clientes_api(request):
     for cliente in clientes:
         results.append({
             'id': cliente.id,
-            'label': f"{cliente.nombre} - {cliente.documento}",
-            'value': cliente.nombre,
+            'label': f"{cliente.nombre_completo} - {cliente.numero_documento}",
+            'value': cliente.nombre_completo,
             'documento': cliente.documento,
             'telefono': cliente.telefono,
             'email': cliente.email,
