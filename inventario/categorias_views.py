@@ -131,6 +131,39 @@ class CategoriaUpdateView(AdminOnlyMixin, UpdateView):
         return super().form_valid(form)
 
 
+class CategoriaDeleteView(AdminOnlyMixin, DeleteView):
+    """Eliminar categoría"""
+    model = Categoria
+    template_name = 'inventario/categoria_confirm_delete.html'
+    success_url = reverse_lazy('inventario:categoria_list')
+    
+    def delete(self, request, *args, **kwargs):
+        categoria = self.get_object()
+        
+        # Verificar si tiene productos asociados
+        productos_count = Producto.objects.filter(categoria=categoria).count()
+        if productos_count > 0:
+            messages.error(
+                request, 
+                f'No se puede eliminar la categoría "{categoria.nombre}" '
+                f'porque tiene {productos_count} productos asociados.'
+            )
+            return redirect('inventario:categoria_list')
+        
+        # Verificar si tiene subcategorías asociadas
+        subcategorias_count = Subcategoria.objects.filter(categoria=categoria).count()
+        if subcategorias_count > 0:
+            messages.error(
+                request, 
+                f'No se puede eliminar la categoría "{categoria.nombre}" '
+                f'porque tiene {subcategorias_count} subcategorías asociadas.'
+            )
+            return redirect('inventario:categoria_list')
+        
+        messages.success(request, f'Categoría "{categoria.nombre}" eliminada exitosamente.')
+        return super().delete(request, *args, **kwargs)
+
+
 # ============= VISTAS DE SUBCATEGORÍAS =============
 
 class SubcategoriaListView(InventarioViewMixin, ListView):

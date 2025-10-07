@@ -7,7 +7,7 @@ from .productos_views import (
     verificar_codigo_producto, obtener_precios_producto
 )
 from .categorias_views import (
-    CategoriaListView, CategoriaCreateView, CategoriaUpdateView,
+    CategoriaListView, CategoriaCreateView, CategoriaUpdateView, CategoriaDeleteView,
     SubcategoriaListView, SubcategoriaCreateView, SubcategoriaUpdateView, SubcategoriaDeleteView
 )
 from .stock_views import (
@@ -57,6 +57,7 @@ urlpatterns = [
     path('categorias/', CategoriaListView.as_view(), name='categoria_list'),
     path('categorias/crear/', CategoriaCreateView.as_view(), name='categoria_create'),
     path('categorias/<int:pk>/editar/', CategoriaUpdateView.as_view(), name='categoria_update'),
+    path('categorias/<int:pk>/eliminar/', CategoriaDeleteView.as_view(), name='categoria_delete'),
     
     # Subcategorías
     path('subcategorias/', SubcategoriaListView.as_view(), name='subcategoria_list'),

@@ -31,7 +31,7 @@
             {% for categoria in categorias %}
             <li class="px-6 py-4 hover:bg-gray-50">
                 <div class="flex items-center justify-between">
-                    <div>
+                    <div class="flex-1">
                         <h3 class="text-lg font-medium text-gray-900">{{ categoria.nombre }}</h3>
                         {% if categoria.descripcion %}
                         <p class="text-sm text-gray-600 mt-1">{{ categoria.descripcion }}</p>
@@ -44,8 +44,28 @@
                             <span class="text-xs text-gray-500">
                                 {{ categoria.subcategorias.count }} subcategoría{{ categoria.subcategorias.count|pluralize }}
                             </span>
+                            <span class="text-xs text-gray-500">
+                                {{ categoria.producto_set.count }} producto{{ categoria.producto_set.count|pluralize }}
+                            </span>
                         </div>
                     </div>
+                    
+                    <!-- Botones de acción -->
+                    {% if user|is_admin_user %}
+                    <div class="flex items-center space-x-2 ml-4">
+                        <a href="{% url 'inventario:categoria_update' categoria.pk %}" 
+                           class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                           title="Editar categoría">
+                            <i class="fas fa-edit mr-1"></i>Editar
+                        </a>
+                        
+                        <a href="{% url 'inventario:categoria_delete' categoria.pk %}" 
+                           class="inline-flex items-center px-3 py-1 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                           title="Eliminar categoría">
+                            <i class="fas fa-trash mr-1"></i>Eliminar
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
                 
                 <!-- Subcategorías -->
