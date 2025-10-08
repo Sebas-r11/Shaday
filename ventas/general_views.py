@@ -154,31 +154,40 @@ def buscar_productos_api(request):
     if not request.user.can_create_sales():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
-    term = request.GET.get('term', '')
+    # Aceptar tanto 'q' como 'term' para compatibilidad
+    term = request.GET.get('q', '') or request.GET.get('term', '')
     if len(term) < 2:
-        return JsonResponse([], safe=False)
+        return JsonResponse({'productos': []})
+    
+    # Verificar si Producto está importado
+    try:
+        from inventario.models import Producto
+    except ImportError:
+        return JsonResponse({'error': 'Modelo Producto no disponible'}, status=500)
     
     productos = Producto.objects.filter(
         Q(nombre__icontains=term) |
-        Q(codigo__icontains=term) |
-        Q(codigo_barras__icontains=term),
+        Q(codigo__icontains=term),
         activo=True
     )[:10]
     
     results = []
     for producto in productos:
+        # Obtener stock total de todas las bodegas
+        stock_total = sum(stock.cantidad for stock in producto.stock.all()) if hasattr(producto, 'stock') else 0
+        
         results.append({
             'id': producto.id,
-            'label': f"{producto.nombre} - {producto.codigo}",
-            'value': producto.nombre,
+            'nombre': producto.nombre,
             'codigo': producto.codigo,
-            'precio': float(producto.precio),
-            'stock': producto.stock,
-            'categoria': producto.categoria.nombre if producto.categoria else '',
-            'imagen': producto.imagen.url if producto.imagen else None
+            'precio': float(producto.precio_minorista or 0),
+            'precio_minorista': float(producto.precio_minorista or 0),
+            'precio_mayorista': float(producto.precio_mayorista or 0),
+            'stock': stock_total,
+            'categoria': producto.categoria.nombre if producto.categoria else ''
         })
     
-    return JsonResponse(results, safe=False)
+    return JsonResponse({'productos': results})
 
 
 @login_required

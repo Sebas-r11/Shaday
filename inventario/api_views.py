@@ -115,13 +115,18 @@ def buscar_productos_api(request):
     
     productos_data = []
     for producto in productos:
+        # Calcular stock total de todas las bodegas
+        stock_total = sum(stock.cantidad for stock in producto.stock.all()) if hasattr(producto, 'stock') else 0
+        
         productos_data.append({
             'id': producto.id,
             'codigo': producto.codigo,
             'nombre': producto.nombre,
             'categoria': producto.categoria.nombre if producto.categoria else '',
-            'stock_actual': producto.stock_actual,
-            'precio_venta': float(producto.precio_venta) if producto.precio_venta else 0,
+            'stock_actual': stock_total,
+            'precio_venta': float(producto.precio_minorista or 0),
+            'precio_minorista': float(producto.precio_minorista or 0),
+            'precio_mayorista': float(producto.precio_mayorista or 0),
             'activo': producto.activo
         })
     

@@ -379,7 +379,7 @@ def buscar_categorias_api(request):
     if not request.user.can_view_inventory():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
-    term = request.GET.get('term', '')
+    term = request.GET.get('q', '') or request.GET.get('term', '')
     if len(term) < 2:
         return JsonResponse([], safe=False)
     

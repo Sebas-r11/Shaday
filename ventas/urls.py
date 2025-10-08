@@ -56,7 +56,7 @@ urlpatterns = [
     
     # Cotizaciones
     path('cotizaciones/', CotizacionListView.as_view(), name='cotizacion_list'),
-    path('cotizaciones/nueva/', CotizacionCreateView.as_view(), name='cotizacion_create'),
+    path('cotizaciones/nueva/', views.CotizacionCreateView.as_view(), name='cotizacion_create'),
     path('cotizaciones/<int:pk>/', CotizacionDetailView.as_view(), name='cotizacion_detail'),
     path('cotizaciones/<int:pk>/editar/', CotizacionUpdateView.as_view(), name='cotizacion_update'),
     path('cotizaciones/<int:pk>/imprimir/', imprimir_cotizacion, name='imprimir_cotizacion'),
@@ -68,7 +68,7 @@ urlpatterns = [
     
     # Pedidos
     path('pedidos/', PedidoListView.as_view(), name='pedido_list'),
-    path('pedidos/nuevo/', PedidoCreateView.as_view(), name='pedido_create'),
+    path('pedidos/nuevo/', views.PedidoCreateView.as_view(), name='pedido_create'),
     path('pedidos/<int:pk>/', PedidoDetailView.as_view(), name='pedido_detail'),
     path('pedidos/<int:pk>/editar/', PedidoUpdateView.as_view(), name='pedido_update'),
     path('pedidos/<int:pk>/imprimir/', views.imprimir_pedido, name='imprimir_pedido'),

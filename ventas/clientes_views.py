@@ -130,13 +130,14 @@ def buscar_clientes_api(request):
     if not request.user.can_create_sales():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
-    term = request.GET.get('term', '')
+    # Aceptar tanto 'q' como 'term' para compatibilidad
+    term = request.GET.get('q', '') or request.GET.get('term', '')
     if len(term) < 2:
-        return JsonResponse([], safe=False)
+        return JsonResponse({'clientes': []})
     
     clientes = Cliente.objects.filter(
-        Q(nombre__icontains=term) |
-        Q(documento__icontains=term),
+        Q(nombre_completo__icontains=term) |
+        Q(numero_documento__icontains=term),
         activo=True
     )[:10]
     
@@ -144,15 +145,14 @@ def buscar_clientes_api(request):
     for cliente in clientes:
         results.append({
             'id': cliente.id,
-            'label': f"{cliente.nombre_completo} - {cliente.numero_documento}",
-            'value': cliente.nombre_completo,
-            'documento': cliente.documento,
+            'nombre_completo': cliente.nombre_completo,
+            'numero_documento': cliente.numero_documento,
+            'tipo_documento': cliente.tipo_documento,
             'telefono': cliente.telefono,
-            'email': cliente.email,
             'direccion': cliente.direccion,
-            'ciudad': cliente.ciudad.nombre if cliente.ciudad else '',
+            'ciudad': cliente.ciudad if isinstance(cliente.ciudad, str) else (cliente.ciudad.nombre if cliente.ciudad else ''),
             'tipo_cliente': cliente.tipo_cliente,
             'limite_credito': float(cliente.limite_credito)
         })
     
-    return JsonResponse(results, safe=False)
+    return JsonResponse({'clientes': results})

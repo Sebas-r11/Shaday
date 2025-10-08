@@ -4,7 +4,7 @@ Vistas especializadas para gestión de productos
 Extraído de inventario/views.py para mejorar organización
 """
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.generic import ListView, CreateView, DetailView, UpdateView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.db.models import Q, Sum, Count
@@ -224,6 +224,30 @@ class ProductoUpdateView(AdminOnlyMixin, UpdateView):
         return super().form_valid(form)
 
 
+class ProductoDeleteView(AdminOnlyMixin, DeleteView):
+    """Eliminar producto"""
+    model = Producto
+    template_name = 'inventario/producto_confirm_delete.html'
+    success_url = reverse_lazy('inventario:producto_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo'] = 'Eliminar Producto'
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            producto = self.get_object()
+            messages.success(request, f'Producto "{producto.nombre}" eliminado exitosamente.')
+            return super().delete(request, *args, **kwargs)
+        except Exception as e:
+            messages.error(
+                request, 
+                f'No se puede eliminar el producto: {str(e)}'
+            )
+            return redirect('inventario:producto_editar', pk=self.get_object().id)
+
+
 # ============= FUNCIONES DE PRODUCTOS =============
 
 def exportar_productos_excel(request):
@@ -371,14 +395,13 @@ def buscar_productos_api(request):
     if not request.user.can_view_inventory():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
-    term = request.GET.get('term', '')
+    term = request.GET.get('q', '') or request.GET.get('term', '')
     if len(term) < 2:
         return JsonResponse([], safe=False)
     
     productos = Producto.objects.filter(
         Q(nombre__icontains=term) |
-        Q(codigo__icontains=term) |
-        Q(codigo_barras__icontains=term),
+        Q(codigo__icontains=term),
         activo=True
     )[:10]
     
@@ -394,8 +417,7 @@ def buscar_productos_api(request):
             'precio_minorista': float(producto.precio_minorista),
             'precio_mayorista': float(producto.precio_mayorista),
             'stock_total': stock_total,
-            'categoria': producto.categoria.nombre if producto.categoria else '',
-            'imagen': producto.imagen.url if producto.imagen else None
+            'categoria': producto.categoria.nombre if producto.categoria else ''
         })
     
     return JsonResponse(results, safe=False)

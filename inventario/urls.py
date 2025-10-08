@@ -2,7 +2,7 @@ from django.urls import path
 
 # Importaciones especializadas después de la refactorización
 from .productos_views import (
-    ProductoListView, ProductoCreateView, ProductoDetailView, ProductoUpdateView,
+    ProductoListView, ProductoCreateView, ProductoDetailView, ProductoUpdateView, ProductoDeleteView,
     exportar_productos_excel, duplicar_producto, buscar_productos_api,
     verificar_codigo_producto, obtener_precios_producto
 )
@@ -51,6 +51,7 @@ urlpatterns = [
     path('productos/crear/', ProductoCreateView.as_view(), name='producto_create'),
     path('productos/<int:pk>/', ProductoDetailView.as_view(), name='producto_detail'),
     path('productos/<int:pk>/editar/', ProductoUpdateView.as_view(), name='producto_update'),
+    path('productos/<int:pk>/eliminar/', ProductoDeleteView.as_view(), name='producto_delete'),
     path('productos/exportar-excel/', exportar_productos_excel, name='exportar_productos_excel'),
     
     # Categorías

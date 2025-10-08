@@ -1,0 +1,84 @@
+{% extends "inventario/base_inventario.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h1 class="text-xl font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-trash-alt text-red-500 mr-3"></i>
+                    {{ titulo }}
+                </h1>
+            </div>
+        </div>
+
+        <!-- Confirmation Card -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <div class="px-6 py-8">
+                <!-- Warning Icon -->
+                <div class="flex items-center justify-center w-16 h-16 mx-auto bg-red-100 rounded-full mb-6">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                </div>
+
+                <!-- Confirmation Message -->
+                <div class="text-center mb-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">
+                        ¿Estás seguro de que deseas eliminar este producto?
+                    </h2>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-gray-600 mb-2">
+                            <strong>Código:</strong> {{ object.codigo }}
+                        </p>
+                        <p class="text-sm text-gray-600 mb-2">
+                            <strong>Nombre:</strong> {{ object.nombre }}
+                        </p>
+                        {% if object.categoria %}
+                        <p class="text-sm text-gray-600 mb-2">
+                            <strong>Categoría:</strong> {{ object.categoria.nombre }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <p class="text-red-600 font-medium">
+                        Esta acción no se puede deshacer.
+                    </p>
+                </div>
+
+                <!-- Form -->
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                        <!-- Cancel Button -->
+                        <a href="{% url 'inventario:producto_update' object.pk %}" 
+                           class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            <i class="fas fa-times mr-2"></i>
+                            Cancelar
+                        </a>
+                        
+                        <!-- Delete Button -->
+                        <button type="submit" 
+                                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            Confirmar Eliminación
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Back to Products List -->
+        <div class="mt-6 text-center">
+            <a href="{% url 'inventario:producto_list' %}" 
+               class="text-blue-600 hover:text-blue-500 font-medium">
+                <i class="fas fa-arrow-left mr-1"></i>
+                Volver a la lista de productos
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
