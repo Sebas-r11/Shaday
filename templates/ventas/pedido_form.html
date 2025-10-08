@@ -170,7 +170,7 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="{{ form.cliente_search.id_for_label }}" class="form-label">
                                             <strong>Cliente *</strong>
                                         </label>
@@ -206,7 +206,18 @@
                                         {% endif %}
                                     </div>
                                     
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="tipo_precio" class="form-label">
+                                            <strong>Tipo de Precio *</strong>
+                                        </label>
+                                        <select id="tipo_precio" name="tipo_precio" class="form-select">
+                                            <option value="minorista">Precio Minorista</option>
+                                            <option value="mayorista">Precio Mayorista</option>
+                                        </select>
+                                        <small class="text-muted">Los precios se aplicarán según la selección</small>
+                                    </div>
+                                    
+                                    <div class="col-md-4 mb-3">
                                         <div class="alert alert-info">
                                             <i class="fas fa-info-circle me-2"></i>
                                             <strong>Número de Pedido:</strong> Se generará automáticamente al guardar
@@ -874,13 +885,16 @@ function actualizarPreciosSegunCliente() {
             if (data.cliente && data.cliente.tipo_cliente) {
                 // Actualizar datos de productos para futuras búsquedas
                 productosData.forEach(producto => {
-                    // Actualizar precio según tipo de cliente
-                    if (data.cliente.tipo_cliente === 'mayorista' || data.cliente.tipo_cliente === 'corporativo') {
+                    // Obtener tipo de precio seleccionado
+                    const tipoPrecio = document.getElementById('tipo_precio').value;
+                    
+                    // Actualizar precio según tipo seleccionado
+                    if (tipoPrecio === 'mayorista') {
                         producto.precio = producto.precio_mayorista;
                     } else {
                         producto.precio = producto.precio_minorista;
                     }
-                    producto.tipo_cliente_precio = data.cliente.tipo_cliente;
+                    producto.tipo_precio_aplicado = tipoPrecio;
                 });
                 
                 console.log('✅ Precios actualizados para tipo de cliente:', data.cliente.tipo_cliente);
@@ -935,6 +949,38 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(actualizarPreciosSegunCliente, 100);
         });
     }
+    
+    // Manejar cambio de tipo de precio
+    document.getElementById('tipo_precio').addEventListener('change', function() {
+        const tipoPrecio = this.value;
+        
+        // Actualizar precios en productosData
+        productosData.forEach(producto => {
+            if (tipoPrecio === 'mayorista') {
+                producto.precio = producto.precio_mayorista;
+            } else {
+                producto.precio = producto.precio_minorista;
+            }
+        });
+        
+        // Actualizar precios de productos ya seleccionados
+        document.querySelectorAll('.product-row').forEach(row => {
+            const productoId = row.querySelector('input[name$="_producto"]').value;
+            if (productoId) {
+                const producto = productosData.find(p => p.id == productoId);
+                if (producto) {
+                    const nuevoPrecio = tipoPrecio === 'mayorista' ? producto.precio_mayorista : producto.precio_minorista;
+                    row.querySelector('input[name$="_precio_unitario"]').value = nuevoPrecio;
+                    
+                    // Actualizar también productosData
+                    producto.precio = nuevoPrecio;
+                }
+            }
+        });
+        
+        // Recalcular totales
+        calcularTotales();
+    });
 });
 
 // Quitar esta línea porque el campo descuento_porcentaje no existe

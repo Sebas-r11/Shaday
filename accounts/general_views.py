@@ -3,6 +3,10 @@ Vistas generales del módulo accounts - Dashboard principal y funciones de apoyo
 """
 
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+def optimizar_ruta(request):
+    """Vista placeholder para optimizar ruta. No modifica modelos."""
+    return HttpResponse("Optimización de ruta (placeholder)")
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required

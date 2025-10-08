@@ -108,7 +108,7 @@
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     {% if user.can_create_sales and cotizacion.estado == 'borrador' %}
-                                        <a href="#" class="text-green-600 hover:text-green-900" title="Editar">
+                                        <a href="{% url 'ventas:cotizacion_update' cotizacion.pk %}" class="text-green-600 hover:text-green-900" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     {% endif %}

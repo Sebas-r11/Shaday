@@ -29,7 +29,7 @@ class VentasRequiredMixin(UserPassesTestMixin):
 class RepartidorRequiredMixin(UserPassesTestMixin):
     """Mixin para verificar permisos de repartidor"""
     def test_func(self):
-        return self.request.user.is_repartidor()
+        return self.request.user.can_deliver_orders()
 
 
 # ============= VISTAS DE ENTREGAS =============
@@ -103,7 +103,7 @@ class EntregaDetailView(VentasRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['puede_asignar'] = self.request.user.can_create_sales()
-        context['es_repartidor'] = self.request.user.is_repartidor()
+        context['es_repartidor'] = self.request.user.can_deliver_orders()
         # context['form_asignar'] = AsignarRepartidorForm(instance=self.object)  # Form no existe
         return context
 
@@ -157,7 +157,7 @@ class EntregasRepartidorView(RepartidorRequiredMixin, ListView):
 @login_required
 def iniciar_entrega(request, pk):
     """Repartidor inicia la entrega"""
-    if not request.user.is_repartidor():
+    if not request.user.can_deliver_orders():
         return JsonResponse({'error': 'Solo repartidores pueden iniciar entregas'}, status=403)
     
     entrega = get_object_or_404(Entrega, pk=pk, repartidor=request.user)
@@ -178,7 +178,7 @@ def iniciar_entrega(request, pk):
 @login_required
 def completar_entrega(request, pk):
     """Repartidor completa la entrega"""
-    if not request.user.is_repartidor():
+    if not request.user.can_deliver_orders():
         messages.error(request, 'Solo repartidores pueden completar entregas.')
         return redirect('ventas:entrega_list')
     
@@ -205,7 +205,7 @@ def completar_entrega(request, pk):
 @login_required
 def reportar_problema_entrega(request, pk):
     """Reportar problema en entrega"""
-    if not request.user.is_repartidor():
+    if not request.user.can_deliver_orders():
         return JsonResponse({'error': 'Solo repartidores pueden reportar problemas'}, status=403)
     
     entrega = get_object_or_404(Entrega, pk=pk, repartidor=request.user)
@@ -231,7 +231,7 @@ def reportar_problema_entrega(request, pk):
 @login_required
 def completar_entrega_api(request, pk):
     """API para completar entrega desde móvil"""
-    if not request.user.is_repartidor():
+    if not request.user.can_deliver_orders():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
     entrega = get_object_or_404(Entrega, pk=pk, repartidor=request.user)
@@ -261,7 +261,7 @@ def completar_entrega_api(request, pk):
 @login_required
 def obtener_entregas_repartidor(request):
     """API para obtener entregas del repartidor"""
-    if not request.user.is_repartidor():
+    if not request.user.can_deliver_orders():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
     entregas = Entrega.objects.filter(
@@ -289,7 +289,7 @@ def obtener_entregas_repartidor(request):
 @login_required
 def actualizar_ubicacion_repartidor(request):
     """API para actualizar ubicación del repartidor"""
-    if not request.user.is_repartidor():
+    if not request.user.can_deliver_orders():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
     if request.method == 'POST':

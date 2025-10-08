@@ -17,6 +17,14 @@
                     <i class="fas fa-arrow-left mr-2"></i>Volver
                 </a>
                 {% if user.can_create_sales %}
+                    {% if cotizacion.estado == 'borrador' %}
+                        <form method="post" action="{% url 'ventas:aprobar_cotizacion' cotizacion.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm" onclick="return confirm('¿Está seguro de que desea aprobar esta cotización?')">
+                                <i class="fas fa-check mr-2"></i>Aprobar
+                            </button>
+                        </form>
+                    {% endif %}
                     <a href="{% url 'ventas:imprimir_cotizacion' cotizacion.pk %}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm">
                         <i class="fas fa-print mr-2"></i>Imprimir
                     </a>
@@ -170,19 +178,30 @@
         {% if user.can_create_sales %}
             <div class="mt-8 pt-6 border-t border-gray-200">
                 <div class="flex justify-end space-x-4">
-                    {% if not cotizacion.convertida_a_pedido and cotizacion.items.exists %}
-                        <a href="{% url 'ventas:convertir_a_pedido' cotizacion.pk %}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md" onclick="return confirm('¿Está seguro de convertir esta cotización a pedido? Esta acción no se puede deshacer.')">
+                    {% if cotizacion.estado == 'borrador' %}
+                        <a href="{% url 'ventas:marcar_pendiente_cotizacion' cotizacion.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md">
+                            <i class="fas fa-clock mr-2"></i>Marcar como Pendiente
+                        </a>
+                    {% elif cotizacion.estado == 'pendiente' %}
+                        <a href="{% url 'ventas:aprobar_cotizacion' cotizacion.pk %}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md">
+                            <i class="fas fa-check mr-2"></i>Aprobar
+                        </a>
+                        <a href="{% url 'ventas:rechazar_cotizacion' cotizacion.pk %}" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-md">
+                            <i class="fas fa-times mr-2"></i>Rechazar
+                        </a>
+                    {% elif cotizacion.estado == 'aprobada' %}
+                        <a href="{% url 'ventas:convertir_a_pedido' cotizacion.pk %}" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md" onclick="return confirm('¿Está seguro de convertir esta cotización a pedido? Esta acción no se puede deshacer.')">
                             <i class="fas fa-shopping-cart mr-2"></i>Convertir a Pedido
                         </a>
-                    {% elif cotizacion.convertida_a_pedido %}
+                    {% elif cotizacion.estado == 'convertida' %}
                         <div class="text-green-600 flex items-center px-4 py-2 bg-green-50 rounded-md">
                             <i class="fas fa-check-circle mr-2"></i>
                             Ya convertida a pedido
                         </div>
-                    {% elif not cotizacion.items.exists %}
-                        <div class="text-gray-500 flex items-center px-4 py-2 bg-gray-50 rounded-md">
-                            <i class="fas fa-info-circle mr-2"></i>
-                            Agregue items para convertir a pedido
+                    {% elif cotizacion.estado == 'rechazada' %}
+                        <div class="text-red-600 flex items-center px-4 py-2 bg-red-50 rounded-md">
+                            <i class="fas fa-times-circle mr-2"></i>
+                            Cotización rechazada
                         </div>
                     {% endif %}
                 </div>

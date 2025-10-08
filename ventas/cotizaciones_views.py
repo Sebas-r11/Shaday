@@ -180,8 +180,6 @@ def aprobar_cotizacion(request, pk):
     
     if cotizacion.estado == 'pendiente':
         cotizacion.estado = 'aprobada'
-        cotizacion.fecha_aprobacion = datetime.datetime.now()
-        cotizacion.usuario_aprobacion = request.user
         cotizacion.save()
         
         messages.success(request, f'Cotización {cotizacion.numero} aprobada exitosamente.')
@@ -202,13 +200,31 @@ def rechazar_cotizacion(request, pk):
     
     if cotizacion.estado == 'pendiente':
         cotizacion.estado = 'rechazada'
-        cotizacion.fecha_rechazo = datetime.datetime.now()
-        cotizacion.usuario_rechazo = request.user
         cotizacion.save()
         
         messages.success(request, f'Cotización {cotizacion.numero} rechazada.')
     else:
         messages.warning(request, 'La cotización ya ha sido procesada.')
+    
+    return redirect('ventas:cotizacion_detail', pk=pk)
+
+
+@login_required
+def marcar_pendiente_cotizacion(request, pk):
+    """Marcar cotización como pendiente"""
+    if not request.user.can_create_sales():
+        messages.error(request, 'No tienes permisos para modificar cotizaciones.')
+        return redirect('ventas:cotizacion_list')
+    
+    cotizacion = get_object_or_404(Cotizacion, pk=pk)
+    
+    if cotizacion.estado == 'borrador':
+        cotizacion.estado = 'pendiente'
+        cotizacion.save()
+        
+        messages.success(request, f'Cotización {cotizacion.numero} marcada como pendiente.')
+    else:
+        messages.warning(request, 'Solo se pueden marcar como pendientes las cotizaciones en borrador.')
     
     return redirect('ventas:cotizacion_detail', pk=pk)
 
@@ -226,28 +242,51 @@ def convertir_cotizacion_pedido(request, pk):
         messages.error(request, 'Solo se pueden convertir cotizaciones aprobadas.')
         return redirect('ventas:cotizacion_detail', pk=pk)
     
-    from .models import Pedido, PedidoItem
+    from .models import Pedido, ItemPedido
+    from datetime import datetime
+    
+    # Generar número único para el pedido
+    año_actual = datetime.now().year
+    prefijo = f"PED{año_actual}"
+    
+    ultimos_pedidos = Pedido.objects.filter(
+        numero__startswith=prefijo
+    ).order_by('-numero')
+    
+    if ultimos_pedidos.exists():
+        ultimo_numero = ultimos_pedidos.first().numero
+        try:
+            # Extraer el número secuencial
+            parte_numerica = ultimo_numero.replace(prefijo, '').lstrip('0') or '0'
+            siguiente_numero = int(parte_numerica) + 1
+        except ValueError:
+            siguiente_numero = 1
+    else:
+        siguiente_numero = 1
+    
+    # Formatear con ceros a la izquierda
+    numero_formateado = f"{prefijo}{siguiente_numero:03d}"
+    
+    # Verificar que no exista
+    while Pedido.objects.filter(numero=numero_formateado).exists():
+        siguiente_numero += 1
+        numero_formateado = f"{prefijo}{siguiente_numero:03d}"
     
     # Crear pedido
     pedido = Pedido.objects.create(
+        numero=numero_formateado,
         cliente=cotizacion.cliente,
-        vendedor=cotizacion.vendedor,
-        observaciones=f"Generado desde cotización {cotizacion.numero}",
-        subtotal=cotizacion.subtotal,
-        impuestos=cotizacion.impuestos,
         total=cotizacion.total,
         estado='pendiente'
     )
     
     # Copiar items
     for item in cotizacion.items.all():
-        PedidoItem.objects.create(
+        ItemPedido.objects.create(
             pedido=pedido,
             producto=item.producto,
             cantidad=item.cantidad,
-            precio_unitario=item.precio_unitario,
-            descuento=item.descuento,
-            subtotal=item.subtotal
+            precio_unitario=item.precio_unitario
         )
     
     # Marcar cotización como convertida

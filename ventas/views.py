@@ -20,6 +20,11 @@ from .forms import ClienteForm, ClienteFilterForm, CotizacionForm, FacturaForm
 
 User = get_user_model()
 
+@login_required
+def optimizar_ruta(request):
+    """Vista placeholder para optimizar ruta. No modifica modelos."""
+    return HttpResponse("Optimización de ruta (placeholder)")
+
 class VentasRequiredMixin(UserPassesTestMixin):
     """Mixin para verificar permisos de ventas"""
     def test_func(self):
@@ -2073,26 +2078,32 @@ class PedidosAlistamientoView(BodegaViewMixin, ListView):
         # Usuarios con permisos de bodega pueden ver pedidos de alistamiento
         usuario_actual = self.request.user
         
-        # Base: pedidos que necesitan alistamiento
-        queryset = Pedido.objects.filter(
-            estado__in=['proceso', 'pendiente']
-        ).select_related(
-            'cliente', 'asignado_a'
-        ).prefetch_related(
-            'items__producto',
-            'items__producto__stock'
-        )
-        
-        # Aplicar filtro de estado (todos los bodegueros ven todos los pedidos)
+        # Aplicar filtro de estado
         filtro_estado = self.request.GET.get('estado')
         
         if filtro_estado == 'proceso':
-            # Todos los pedidos en proceso (independientemente de asignación)
-            queryset = queryset.filter(estado='proceso')
+            # Solo pedidos en proceso asignados al usuario actual
+            queryset = Pedido.objects.filter(
+                estado='proceso',
+                asignado_a=usuario_actual
+            ).select_related('cliente', 'asignado_a').prefetch_related(
+                'items__producto', 'items__producto__stock'
+            )
         elif filtro_estado == 'pendiente':
             # Todos los pedidos pendientes
-            queryset = queryset.filter(estado='pendiente')
-        # else: Vista "Todos" - mostrar todos los pedidos pendientes y en proceso
+            queryset = Pedido.objects.filter(
+                estado='pendiente'
+            ).select_related('cliente', 'asignado_a').prefetch_related(
+                'items__producto', 'items__producto__stock'
+            )
+        else:
+            # Vista "Todos": pedidos pendientes + pedidos en proceso asignados a mí
+            return Pedido.objects.filter(
+                Q(estado='pendiente') |
+                Q(estado='proceso', asignado_a=usuario_actual)
+            ).select_related('cliente', 'asignado_a').prefetch_related(
+                'items__producto', 'items__producto__stock'
+            ).order_by('-fecha_creacion')
         
         return queryset.order_by('-fecha_creacion')
     
@@ -2102,12 +2113,15 @@ class PedidosAlistamientoView(BodegaViewMixin, ListView):
         usuario_actual = self.request.user
         
         # Totales específicos para cada bodeguero
-        context['total_pedidos'] = self.get_queryset().count()
-        context['total_pendientes'] = Pedido.objects.filter(estado='pendiente').count()
+        context['total_pendientes'] = Pedido.objects.filter(
+            estado='pendiente'
+        ).count()
         context['total_proceso'] = Pedido.objects.filter(
             estado='proceso', 
             asignado_a=usuario_actual
         ).count()
+        # Total de pedidos relevantes para este bodeguero
+        context['total_pedidos'] = context['total_pendientes'] + context['total_proceso']
         
         # Estado del filtro actual
         context['filtro_actual'] = self.request.GET.get('estado', 'todos')
@@ -2959,14 +2973,14 @@ def optimizar_ruta_view(request):
         # Repartidor: solo sus entregas asignadas
         entregas = Entrega.objects.filter(
             repartidor=request.user,
-            estado__in=['programada', 'pendiente', 'en_ruta']
+            estado__in=['asignada', 'programada', 'pendiente', 'en_ruta']
         ).select_related(
             'pedido__cliente'
         ).order_by('fecha_programada', 'id')
     else:
         # Administrador: todas las entregas pendientes
         entregas = Entrega.objects.filter(
-            estado__in=['programada', 'pendiente', 'en_ruta']
+            estado__in=['asignada', 'programada', 'pendiente', 'en_ruta']
         ).select_related(
             'pedido__cliente',
             'repartidor'
@@ -3112,15 +3126,64 @@ def completar_pedido_inmediato(request, pk):
 @login_required
 def asignar_pedido_bodega(request, pk):
     """Vista simple para asignar pedido a bodega"""
+    if not request.user.can_prepare_orders():
+        messages.error(request, 'No tienes permisos para asignar pedidos.')
+        return redirect('ventas:pedidos_alistamiento')
+    
     pedido = get_object_or_404(Pedido, pk=pk)
     
     if request.method == 'POST':
         pedido.asignado_a = request.user
-        pedido.estado = 'proceso'
+        if pedido.estado == 'pendiente':
+            pedido.estado = 'proceso'
         pedido.save()
-        messages.success(request, 'Pedido asignado a bodega exitosamente.')
+        messages.success(request, f'Pedido {pedido.numero} asignado exitosamente.')
+        return redirect('ventas:pedidos_alistamiento')
     
-    return redirect('ventas:pedido_detail', pk=pk)
+    # Si es GET, también asignar directamente (para enlaces simples)
+    pedido.asignado_a = request.user
+    if pedido.estado == 'pendiente':
+        pedido.estado = 'proceso'
+    pedido.save()
+    messages.success(request, f'Pedido {pedido.numero} asignado exitosamente.')
+    return redirect('ventas:pedidos_alistamiento')
+
+@login_required
+def iniciar_pedido_bodega(request, pk):
+    """Vista simple para iniciar pedido desde alistamiento"""
+    if not request.user.can_prepare_orders():
+        messages.error(request, 'No tienes permisos para iniciar pedidos.')
+        return redirect('ventas:pedidos_alistamiento')
+    
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    if pedido.estado == 'pendiente':
+        pedido.estado = 'proceso'
+        pedido.asignado_a = request.user
+        pedido.save()
+        messages.success(request, f'Pedido {pedido.numero} iniciado y asignado exitosamente.')
+    else:
+        messages.warning(request, f'El pedido {pedido.numero} ya no está pendiente.')
+    
+    return redirect('ventas:pedidos_alistamiento')
+
+@login_required
+def completar_pedido_bodega(request, pk):
+    """Vista simple para completar pedido desde alistamiento"""
+    if not request.user.can_prepare_orders():
+        messages.error(request, 'No tienes permisos para completar pedidos.')
+        return redirect('ventas:pedidos_alistamiento')
+    
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    if pedido.estado == 'proceso' and pedido.asignado_a == request.user:
+        pedido.estado = 'completado'
+        pedido.save()
+        messages.success(request, f'Pedido {pedido.numero} completado exitosamente.')
+    else:
+        messages.warning(request, f'No puedes completar este pedido.')
+    
+    return redirect('ventas:pedidos_alistamiento')
 
 @login_required
 def reprogramar_entrega(request, pk):

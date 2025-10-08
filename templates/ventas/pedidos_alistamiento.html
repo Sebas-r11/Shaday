@@ -385,7 +385,7 @@ div.alistamiento-header p {
                                 <i class="fas fa-eye"></i> Detalle
                             </a>
                             {% if pedido.estado == 'pendiente' %}
-                            <a href="{% url 'ventas:cambiar_estado_pedido' pedido.pk %}?estado=proceso" 
+                            <a href="{% url 'ventas:iniciar_pedido_bodega' pedido.pk %}" 
                                class="btn btn-warning btn-alistamiento"
                                onclick="return confirm('¿Iniciar pedido y asignarlo a ti?')">
                                 <i class="fas fa-play"></i> Iniciar
@@ -398,7 +398,7 @@ div.alistamiento-header p {
                                     <i class="fas fa-hand-paper"></i> Asignar a mí
                                 </a>
                                 {% elif pedido.asignado_a == usuario_actual %}
-                                <a href="{% url 'ventas:cambiar_estado_pedido' pedido.pk %}?estado=completado" 
+                                <a href="{% url 'ventas:completar_pedido_bodega' pedido.pk %}" 
                                    class="btn btn-success btn-alistamiento"
                                    onclick="return confirm('¿Marcar pedido como Completado?')">
                                     <i class="fas fa-check"></i> Completar
@@ -497,14 +497,11 @@ div.alistamiento-header p {
 
 {% block extra_js %}
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     // Auto-refresh cada 30 segundos
     setTimeout(function() {
         location.reload();
     }, 30000);
-    
-    // Tooltip para elementos con título
-    $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
 {% endblock %}

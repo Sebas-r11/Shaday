@@ -41,7 +41,7 @@ def dashboard_view(request):
     
     # Pedidos pendientes
     pedidos_pendientes = Pedido.objects.filter(estado='pendiente').count()
-    pedidos_alistamiento = Pedido.objects.filter(estado='alistamiento').count()
+    pedidos_alistamiento = Pedido.objects.filter(estado='proceso').count()
     
     # Facturas por cobrar
     facturas_pendientes = Factura.objects.filter(

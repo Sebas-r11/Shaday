@@ -184,7 +184,7 @@ class ProductoDetailView(InventarioViewMixin, DetailView):
         from .models import MovimientoInventario
         context['movimientos_recientes'] = MovimientoInventario.objects.filter(
             producto=self.object
-        ).order_by('-fecha_creacion')[:10]
+        ).order_by('-fecha_movimiento')[:10]
         
         # Información de proveedores
         from .models import ProductoProveedor

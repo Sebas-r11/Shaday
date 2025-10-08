@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 
 # Importaciones especializadas después de la refactorización
-from .general_views import DashboardView
+from .general_views import DashboardView, optimizar_ruta
 from .usuarios_views import (
     UserListView, UserCreateView, UserDetailView, UserUpdateView,
     toggle_user_status, user_management_dashboard
@@ -38,5 +38,7 @@ urlpatterns = [
     
     # Dashboard de seguimiento de repartidores (administradores)
     path('repartidores/dashboard/', dashboard_repartidores, name='dashboard_repartidores'),
+    # Optimización de rutas (placeholder, solo para evitar NoReverseMatch)
+    path('optimizar-ruta/', optimizar_ruta, name='optimizar_ruta'),
     path('repartidor/<int:repartidor_id>/toggle-disponibilidad/', toggle_repartidor_disponibilidad, name='toggle_repartidor_disponibilidad'),
 ]

@@ -14,12 +14,13 @@ from .clientes_views import (
 from .cotizaciones_views import (
     CotizacionListView, CotizacionCreateView, CotizacionDetailView, CotizacionUpdateView,
     aprobar_cotizacion, rechazar_cotizacion, convertir_cotizacion_pedido,
-    imprimir_cotizacion
+    imprimir_cotizacion, marcar_pendiente_cotizacion
 )
 from .pedidos_views import (
     PedidoListView, PedidoCreateView, PedidoDetailView, PedidoUpdateView,
     cancelar_pedido, convertir_pedido_factura,
-    PedidosAlistamientoView, completar_alistamiento, obtener_pedidos_pendientes
+    PedidosAlistamientoView, completar_alistamiento, obtener_pedidos_pendientes,
+    tomar_pedido_repartidor, crear_entregas_masivas
     # cambiar_estado_pedido - Función comentada
 )
 from .facturas_views import (
@@ -39,6 +40,8 @@ from .entregas_views import (
 app_name = 'ventas'
 
 urlpatterns = [
+    # Optimización de rutas (placeholder, solo para evitar NoReverseMatch)
+    path('optimizar-ruta/', views.optimizar_ruta_view, name='optimizar_ruta'),
     # Dashboard
     path('', dashboard_view, name='dashboard'),
     path('charts/', dashboard_charts_view, name='dashboard_charts'),
@@ -65,6 +68,7 @@ urlpatterns = [
     path('cotizaciones/<int:pk>/convertir-pedido/', convertir_cotizacion_pedido, name='convertir_a_pedido'),
     path('cotizaciones/<int:pk>/generar-pdf/', views.generar_pdf_cotizacion, name='generar_pdf_cotizacion'),
     path('cotizaciones/<int:pk>/enviar/', views.enviar_cotizacion, name='enviar_cotizacion'),
+    path('cotizaciones/<int:pk>/marcar-pendiente/', marcar_pendiente_cotizacion, name='marcar_pendiente_cotizacion'),
     
     # Pedidos
     path('pedidos/', PedidoListView.as_view(), name='pedido_list'),
@@ -78,6 +82,12 @@ urlpatterns = [
     path('pedidos/<int:pk>/cancelar/', cancelar_pedido, name='cancelar_pedido'),
     path('pedidos/alistamiento/', PedidosAlistamientoView.as_view(), name='pedidos_alistamiento'),
     path('pedidos/<int:pk>/completar-alistamiento/', completar_alistamiento, name='completar_alistamiento'),
+    path('pedidos/<int:pk>/asignar-bodega/', views.asignar_pedido_bodega, name='asignar_pedido_bodega'),
+    path('pedidos/<int:pk>/iniciar-bodega/', views.iniciar_pedido_bodega, name='iniciar_pedido_bodega'),
+    path('pedidos/<int:pk>/completar-bodega/', views.completar_pedido_bodega, name='completar_pedido_bodega'),
+    
+    # Repartidores
+    path('pedidos/<int:pk>/tomar/', tomar_pedido_repartidor, name='tomar_pedido_repartidor'),
     
     # Facturas
     path('facturas/', FacturaListView.as_view(), name='factura_list'),
@@ -97,11 +107,11 @@ urlpatterns = [
     
     # Entregas
     path('entregas/', EntregaListView.as_view(), name='entrega_list'),
+    path('entregas/crear/', crear_entregas_masivas, name='crear_entregas_masivas'),
     # path('entregas/nueva/', EntregaCreateView.as_view(), name='entrega_create'),  # Vista comentada
     path('entregas/<int:pk>/', EntregaDetailView.as_view(), name='entrega_detail'),
     path('entregas/repartidor/', EntregasRepartidorView.as_view(), name='entregas_repartidor'),
     # path('entregas/<int:pk>/asignar/', asignar_repartidor, name='asignar_repartidor'),  # Función comentada
-    path('entregas/<int:pk>/asignar/', views.asignar_pedido_bodega, name='asignar_pedido_bodega'),
     path('entregas/<int:pk>/reprogramar/', views.reprogramar_entrega, name='reprogramar_entrega'),
     path('entregas/<int:pk>/iniciar/', iniciar_entrega, name='iniciar_entrega'),
     path('entregas/<int:pk>/completar/', completar_entrega, name='completar_entrega'),

@@ -35,10 +35,11 @@ class BodegaRequiredMixin(UserPassesTestMixin):
 # ============= VISTAS DE PEDIDOS =============
 
 class VentasYBodegaMixin(UserPassesTestMixin):
-    """Mixin para permitir acceso tanto a ventas como a bodega"""
+    """Mixin para permitir acceso tanto a ventas como a bodega y repartidores"""
     def test_func(self):
         return (self.request.user.can_create_sales() or 
-                self.request.user.can_prepare_orders())
+                self.request.user.can_prepare_orders() or
+                self.request.user.can_deliver_orders())
 
 class PedidoListView(VentasYBodegaMixin, ListView):
     """Lista de pedidos"""
@@ -50,7 +51,16 @@ class PedidoListView(VentasYBodegaMixin, ListView):
     def get_queryset(self):
         queryset = Pedido.objects.select_related('cliente', 'asignado_a')
         
-        # Filtros
+        # Lógica específica para repartidores
+        if self.request.user.can_deliver_orders() and not self.request.user.can_create_sales():
+            # Repartidores solo ven pedidos completados (alistados) y disponibles para entrega
+            queryset = queryset.filter(
+                estado='completado',
+                # Solo pedidos sin entrega asignada (relacionada con 'entregas')
+                entregas__isnull=True
+            ).distinct()
+        
+        # Filtros comunes
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
@@ -60,7 +70,8 @@ class PedidoListView(VentasYBodegaMixin, ListView):
             )
         
         estado = self.request.GET.get('estado')
-        if estado:
+        if estado and not (self.request.user.can_deliver_orders() and not self.request.user.can_create_sales()):
+            # Los repartidores no pueden filtrar por estado (ya están pre-filtrados)
             queryset = queryset.filter(estado=estado)
         
         vendedor = self.request.GET.get('vendedor')
@@ -79,10 +90,23 @@ class PedidoListView(VentasYBodegaMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_pedidos'] = Pedido.objects.count()
-        context['pedidos_pendientes'] = Pedido.objects.filter(estado='pendiente').count()
-        context['pedidos_alistamiento'] = Pedido.objects.filter(estado='alistamiento').count()
-        context['pedidos_completados'] = Pedido.objects.filter(estado='completado').count()
+        
+        # Contexto específico para repartidores
+        if self.request.user.can_deliver_orders() and not self.request.user.can_create_sales():
+            context['es_repartidor'] = True
+            context['total_disponibles'] = Pedido.objects.filter(
+                estado='completado', 
+                entregas__isnull=True
+            ).count()
+            context['title'] = 'Pedidos Disponibles para Entrega'
+        else:
+            context['es_repartidor'] = False
+            context['total_pedidos'] = Pedido.objects.count()
+            context['pedidos_pendientes'] = Pedido.objects.filter(estado='pendiente').count()
+            context['pedidos_alistamiento'] = Pedido.objects.filter(estado='alistamiento').count()
+            context['pedidos_completados'] = Pedido.objects.filter(estado='completado').count()
+            context['title'] = 'Lista de Pedidos'
+        
         return context
 
 
@@ -327,16 +351,70 @@ class PedidosAlistamientoView(BodegaRequiredMixin, ListView):
     context_object_name = 'pedidos'
     
     def get_queryset(self):
-        return Pedido.objects.filter(
-            estado='alistamiento'
-        ).order_by('fecha_creacion')
+        usuario_actual = self.request.user
+        filtro_estado = self.request.GET.get('estado')
+        
+        # Debug detallado
+        print("=== DEBUG ALISTAMIENTO ===")
+        print(f"Usuario: {usuario_actual}")
+        print(f"Filtro: {filtro_estado}")
+        
+        # Mostrar TODOS los pedidos para debug
+        todos_pedidos = Pedido.objects.all().values('numero', 'estado', 'asignado_a__username')
+        print("Todos los pedidos en la BD:")
+        for pedido in todos_pedidos:
+            print(f"  - {pedido['numero']}: estado='{pedido['estado']}', asignado_a={pedido['asignado_a__username']}")
+        
+        if filtro_estado == 'pendiente':
+            # Pendientes: estado='pendiente' O proceso sin asignar (disponibles para tomar)
+            queryset = Pedido.objects.filter(
+                Q(estado='pendiente') |
+                Q(estado='proceso', asignado_a__isnull=True)
+            )
+            print(f"Filtro pendiente - encontrados: {queryset.count()}")
+            for p in queryset:
+                print(f"  - {p.numero}: estado={p.estado}, asignado_a={p.asignado_a}")
+            return queryset.order_by('fecha_creacion')
+        elif filtro_estado == 'proceso':
+            # Solo pedidos en proceso asignados a mí
+            queryset = Pedido.objects.filter(
+                estado='proceso',
+                asignado_a=usuario_actual
+            )
+            print(f"Filtro proceso - encontrados: {queryset.count()}")
+            for p in queryset:
+                print(f"  - {p.numero}: asignado_a={p.asignado_a}")
+            return queryset.order_by('fecha_creacion')
+        else:
+            # Vista "Todos": pendientes + proceso sin asignar + proceso asignados a mí
+            queryset = Pedido.objects.filter(
+                Q(estado='pendiente') |
+                Q(estado='proceso', asignado_a__isnull=True) |
+                Q(estado='proceso', asignado_a=usuario_actual)
+            )
+            print(f"Filtro todos - encontrados: {queryset.count()}")
+            return queryset.order_by('fecha_creacion')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['total_alistamiento'] = self.get_queryset().count()
-        # Agregar contadores para otros estados que el template pueda necesitar
-        context['total_proceso'] = Pedido.objects.filter(estado='proceso').count()
-        context['total_pendiente'] = Pedido.objects.filter(estado='pendiente').count()
+        usuario_actual = self.request.user
+        
+        # Contadores específicos para el usuario actual
+        context['usuario_actual'] = usuario_actual
+        
+        # Pendientes: estado pendiente + proceso sin asignar (disponibles)
+        context['total_pendientes'] = Pedido.objects.filter(
+            Q(estado='pendiente') | Q(estado='proceso', asignado_a__isnull=True)
+        ).count()
+        
+        # En proceso: solo los asignados a mí
+        context['total_proceso'] = Pedido.objects.filter(
+            estado='proceso',
+            asignado_a=usuario_actual
+        ).count()
+        
+        # Total de alistamiento
+        context['total_alistamiento'] = context['total_pendientes'] + context['total_proceso']
         context['total_completado'] = Pedido.objects.filter(estado='completado').count()
         return context
 
@@ -349,18 +427,56 @@ def completar_alistamiento(request, pk):
     
     pedido = get_object_or_404(Pedido, pk=pk)
     
-    if pedido.estado != 'alistamiento':
-        return JsonResponse({'error': 'Pedido no está en alistamiento'}, status=400)
+    if pedido.estado != 'proceso':
+        return JsonResponse({'error': 'Pedido no está en proceso'}, status=400)
     
     pedido.estado = 'completado'
-    pedido.fecha_completado = timezone.now()
-    pedido.usuario_completado = request.user
     pedido.save()
     
     return JsonResponse({
         'success': True,
         'message': f'Pedido {pedido.numero} completado exitosamente'
     })
+
+
+# ============= FUNCIONES PARA REPARTIDORES =============
+
+@login_required
+def tomar_pedido_repartidor(request, pk):
+    """Permite a un repartidor tomar un pedido disponible"""
+    if not request.user.can_deliver_orders():
+        return JsonResponse({'error': 'Sin permisos para tomar pedidos'}, status=403)
+    
+    pedido = get_object_or_404(Pedido, pk=pk)
+    
+    # Verificar que el pedido esté disponible
+    if pedido.estado != 'completado':
+        return JsonResponse({'error': 'Pedido no está disponible para entrega'}, status=400)
+    
+    # Verificar que no tenga entrega asignada
+    if pedido.entregas.exists():
+        return JsonResponse({'error': 'Pedido ya tiene entrega asignada'}, status=400)
+    
+    # Crear entrega y asignar al repartidor actual
+    from .models import Entrega
+    try:
+        entrega = Entrega.objects.create(
+            pedido=pedido,
+            repartidor=request.user,
+            direccion_entrega=pedido.cliente.direccion,
+            telefono_contacto=pedido.cliente.telefono,
+            estado='asignada',
+            fecha_programada=timezone.now()
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Pedido {pedido.numero} asignado exitosamente',
+            'entrega_id': entrega.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': f'Error al asignar pedido: {str(e)}'}, status=500)
 
 
 # ============= API PEDIDOS =============
@@ -385,3 +501,65 @@ def obtener_pedidos_pendientes(request):
         })
     
     return JsonResponse(data, safe=False)
+
+
+@login_required
+def crear_entregas_masivas(request):
+    """Permite a repartidores crear múltiples entregas de una vez"""
+    if not request.user.can_deliver_orders():
+        return JsonResponse({'error': 'Sin permisos para crear entregas'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        pedido_ids = data.get('pedidos', [])
+        fecha_programada = data.get('fecha_programada', None)
+        
+        if not pedido_ids:
+            return JsonResponse({'error': 'No se seleccionaron pedidos'}, status=400)
+        
+        # Verificar que los pedidos estén disponibles
+        pedidos = Pedido.objects.filter(
+            id__in=pedido_ids,
+            estado='completado',
+            entregas__isnull=True
+        )
+        
+        if pedidos.count() != len(pedido_ids):
+            return JsonResponse({'error': 'Algunos pedidos ya no están disponibles'}, status=400)
+        
+        # Procesar fecha programada
+        if fecha_programada:
+            from datetime import datetime
+            try:
+                fecha_programada = datetime.strptime(fecha_programada, '%Y-%m-%d %H:%M')
+            except ValueError:
+                fecha_programada = timezone.now()
+        else:
+            fecha_programada = timezone.now()
+        
+        # Crear entregas
+        from .models import Entrega
+        entregas_creadas = []
+        
+        for pedido in pedidos:
+            entrega = Entrega.objects.create(
+                pedido=pedido,
+                repartidor=request.user,
+                direccion_entrega=pedido.cliente.direccion,
+                telefono_contacto=pedido.cliente.telefono,
+                estado='asignada',
+                fecha_programada=fecha_programada
+            )
+            entregas_creadas.append(entrega)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Se crearon {len(entregas_creadas)} entregas exitosamente'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': f'Error al crear entregas: {str(e)}'}, status=500)
