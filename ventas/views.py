@@ -22,8 +22,20 @@ User = get_user_model()
 
 @login_required
 def optimizar_ruta(request):
-    """Vista placeholder para optimizar ruta. No modifica modelos."""
-    return HttpResponse("Optimización de ruta (placeholder)")
+    """Vista para optimizar ruta. Toma link_ubicacion de bodega principal."""
+    from inventario.models import Bodega
+    bodega_principal = Bodega.objects.filter(es_principal=True).first() or Bodega.objects.first()
+    punto_salida = bodega_principal.link_ubicacion if bodega_principal and bodega_principal.link_ubicacion else ""
+    # Obtener entregas programadas (ajusta según tu lógica actual)
+    from .models import Entrega
+    entregas = Entrega.objects.select_related('pedido__cliente').filter(estado__in=['asignada', 'pendiente', 'proceso'])
+    total_entregas = entregas.count()
+    context = {
+        'punto_salida': punto_salida,
+        'entregas': entregas,
+        'total_entregas': total_entregas,
+    }
+    return render(request, 'ventas/optimizar_ruta.html', context)
 
 class VentasRequiredMixin(UserPassesTestMixin):
     """Mixin para verificar permisos de ventas"""
