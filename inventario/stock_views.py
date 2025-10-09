@@ -134,7 +134,7 @@ class StockDetailView(InventarioViewMixin, DetailView):
         context['movimientos_recientes'] = MovimientoInventario.objects.filter(
             producto=self.object.producto,
             bodega=self.object.bodega
-        ).order_by('-fecha_creacion')[:20]
+        ).order_by('-fecha_movimiento')[:20]
         
         # Stock en otras bodegas del mismo producto
         context['otros_stocks'] = Stock.objects.filter(
@@ -222,7 +222,7 @@ class BodegaDetailView(InventarioViewMixin, DetailView):
         # Movimientos recientes en la bodega
         context['movimientos_recientes'] = MovimientoInventario.objects.filter(
             bodega=self.object
-        ).order_by('-fecha_creacion')[:10]
+        ).order_by('-fecha_movimiento')[:10]
         
         # Productos bajo mínimo en esta bodega
         productos_bajo_minimo = []
