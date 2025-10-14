@@ -136,8 +136,6 @@ class PedidoCreateView(VentasRequiredMixin, CreateView):
             form.instance.vendedor = self.request.user
             pedido = form.save()
             
-            items_formset.instance = pedido
-            items_formset.save()
             
             # Calcular totales
             pedido.calcular_totales()
@@ -188,17 +186,13 @@ class PedidoUpdateView(VentasRequiredMixin, UpdateView):
     def form_valid(self, form):
         # context = self.get_context_data()
         # items_formset = context['items_formset']
-        
         # FormSet temporalmente desactivado
-        # if form.is_valid() and items_formset.is_valid():
         if form.is_valid():
             pedido = form.save()
             # items_formset.save()
-            
             # Recalcular totales
             pedido.calcular_totales()
             pedido.save()
-            
             messages.success(self.request, f'Pedido {pedido.numero} actualizado exitosamente.')
             return redirect('ventas:pedido_detail', pk=pedido.pk)
         else:
@@ -366,34 +360,49 @@ class PedidosAlistamientoView(BodegaRequiredMixin, ListView):
             print(f"  - {pedido['numero']}: estado='{pedido['estado']}', asignado_a={pedido['asignado_a__username']}")
         
         if filtro_estado == 'pendiente':
-            # Pendientes: estado='pendiente' O proceso sin asignar (disponibles para tomar)
             queryset = Pedido.objects.filter(
                 Q(estado='pendiente') |
                 Q(estado='proceso', asignado_a__isnull=True)
             )
-            print(f"Filtro pendiente - encontrados: {queryset.count()}")
-            for p in queryset:
-                print(f"  - {p.numero}: estado={p.estado}, asignado_a={p.asignado_a}")
-            return queryset.order_by('fecha_creacion')
+            pedidos = list(queryset.order_by('fecha_creacion'))
         elif filtro_estado == 'proceso':
-            # Solo pedidos en proceso asignados a mí
             queryset = Pedido.objects.filter(
                 estado='proceso',
                 asignado_a=usuario_actual
             )
-            print(f"Filtro proceso - encontrados: {queryset.count()}")
-            for p in queryset:
-                print(f"  - {p.numero}: asignado_a={p.asignado_a}")
-            return queryset.order_by('fecha_creacion')
+            pedidos = list(queryset.order_by('fecha_creacion'))
         else:
-            # Vista "Todos": pendientes + proceso sin asignar + proceso asignados a mí
             queryset = Pedido.objects.filter(
                 Q(estado='pendiente') |
                 Q(estado='proceso', asignado_a__isnull=True) |
                 Q(estado='proceso', asignado_a=usuario_actual)
             )
-            print(f"Filtro todos - encontrados: {queryset.count()}")
-            return queryset.order_by('fecha_creacion')
+            pedidos = list(queryset.order_by('fecha_creacion'))
+        # Verificar stock por cada item de cada pedido
+        from inventario.models import Stock
+        # Enriquecer cada pedido con una lista de items con atributos extra
+        for pedido in pedidos:
+            items_enriquecidos = []
+            for item in pedido.items.all():
+                bodega_usuario = self.request.user.bodega
+                stock_disponible = 0
+                stock_obj = None
+                if bodega_usuario:
+                    stock_obj = Stock.objects.filter(producto=item.producto, bodega=bodega_usuario).first()
+                    if stock_obj:
+                        stock_disponible = stock_obj.cantidad - stock_obj.cantidad_reservada
+                    else:
+                        stock_disponible = 0
+                else:
+                    stock_disponible = 0
+                print(f"DEBUG STOCK: Producto={item.producto.codigo} | Cantidad={stock_obj.cantidad if stock_obj else 'N/A'} | Reservado={stock_obj.cantidad_reservada if stock_obj else 'N/A'} | Disponible={stock_disponible} | Fórmula: {stock_obj.cantidad if stock_obj else 0} - {stock_obj.cantidad_reservada if stock_obj else 0}")
+                item.stock_disponible = stock_disponible
+                item.stock_suficiente = stock_disponible >= item.cantidad
+                item.sin_stock = stock_disponible < item.cantidad
+                items_enriquecidos.append(item)
+            pedido.items_enriquecidos = items_enriquecidos
+        print(f"DEBUG FINAL: Se retorna {len(pedidos)} pedidos en alistamiento")
+        return pedidos
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -422,21 +431,51 @@ class PedidosAlistamientoView(BodegaRequiredMixin, ListView):
 @login_required
 def completar_alistamiento(request, pk):
     """Completar alistamiento de pedido"""
-    if not request.user.can_manage_inventory():
+    if not request.user.can_adjust_inventory():
         return JsonResponse({'error': 'Sin permisos'}, status=403)
     
     pedido = get_object_or_404(Pedido, pk=pk)
     
     if pedido.estado != 'proceso':
         return JsonResponse({'error': 'Pedido no está en proceso'}, status=400)
-    
+
+    # Validar que todos los items tengan suficiente stock en la bodega del usuario
+    bodega_usuario = request.user.bodega
+    from inventario.models import Stock
+    items_sin_stock = []
+    for item in pedido.items.all():
+        if bodega_usuario:
+            stock_qs = Stock.objects.filter(producto=item.producto, bodega=bodega_usuario)
+            stock_disponible = sum([s.cantidad - s.cantidad_reservada for s in stock_qs])
+        else:
+            stock_disponible = 0
+        if stock_disponible < item.cantidad:
+            items_sin_stock.append(f"{item.producto.nombre} (Disponible: {stock_disponible}, Requerido: {item.cantidad})")
+
+    if items_sin_stock:
+        return JsonResponse({
+            'error': 'No se puede completar el alistamiento. Stock insuficiente en los siguientes productos:',
+            'items': items_sin_stock
+        }, status=400)
+
+    # Reservar el stock de cada item en la bodega del usuario
+    import logging
+    logger = logging.getLogger("django")
+    for item in pedido.items.all():
+        if bodega_usuario:
+            from inventario.models import Stock
+            stock_obj = Stock.objects.filter(producto=item.producto, bodega=bodega_usuario).first()
+            if stock_obj:
+                resultado = stock_obj.reservar(item.cantidad, usuario=request.user, pedido_id=pedido.id, observaciones="Reserva por alistamiento")
+                logger.info(f"Reserva pedido {pedido.numero} - Producto: {item.producto.codigo} - Cantidad: {item.cantidad} - Resultado: {resultado} - Reservado ahora: {stock_obj.cantidad_reservada}")
+            else:
+                logger.warning(f"No se encontró Stock para producto {item.producto.codigo} en bodega {bodega_usuario}")
+
     pedido.estado = 'completado'
     pedido.save()
-    
-    return JsonResponse({
-        'success': True,
-        'message': f'Pedido {pedido.numero} completado exitosamente'
-    })
+
+    from django.shortcuts import redirect
+    return redirect('ventas:pedidos_alistamiento')
 
 
 # ============= FUNCIONES PARA REPARTIDORES =============

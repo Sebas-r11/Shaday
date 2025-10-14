@@ -100,10 +100,10 @@
                                 <div class="text-xs text-gray-500">Reservado</div>
                             </div>
                             <div>
-                                {% with disponible=stock.cantidad|add:0|add:stock.cantidad_reservada|add:0 %}
+                                {% with disponible=stock.cantidad_disponible %}
                                 <div class="text-2xl font-bold 
                                     {% if disponible == 0 %}text-red-600{% elif disponible <= stock.producto.stock_minimo %}text-yellow-600{% else %}text-green-600{% endif %}">
-                                    {{ stock.cantidad|add:0|add:stock.cantidad_reservada|add:0 }}
+                                    {{ disponible }}
                                 </div>
                                 <div class="text-xs text-gray-500">Disponible</div>
                                 {% endwith %}
@@ -112,7 +112,7 @@
                         
                         <div class="text-center pt-3 border-t border-gray-200">
                             <div class="text-lg font-medium text-gray-700">Stock Mínimo: {{ stock.producto.stock_minimo }}</div>
-                            {% with disponible=stock.cantidad|add:0|add:stock.cantidad_reservada|add:0 %}
+                            {% with disponible=stock.cantidad_disponible %}
                             {% if disponible == 0 %}
                             <div class="mt-2">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">

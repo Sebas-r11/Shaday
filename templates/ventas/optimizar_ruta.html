@@ -559,11 +559,15 @@
                                 <i class="fas fa-map-marker-alt text-success"></i>
                                 Punto de Salida
                             </label>
-                            <input type="text" 
-                                   id="puntoSalida" 
-                                   class="form-control punto-salida-input"
-                                   placeholder="URL de Google Maps de la bodega"
-                                   value="{{ punto_salida }}">
+                            {% if bodegas and bodegas|length > 0 %}
+                                <select id="puntoSalida" class="form-control punto-salida-input">
+                                    {% for bodega in bodegas %}
+                                        <option value="{{ bodega.link_ubicacion }}" {% if bodega.link_ubicacion == punto_salida %}selected{% endif %}>{{ bodega.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <div class="alert alert-warning mt-2">No hay bodegas activas disponibles para seleccionar.</div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -580,24 +584,7 @@
                     </div>
                 </div>
 
-                <!-- Configuración de Parámetros -->
-                <div class="config-section">
-                    <h6><i class="fas fa-cog"></i> Configuración de Parámetros</h6>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <label class="form-label small">Velocidad (km/h)</label>
-                            <input type="number" id="velocidadPromedio" class="config-input" value="25" min="10" max="60">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small">Tiempo/Entrega (min)</label>
-                            <input type="number" id="tiempoPorEntrega" class="config-input" value="15" min="5" max="60">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small">Hora de Inicio</label>
-                            <input type="time" id="horaInicio" class="config-input" value="08:00">
-                        </div>
-                    </div>
-                </div>
+
                 
                 <!-- Acciones de Optimización -->
                 <div class="optimizer-actions">
@@ -657,6 +644,25 @@
                                     Pedido #{{ entrega.numero }} • 
                                     Estado: {{ entrega.get_estado_display }}
                                 </div>
+                                <!-- Información real de pago y totales -->
+                                <div class="info-pago-real d-none"
+                                     data-tipo-pago="{{ entrega.pedido.tipo_pago }}"
+                                     data-total="{{ entrega.pedido.total }}"
+                                     data-pendiente="{{ entrega.pedido.monto_pendiente }}">
+                                </div>
+                                <!-- Tabla oculta con los items reales del pedido -->
+                                <table class="tabla-items-pedido d-none">
+                                    <tbody>
+                                    {% for item in entrega.pedido.items.all %}
+                                        <tr data-producto-id="{{ item.producto.id }}">
+                                            <td class="item-nombre">{{ item.producto.nombre }}</td>
+                                            <td class="item-cantidad">{{ item.cantidad }}</td>
+                                            <td class="item-precio">{{ item.precio_unitario }}</td>
+                                            <td class="item-subtotal">{{ item.subtotal }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
                             
                             <div class="delivery-actions">
@@ -762,9 +768,9 @@
 // ⭐ CONFIGURACIÓN DINÁMICA DE PARÁMETROS ⭐
 function obtenerConfiguracion() {
     return {
-        velocidadPromedio: parseFloat(document.getElementById('velocidadPromedio').value) || 25,
-        tiempoPorEntrega: parseFloat(document.getElementById('tiempoPorEntrega').value) || 15,
-        horaInicio: document.getElementById('horaInicio').value || '08:00'
+        velocidadPromedio: 40,
+        tiempoPorEntrega: 15,
+        horaInicio: '08:00'
     };
 }
 
@@ -779,7 +785,7 @@ function abrirUbicacion(enlaceMaps, cliente) {
 }
 
 // Función principal de optimización con estimación de tiempos (MEJORADA CON 2-OPT)
-function optimizarRutaCompleta() {
+window.optimizarRutaCompleta = function() {
     console.log('🚀 Iniciando optimización avanzada de ruta con algoritmo 2-opt');
     
     // Verificar si ya hay una ruta en progreso
@@ -818,9 +824,20 @@ function optimizarRutaCompleta() {
     localStorage.removeItem('rutaActualGuardada');
     localStorage.removeItem('metricasRutaGuardada');
     
-    const puntoSalida = document.getElementById('puntoSalida').value.trim();
+    const bodegaSelect = document.getElementById('puntoSalida');
+    let puntoSalida = '';
+    let puntoSalidaLink = '';
+    let puntoSalidaCoords = [4.6097, -74.0817]; // Default Bogotá
+    if (bodegaSelect) {
+        puntoSalida = bodegaSelect.options[bodegaSelect.selectedIndex].text.trim();
+        puntoSalidaLink = bodegaSelect.value.trim();
+        const coords = extraerCoordenadas(puntoSalidaLink);
+        if (coords && coords.includes(',')) {
+            puntoSalidaCoords = coords.split(',').map(coord => parseFloat(coord.trim()));
+        }
+    }
     if (!puntoSalida) {
-        mostrarAlerta('warning', 'Por favor ingrese el punto de salida');
+        mostrarAlerta('warning', 'Por favor seleccione la bodega de salida');
         return;
     }
     
@@ -883,10 +900,8 @@ function optimizarRutaCompleta() {
     
     console.log(`\n✅ Optimización completada con: ${algoritmUsado}`);
     
-    // Calcular métricas completas
-    const puntoSalidaCoords = [4.6097, -74.0817]; // Coordenadas aproximadas de Bogotá
-    const bodegaCoords = [4.6533, -74.0625]; // Coordenadas de la bodega
-    
+    // Calcular métricas completas usando las coordenadas reales de la bodega seleccionada
+    const bodegaCoords = puntoSalidaCoords;
     const metricas = calcularMetricasRuta(ubicacionesOptimizadas, puntoSalidaCoords, bodegaCoords, config);
     
     // Agregar información del algoritmo usado
@@ -912,9 +927,8 @@ function optimizarRutaCompleta() {
         }
     });
     
-    // Agregar la BODEGA como destino final
-    const bodegaUbicacion = 'Calle 94 #15-32, Bogotá, Colombia';
-    urlMaps += '/' + encodeURIComponent(bodegaUbicacion);
+    // Agregar la BODEGA seleccionada como destino final
+    urlMaps += '/' + encodeURIComponent(puntoSalida);
     
     // Agregar parámetros de Google Maps
     urlMaps += '?travelmode=driving';
@@ -1714,7 +1728,7 @@ function mostrarETAEnEntregas(metricas) {
 function mostrarOrdenOptimizadoVisual(ubicacionesOptimizadas) {
     console.log('🎨 Actualizando orden visual...');
     
-    const deliveryList = document.getElementById('delivery-list');
+    let deliveryList = document.getElementById('delivery-list');
     if (!deliveryList) return;
     
     // Reordenar los elementos en el DOM según el orden optimizado
@@ -1747,6 +1761,35 @@ function mostrarOrdenOptimizadoVisual(ubicacionesOptimizadas) {
     });
     
     mostrarAlerta('success', `Orden optimizado aplicado - Ahorro estimado: 15-30% en tiempo de viaje`);
+
+        // Agregar visualmente el paso de regreso a bodega
+        const bodegaSelect = document.getElementById('puntoSalida');
+        let bodegaNombre = '';
+        let bodegaDireccion = '';
+        let bodegaLink = '';
+        if (bodegaSelect) {
+            bodegaNombre = bodegaSelect.options[bodegaSelect.selectedIndex].text;
+            bodegaLink = bodegaSelect.value;
+            bodegaDireccion = bodegaSelect.options[bodegaSelect.selectedIndex].text;
+        }
+        // Usar el mismo link de ubicación para el punto final
+        const puntoSalidaLink = bodegaLink;
+        const pasoRegreso = document.createElement('div');
+        pasoRegreso.className = 'delivery-item d-flex align-items-center';
+        pasoRegreso.innerHTML = `
+            <div class="delivery-order">${ubicacionesOptimizadas.length + 1}</div>
+            <div class="delivery-info">
+                <div class="delivery-client"><i class="fas fa-warehouse"></i> Regreso a Bodega: ${bodegaNombre}</div>
+                <div class="delivery-address">
+                    <i class="fas fa-map-marker-alt text-muted"></i>
+                    ${bodegaDireccion}
+                </div>
+                <div class="delivery-details">
+                    <a href="${puntoSalidaLink}" target="_blank" class="btn btn-maps btn-sm"><i class="fas fa-map"></i> Abrir Maps</a>
+                </div>
+            </div>
+        `;
+        if (deliveryList) deliveryList.appendChild(pasoRegreso);
 }
 
 // Wrapper para compatibilidad con botones legacy
@@ -2707,15 +2750,33 @@ function extraerInformacionPedido(entregaElement) {
     const numeroPedidoMatch = detallesTexto.match(/Pedido #(\w+)/);
     const numeroPedido = numeroPedidoMatch ? numeroPedidoMatch[1] : 'N/A';
     
-    // Simular información del pedido (en implementación real vendría del servidor)
+    // Extraer items reales del pedido desde la tabla oculta
+    const items = [];
+    const tabla = entregaElement.querySelector('.tabla-items-pedido tbody');
+    if (tabla) {
+        tabla.querySelectorAll('tr').forEach(tr => {
+            items.push({
+                producto_id: tr.dataset.productoId,
+                nombre: tr.querySelector('.item-nombre').textContent,
+                cantidad: parseInt(tr.querySelector('.item-cantidad').textContent),
+                precio: parseFloat(tr.querySelector('.item-precio').textContent),
+                subtotal: parseFloat(tr.querySelector('.item-subtotal').textContent)
+            });
+        });
+    }
+    // Extraer información real de pago y totales
+    const infoPago = entregaElement.querySelector('.info-pago-real');
+    const tipoPago = infoPago ? infoPago.dataset.tipoPago : '';
+    const montoTotal = infoPago ? parseFloat(infoPago.dataset.total) : 0;
+    const montoPendiente = infoPago ? parseFloat(infoPago.dataset.pendiente) : 0;
     return {
         numero: numeroPedido,
         cliente: entregaElement.querySelector('.delivery-client').textContent,
         direccion: entregaElement.querySelector('.delivery-address').textContent.replace('📍', '').trim(),
-        items: generarItemsPedidoSimulados(),
-        tipoPago: determinarTipoPago(),
-        montoTotal: calcularMontoTotal(),
-        montoPendiente: calcularMontoPendiente(),
+        items: items,
+        tipoPago: tipoPago,
+        montoTotal: montoTotal,
+        montoPendiente: montoPendiente,
         fechaVencimiento: calcularFechaVencimiento()
     };
 }

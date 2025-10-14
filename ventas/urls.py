@@ -41,7 +41,7 @@ app_name = 'ventas'
 
 urlpatterns = [
     # Optimización de rutas (placeholder, solo para evitar NoReverseMatch)
-    path('optimizar-ruta/', views.optimizar_ruta_view, name='optimizar_ruta'),
+    path('optimizar-ruta/', views.optimizar_ruta, name='optimizar_ruta'),
     # Dashboard
     path('', dashboard_view, name='dashboard'),
     path('charts/', dashboard_charts_view, name='dashboard_charts'),

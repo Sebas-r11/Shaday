@@ -51,6 +51,15 @@ class User(AbstractUser):
         auto_now=True,
         verbose_name='Fecha de modificación'
     )
+
+    bodega = models.ForeignKey(
+        'inventario.Bodega',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name='Bodega asignada',
+        help_text='Bodega a la que pertenece el usuario (solo para bodegueros)'
+    )
     
     # Campos de ubicación GPS para repartidores
     latitud = models.DecimalField(

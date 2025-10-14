@@ -24,14 +24,15 @@ User = get_user_model()
 def optimizar_ruta(request):
     """Vista para optimizar ruta. Toma link_ubicacion de bodega principal."""
     from inventario.models import Bodega
-    bodega_principal = Bodega.objects.filter(es_principal=True).first() or Bodega.objects.first()
+    bodegas = Bodega.objects.filter(activa=True).exclude(link_ubicacion__isnull=True).exclude(link_ubicacion__regex=r'^\s*$').order_by('-es_principal', 'nombre')
+    bodega_principal = bodegas.filter(es_principal=True).first() or bodegas.first()
     punto_salida = bodega_principal.link_ubicacion if bodega_principal and bodega_principal.link_ubicacion else ""
-    # Obtener entregas programadas (ajusta según tu lógica actual)
     from .models import Entrega
     entregas = Entrega.objects.select_related('pedido__cliente').filter(estado__in=['asignada', 'pendiente', 'proceso'])
     total_entregas = entregas.count()
     context = {
         'punto_salida': punto_salida,
+        'bodegas': bodegas,
         'entregas': entregas,
         'total_entregas': total_entregas,
     }

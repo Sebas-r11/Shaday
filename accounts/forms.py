@@ -131,7 +131,7 @@ class UserUpdateForm(UserChangeForm, BaseUserForm):
         fields = [
             'username', 'email', 'first_name', 'last_name',
             'role', 'telefono', 'documento', 'activo',
-            'is_staff', 'is_superuser'
+            'bodega', 'is_staff', 'is_superuser'
         ]
         widgets = {
             'username': forms.TextInput(attrs={'placeholder': 'Nombre de usuario único'}),

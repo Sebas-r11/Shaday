@@ -68,6 +68,22 @@
                                         {% for error in form.first_name.errors %}{{ error }}{% endfor %}
                                     </div>
                                 {% endif %}
+                            {% if request.user.is_superuser or request.user.role == 'administrador' %}
+                                {% if form.instance.role == 'bodega' %}
+                                <div class="col-md-6">
+                                    <label for="{{ form.bodega.id_for_label }}" class="form-label">
+                                        <strong>Bodega asignada</strong>
+                                    </label>
+                                    {{ form.bodega }}
+                                    {% if form.bodega.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.bodega.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">Solo para usuarios con rol de bodeguero.</small>
+                                </div>
+                                {% endif %}
+                            {% endif %}
                             </div>
                             
                             <div class="col-md-6">
