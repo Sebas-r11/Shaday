@@ -57,62 +57,197 @@
             </div>
         {% endif %}
 
-        <div class="grid lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-8">
+        <div class="flex flex-col gap-6 max-w-3xl mx-auto">
+            <div>
                 <form method="post" novalidate>
                     {% csrf_token %}
-                    
+
                     <!-- Información Básica -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h5 class="text-lg font-semibold text-gray-900 mb-0">
                                 <i class="fas fa-building mr-2 text-blue-600"></i>
                                 Información Básica
                             </h5>
                         </div>
-                        <div class="p-6">
-                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div class="md:col-span-1">
-                                    <label for="{{ form.codigo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Código
-                                        {% if not form.codigo.value %}
-                                            <small class="text-gray-500">(Automático)</small>
-                                        {% endif %}
-                                    </label>
-                                    {{ form.codigo }}
-                                    {% if form.codigo.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.codigo.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    {% if form.codigo.help_text %}
-                                        <small class="text-gray-500 text-sm">{{ form.codigo.help_text }}</small>
-                                    {% endif %}
+                        <div class="p-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="md:col-span-1">
+                                <label for="{{ form.codigo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Código {% if not form.codigo.value %}<small class="text-gray-500">(Automático)</small>{% endif %}</label>
+                                {{ form.codigo }}
+                                {% if form.codigo.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.codigo.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                                {% if form.codigo.help_text %}<small class="text-gray-500 text-sm">{{ form.codigo.help_text }}</small>{% endif %}
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="{{ form.razon_social.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Razón Social <span class="text-red-500">*</span></label>
+                                {{ form.razon_social }}
+                                {% if form.razon_social.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.razon_social.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="{{ form.nombre_comercial.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Nombre Comercial</label>
+                                {{ form.nombre_comercial }}
+                                {% if form.nombre_comercial.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.nombre_comercial.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documento de Identificación -->
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                                <i class="fas fa-id-card mr-2 text-blue-600"></i>
+                                Documento de Identificación
+                            </h5>
+                        </div>
+                        <div class="p-6 grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.tipo_documento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Documento <span class="text-red-500">*</span></label>
+                                {{ form.tipo_documento }}
+                                {% if form.tipo_documento.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.tipo_documento.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.numero_documento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Número de Documento <span class="text-red-500">*</span></label>
+                                {{ form.numero_documento }}
+                                {% if form.numero_documento.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.numero_documento.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de Contacto -->
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                                <i class="fas fa-phone mr-2 text-blue-600"></i>
+                                Información de Contacto
+                            </h5>
+                        </div>
+                        <div class="p-6 grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                                {{ form.telefono }}
+                                {% if form.telefono.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.telefono.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="{{ form.sitio_web.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Sitio Web</label>
+                                {{ form.sitio_web }}
+                                {% if form.sitio_web.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.sitio_web.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dirección -->
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                                <i class="fas fa-map-marker-alt mr-2 text-blue-600"></i>
+                                Dirección
+                            </h5>
+                        </div>
+                        <div class="p-6 grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.direccion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Dirección</label>
+                                {{ form.direccion }}
+                                {% if form.direccion.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.direccion.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="ciudad" class="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
+                                <input type="text" name="ciudad" id="ciudad" class="form-control" placeholder="Ciudad" value="{{ form.ciudad.value|default_if_none:'' }}">
+                                {% if form.ciudad.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.ciudad.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.codigo_postal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Código Postal</label>
+                                {{ form.codigo_postal }}
+                                {% if form.codigo_postal.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.codigo_postal.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Comercial -->
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                                <i class="fas fa-briefcase mr-2 text-blue-600"></i>
+                                Información Comercial
+                            </h5>
+                        </div>
+                        <div class="p-6 grid md:grid-cols-3 gap-4">
+                            <div>
+                                <label for="{{ form.condiciones_pago.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Condiciones de Pago</label>
+                                {{ form.condiciones_pago }}
+                                {% if form.condiciones_pago.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.condiciones_pago.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.limite_credito.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Límite de Crédito</label>
+                                {{ form.limite_credito }}
+                                {% if form.limite_credito.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.limite_credito.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            {# Eliminado descuento_comercial #}
+                        </div>
+                    </div>
+
+                    <!-- Contacto Principal -->
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                                <i class="fas fa-user mr-2 text-blue-600"></i>
+                                Contacto Principal
+                            </h5>
+                        </div>
+                        <div class="p-6 grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.contacto_nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Nombre del Contacto</label>
+                                {{ form.contacto_nombre }}
+                                {% if form.contacto_nombre.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.contacto_nombre.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.contacto_cargo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Cargo del Contacto</label>
+                                {{ form.contacto_cargo }}
+                                {% if form.contacto_cargo.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.contacto_cargo.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.contacto_telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Teléfono del Contacto</label>
+                                {{ form.contacto_telefono }}
+                                {% if form.contacto_telefono.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.contacto_telefono.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.contacto_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Email del Contacto</label>
+                                {{ form.contacto_email }}
+                                {% if form.contacto_email.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.contacto_email.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información Adicional y Estado -->
+                    <div class="bg-white border border-gray-200 rounded-lg mb-6 p-8">
+                        <div class="border-b border-gray-200 px-6 py-4">
+                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
+                                <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                                Información Adicional
+                            </h5>
+                        </div>
+                        <div class="p-6 grid md:grid-cols-2 gap-4">
+                            <div class="md:col-span-2">
+                                <label for="{{ form.observaciones.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Observaciones</label>
+                                {{ form.observaciones }}
+                                {% if form.observaciones.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.observaciones.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            <div class="flex items-center mt-2">
+                                <input type="checkbox" name="activo" id="{{ form.activo.id_for_label }}" class="form-checkbox h-6 w-6 text-blue-600" {% if form.activo.value %}checked{% endif %}>
+                                <label for="{{ form.activo.id_for_label }}" class="ml-2 text-base text-gray-700 font-semibold">Activo</label>
+                                {% if form.activo.errors %}<div class="text-red-600 text-sm mt-1">{% for error in form.activo.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                            </div>
+                            {# Eliminado descuento_comercial #}
+                                {# Eliminados duplicados de tipo_documento y numero_documento #}
+                                </div>
                                 </div>
                                 
-                                <div class="md:col-span-2">
-                                    <label for="{{ form.razon_social.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Razón Social <span class="text-red-500">*</span>
-                                    </label>
-                                    {{ form.razon_social }}
-                                    {% if form.razon_social.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.razon_social.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
                                 
-                                <div class="md:col-span-2">
-                                    <label for="{{ form.nombre_comercial.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Nombre Comercial
-                                    </label>
-                                    {{ form.nombre_comercial }}
-                                    {% if form.nombre_comercial.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.nombre_comercial.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
+                                
+                                {# Nombre Comercial oculto #}
                                 
                                 <div class="md:col-span-1">
                                     {% if object %}
@@ -129,7 +264,7 @@
                     </div>
 
                     <!-- Identificación -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 p-8">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h5 class="text-lg font-semibold text-gray-900 mb-0">
                                 <i class="fas fa-id-card mr-2 text-blue-600"></i>
@@ -166,149 +301,9 @@
                     </div>
 
                     <!-- Contacto -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 p-8">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h5 class="text-lg font-semibold text-gray-900 mb-0">
-                                <i class="fas fa-phone mr-2 text-blue-600"></i>
-                                Información de Contacto
-                            </h5>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Teléfono <span class="text-red-500">*</span>
-                                    </label>
-                                    {{ form.telefono }}
-                                    {% if form.telefono.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.telefono.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Email <span class="text-red-500">*</span>
-                                    </label>
-                                    {{ form.email }}
-                                    {% if form.email.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.email.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="md:col-span-2">
-                                    <label for="{{ form.sitio_web.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Sitio Web
-                                    </label>
-                                    {{ form.sitio_web }}
-                                    {% if form.sitio_web.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.sitio_web.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Ubicación -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
-                        <div class="border-b border-gray-200 px-6 py-4">
-                                <i class="fas fa-map-marker-alt mr-2 text-blue-600"></i>
-                                Ubicación
-                            </h5>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid md:grid-cols-4 gap-4">
-                                <div class="md:col-span-4">
-                                    <label for="{{ form.direccion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Dirección
-                                    </label>
-                                    {{ form.direccion }}
-                                    {% if form.direccion.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.direccion.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="md:col-span-3">
-                                    <label for="{{ form.ciudad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Ciudad
-                                    </label>
-                                    {{ form.ciudad }}
-                                    {% if form.ciudad.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.ciudad.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.codigo_postal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Código Postal
-                                    </label>
-                                    {{ form.codigo_postal }}
-                                    {% if form.codigo_postal.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.codigo_postal.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Términos Comerciales -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
-                        <div class="border-b border-gray-200 px-6 py-4">
-                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
-                                <i class="fas fa-handshake mr-2 text-blue-600"></i>
-                                Términos Comerciales
-                            </h5>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid md:grid-cols-3 gap-4">
-                                <div>
-                                    <label for="{{ form.condiciones_pago.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Condiciones de Pago
-                                    </label>
-                                    {{ form.condiciones_pago }}
-                                    {% if form.condiciones_pago.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.condiciones_pago.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.limite_credito.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Límite de Crédito
-                                    </label>
-                                    <div class="relative">
-                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
-                                        {{ form.limite_credito }}
-                                    </div>
-                                    {% if form.limite_credito.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.limite_credito.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                    {% if form.limite_credito.help_text %}
-                                        <small class="text-gray-500 text-sm">{{ form.limite_credito.help_text }}</small>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.descuento_comercial.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Descuento Comercial
-                                    </label>
-                                    <div class="relative">
-                                        {{ form.descuento_comercial }}
-                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
                                     </div>
                                     {% if form.descuento_comercial.errors %}
                                         <div class="text-red-600 text-sm mt-1">
@@ -317,91 +312,15 @@
                                     {% endif %}
                                     {% if form.descuento_comercial.help_text %}
                                         <small class="text-gray-500 text-sm">{{ form.descuento_comercial.help_text }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Contacto Principal -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
-                        <div class="border-b border-gray-200 px-6 py-4">
-                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
-                                <i class="fas fa-user mr-2 text-blue-600"></i>
-                                Contacto Principal
-                            </h5>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="{{ form.contacto_nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Nombre del Contacto
-                                    </label>
-                                    {{ form.contacto_nombre }}
-                                    {% if form.contacto_nombre.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.contacto_nombre.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.contacto_cargo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Cargo
-                                    </label>
-                                    {{ form.contacto_cargo }}
-                                    {% if form.contacto_cargo.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.contacto_cargo.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.contacto_telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Teléfono del Contacto
-                                    </label>
-                                    {{ form.contacto_telefono }}
-                                    {% if form.contacto_telefono.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.contacto_telefono.errors %}{{ error }}{% endfor %}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                
-                                <div>
-                                    <label for="{{ form.contacto_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Email del Contacto
-                                    </label>
-                                    {{ form.contacto_email }}
-                                    {% if form.contacto_email.errors %}
-                                        <div class="text-red-600 text-sm mt-1">
-                                            {% for error in form.contacto_email.errors %}{{ error }}{% endfor %}
-                                        </div>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Observaciones -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
-                        <div class="border-b border-gray-200 px-6 py-4">
-                            <h5 class="text-lg font-semibold text-gray-900 mb-0">
-                                <i class="fas fa-sticky-note mr-2 text-blue-600"></i>
-                                Observaciones
-                            </h5>
-                        </div>
-                        <div class="p-6">
-                            {{ form.observaciones }}
-                            {% if form.observaciones.errors %}
-                                <div class="text-red-600 text-sm mt-1">
-                                    {% for error in form.observaciones.errors %}{{ error }}{% endfor %}
-                                </div>
-                        </div>
-                    </div>
 
                     <!-- Botones de Acción -->
-                    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 p-8">
                         <div class="p-6">
                             <div class="flex justify-between">
                                 <a href="{% url 'compras:proveedor_list' %}" class="border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2 rounded-md text-sm font-medium transition-colors">
@@ -418,8 +337,8 @@
             </div>
             
             <!-- Sidebar de ayuda -->
-            <div class="lg:col-span-4">
-                <div class="bg-white shadow-sm rounded-lg border border-gray-200 sticky top-6">
+            <div>
+                <div class="bg-white border border-gray-200 rounded-lg mb-6 p-6 sticky top-6">
                     <div class="border-b border-gray-200 px-6 py-4">
                         <h6 class="text-lg font-medium text-gray-900 mb-0">
                             <i class="fas fa-info-circle mr-1 text-blue-600"></i>
@@ -459,9 +378,7 @@
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {

@@ -31,12 +31,25 @@ class BaseModelForm(ModelForm):
 
 
 class ProveedorForm(BaseModelForm):
+    descuento_comercial = forms.DecimalField(
+        label='Descuento general otorgado por el proveedor',
+        required=True,
+        initial=0,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'style': 'width: 180px; font-size: 1.1em;', 'placeholder': '0', 'step': '0.01', 'max': '100'})
+    )
+
+    ciudad = forms.ModelChoiceField(
+        label='Ciudad',
+        queryset=Ciudad.objects.all().order_by('nombre'),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
     """Formulario para crear y editar proveedores"""
     
     class Meta:
         model = Proveedor
         fields = [
-            'codigo', 'razon_social', 'nombre_comercial', 
+            'codigo', 'razon_social', 'nombre_comercial',
             'tipo_documento', 'numero_documento',
             'telefono', 'email', 'sitio_web',
             'direccion', 'ciudad', 'codigo_postal',
@@ -46,44 +59,23 @@ class ProveedorForm(BaseModelForm):
         ]
         widgets = {
             'codigo': forms.TextInput(attrs={'placeholder': 'Se genera automáticamente si se deja vacío'}),
-            'razon_social': forms.TextInput(attrs={'placeholder': 'Razón social completa'}),
-            'nombre_comercial': forms.TextInput(attrs={'placeholder': 'Nombre comercial (opcional)'}),
-            'numero_documento': forms.TextInput(attrs={'placeholder': 'Número de documento sin puntos ni espacios'}),
-            'telefono': forms.TextInput(attrs={'placeholder': 'Ej: +57 300 1234567'}),
-            'email': forms.EmailInput(attrs={'placeholder': 'email@empresa.com'}),
-            'sitio_web': forms.URLInput(attrs={'placeholder': 'https://www.sitio.com'}),
-            'direccion': forms.TextInput(attrs={'placeholder': 'Dirección completa'}),
-            'codigo_postal': forms.TextInput(attrs={'placeholder': 'Código postal'}),
+            'razon_social': forms.TextInput(attrs={'placeholder': 'Razón Social', 'required': 'required'}),
+            'nombre_comercial': forms.TextInput(attrs={'placeholder': 'Nombre Comercial'}),
+            'tipo_documento': forms.Select(),
+            'numero_documento': forms.TextInput(attrs={'placeholder': 'Número de documento', 'required': 'required'}),
+            'telefono': forms.TextInput(attrs={'placeholder': 'Teléfono'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'Email'}),
+            'sitio_web': forms.URLInput(attrs={'placeholder': 'Sitio Web'}),
+            'direccion': forms.TextInput(attrs={'placeholder': 'Dirección'}),
+            'codigo_postal': forms.TextInput(attrs={'placeholder': 'Código Postal'}),
             'limite_credito': forms.NumberInput(attrs={'placeholder': '0.00', 'step': '0.01'}),
             'descuento_comercial': forms.NumberInput(attrs={'placeholder': '0.00', 'step': '0.01', 'max': '100'}),
             'contacto_nombre': forms.TextInput(attrs={'placeholder': 'Nombre del contacto principal'}),
             'contacto_cargo': forms.TextInput(attrs={'placeholder': 'Cargo del contacto'}),
             'contacto_telefono': forms.TextInput(attrs={'placeholder': 'Teléfono del contacto'}),
-            'contacto_email': forms.EmailInput(attrs={'placeholder': 'email@contacto.com'}),
-            'observaciones': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Observaciones adicionales'}),
+            'contacto_email': forms.EmailInput(attrs={'placeholder': 'Email del contacto'}),
+            'observaciones': forms.Textarea(attrs={'rows': 2}),
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Cargar ciudades agrupadas por departamento
-        self.fields['ciudad'].queryset = Ciudad.objects.select_related('departamento').order_by(
-            'departamento__nombre', 'nombre'
-        )
-        
-        # Hacer el campo código opcional (se genera automáticamente)
-        self.fields['codigo'].required = False
-        
-        # Hacer algunos campos requeridos
-        self.fields['razon_social'].required = True
-        self.fields['tipo_documento'].required = True
-        self.fields['numero_documento'].required = True
-        self.fields['email'].required = True
-        self.fields['telefono'].required = True
-        
-        # Configurar help_text
-        self.fields['limite_credito'].help_text = "Límite de crédito en pesos colombianos"
-        self.fields['descuento_comercial'].help_text = "Descuento comercial en porcentaje (0-100%)"
         
     def clean_numero_documento(self):
         """Validar número de documento"""

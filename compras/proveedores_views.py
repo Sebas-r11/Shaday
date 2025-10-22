@@ -11,6 +11,7 @@ from django.contrib import messages
 
 # Importaciones locales
 from .models import Proveedor
+from .forms import ProveedorForm
 
 # ========================================
 # MIXIN DE PERMISOS PARA COMPRAS
@@ -74,14 +75,7 @@ class ProveedorCreateView(ComprasRequiredMixin, CreateView):
     """Crear nuevo proveedor"""
     model = Proveedor
     template_name = 'compras/proveedor_form.html'
-    fields = [
-        'codigo', 'razon_social', 'nombre_comercial', 'tipo_documento', 
-        'numero_documento', 'telefono', 'email', 'sitio_web',
-        'direccion', 'ciudad', 'codigo_postal',
-        'condiciones_pago', 'limite_credito', 'descuento_comercial',
-        'contacto_nombre', 'contacto_cargo', 'contacto_telefono', 'contacto_email',
-        'observaciones'
-    ]
+    form_class = ProveedorForm
     
     def form_valid(self, form):
         form.instance.usuario_creacion = self.request.user
