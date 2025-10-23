@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import imprimir_tirilla_factura
 from .general_views import (
     dashboard_view, dashboard_charts_view, buscar_productos_api, obtener_precio_producto,
     verificar_stock_disponible, test_autocompletado, test_ajax_simple, test_syntax,
@@ -40,6 +41,8 @@ from .entregas_views import (
 app_name = 'ventas'
 
 urlpatterns = [
+    # Tirilla de factura (impresión tipo recibo)
+    path('facturas/<int:pk>/tirilla/', imprimir_tirilla_factura, name='tirilla_factura'),
     # Optimización de rutas (placeholder, solo para evitar NoReverseMatch)
     path('optimizar-ruta/', views.optimizar_ruta, name='optimizar_ruta'),
     # Dashboard

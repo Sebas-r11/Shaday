@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tirilla de Venta</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 17px;
+            width: 80mm;
+            margin: 0 auto;
+            color: #222;
+            background: #fff;
+        }
+        .tirilla-container {
+            width: 80mm;
+            padding: 5px 0;
+        }
+        .center {
+            text-align: center;
+        }
+        .bold {
+            font-weight: bold;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .items-table th, .items-table td {
+            border-bottom: 1px dashed #ccc;
+            padding: 6px 0;
+            font-size: 17px;
+        }
+        .totals {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .totals td {
+            font-size: 17px;
+            padding: 6px 0;
+        }
+        .footer {
+            margin-top: 10px;
+            font-size: 15px;
+            text-align: center;
+        }
+        @media print {
+            body, .tirilla-container {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="tirilla-container">
+        <div class="center bold">DistribucioneShaddai</div>
+        <div class="center">NIT: 123.456.789-0</div>
+        <div class="center">Calle Principal #123, Bogotá</div>
+        <div class="center">Tel: (601) 234-5678</div>
+        <div class="center">info@distribucioneshaddai.com</div>
+        <hr>
+        <div class="center bold">TIRILLA DE VENTA</div>
+    {% if factura %}
+            <div style="margin-bottom: 5px;">
+                <strong>Factura:</strong> {{ factura.numero_fiscal|default:factura.numero }}<br>
+                <strong>Fecha:</strong> {{ factura.fecha|date:"d/m/Y H:i" }}<br>
+            </div>
+            <div style="margin-bottom: 5px;">
+                <strong>Cliente:</strong> {{ factura.cliente.nombre_completo }}<br>
+                <strong>Documento:</strong> {{ factura.cliente.get_tipo_documento_display }} {{ factura.cliente.numero_documento }}<br>
+                {% if factura.cliente.telefono %}<strong>Tel:</strong> {{ factura.cliente.telefono }}<br>{% endif %}
+                {# Dirección omitida por solicitud #}
+                {% if factura.cliente.ciudad %}<strong>Ciudad:</strong> {{ factura.cliente.ciudad }}<br>{% endif %}
+            </div>
+            <hr>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Cant</th>
+                        <th>Producto</th>
+                        <th class="right">Unitario</th>
+                        <th class="right">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in factura.items.all %}
+                <tr>
+                    <td>{{ item.cantidad }}</td>
+                    <td>
+                        {% if item.producto %}{{ item.producto.nombre }}{% else %}Producto{% endif %}
+                    </td>
+                    <td class="right">${{ item.precio|floatformat:0 }}</td>
+                    <td class="right">${{ item.cantidad|floatformat:0|add:item.precio|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <table class="totals">
+                <tr>
+                    <td class="bold">TOTAL:</td>
+                    <td class="right bold">${{ factura.total|floatformat:0 }}</td>
+                </tr>
+                {% if factura.impuestos > 0 %}
+                <tr>
+                    <td>IVA:</td>
+                    <td class="right">${{ factura.impuestos|floatformat:0 }}</td>
+                </tr>
+                {% endif %}
+                {% if factura.descuento_valor > 0 %}
+                <tr>
+                    <td>Descuento:</td>
+                    <td class="right">-${{ factura.descuento_valor|floatformat:0 }}</td>
+                </tr>
+                {% endif %}
+            </table>
+            {% if factura.observaciones %}
+            <div>Obs: {{ factura.observaciones }}</div>
+            {% endif %}
+        {% elif pedido %}
+            <div style="margin-bottom: 5px;">
+                <strong>Pedido:</strong> {{ pedido.numero }}<br>
+                <strong>Fecha:</strong> {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}<br>
+            </div>
+            <div style="margin-bottom: 5px;">
+                <strong>Cliente:</strong> {{ pedido.cliente.nombre_completo }}<br>
+                <strong>Documento:</strong> {{ pedido.cliente.get_tipo_documento_display }} {{ pedido.cliente.numero_documento }}<br>
+                {% if pedido.cliente.telefono %}<strong>Tel:</strong> {{ pedido.cliente.telefono }}<br>{% endif %}
+                {# Dirección omitida por solicitud #}
+                {% if pedido.cliente.ciudad %}<strong>Ciudad:</strong> {{ pedido.cliente.ciudad }}<br>{% endif %}
+            </div>
+            <hr>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Cant</th>
+                        <th>Producto</th>
+                        <th class="right">Unitario</th>
+                        <th class="right">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in pedido.items.all %}
+                <tr>
+                    <td>{{ item.cantidad }}</td>
+                    <td>{{ item.producto.nombre }}</td>
+                    <td class="right">${{ item.precio_unitario|floatformat:0 }}</td>
+                    <td class="right">${{ item.subtotal|floatformat:0 }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <table class="totals">
+                <tr>
+                    <td class="bold">TOTAL:</td>
+                    <td class="right bold">${{ pedido.total|floatformat:0 }}</td>
+                </tr>
+            </table>
+        {% else %}
+            <div class="center" style="color: red; margin: 20px 0;">{{ error|default:'No existe una factura ni pedido válido.' }}</div>
+        {% endif %}
+        {# Bloques duplicados de items/totales eliminados #}
+        <div class="footer">
+            ¡Gracias por su compra!<br>
+            Factura generada el {{ "now"|date:"d/m/Y H:i" }}<br>
+            DistribucioneShaddai v1.0
+        </div>
+    </div>
+</body>
+</html>

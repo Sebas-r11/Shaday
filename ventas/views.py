@@ -12,6 +12,44 @@ from decimal import Decimal, InvalidOperation
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from .models import Cliente, Cotizacion, Pedido, Factura, ItemCotizacion, ItemPedido, ItemFactura, Entrega
+from inventario.models import Producto, Stock, Bodega
+from .forms import ClienteForm, ClienteFilterForm, CotizacionForm, FacturaForm
+
+# Vista para imprimir tirilla de factura
+@login_required
+def imprimir_tirilla_factura(request, pk):
+    """Vista para imprimir la tirilla de una factura (formato 8cm) o desde pedido si no existe factura con ese pk"""
+    from .models import Factura, Pedido
+    factura = Factura.objects.filter(pk=pk).first()
+    pedido = None
+    if not factura:
+        # Si no existe una factura con ese pk, intentar buscar la factura asociada al pedido con ese pk
+        pedido = Pedido.objects.filter(pk=pk).first()
+        if pedido:
+            # Buscar la primera factura asociada a ese pedido (si hay relación directa)
+            factura = Factura.objects.filter(pedido_origen=pedido).first() if hasattr(Factura, 'pedido_origen') else None
+            # Si no hay relación directa, buscar por cliente y total como fallback (no recomendado pero útil en sistemas simples)
+            if not factura:
+                factura = Factura.objects.filter(cliente=pedido.cliente, total=pedido.total).order_by('-fecha_creacion').first()
+    return render(request, 'ventas/tirilla_print.html', {'factura': factura, 'pedido': pedido})
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, View, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.urls import reverse_lazy
+from django.db.models import Q, Sum, Count, Avg, F
+from django.db import models
+from django.contrib import messages
+from django.http import JsonResponse, Http404, HttpResponse
+from django.core.exceptions import PermissionDenied
+from datetime import datetime, timedelta, date
+from decimal import Decimal, InvalidOperation
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from .models import Cliente, Cotizacion, Pedido, Factura, ItemCotizacion, ItemPedido, ItemFactura, Entrega
